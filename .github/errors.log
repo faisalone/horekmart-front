@@ -1,10 +1,19 @@
-Error: Invalid src prop (https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop) on `next/image`, hostname "images.unsplash.com" is not configured under images in your `next.config.js`
-See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
-    at defaultLoader (http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:2785:49)
-    at http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:213:36
-    at Array.map (<anonymous>)
-    at generateImgAttrs (http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:213:24)
-    at getImgProps (http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:600:27)
-    at http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:3089:82
-    at HomePage (http://localhost:3000/_next/static/chunks/src_c49641c9._.js:1336:243)
-    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2061:50)
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: object. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `RootLayout`.
+    at createFiberFromTypeAndProps (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4928:32)
+    at createFiberFromElement (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4939:16)
+    at createChild (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5610:40)
+    at reconcileChildrenArray (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5723:72)
+    at reconcileChildFibersImpl (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5829:117)
+    at http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5856:39
+    at reconcileChildren (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:7439:51)
+    at beginWork (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8209:1573)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:3073:74)
+    at performUnitOfWork (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10243:97)
+    at workLoopSync (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10135:40)
+    at renderRootSync (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10118:13)
+    at performWorkOnRoot (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:9877:56)
+    at performWorkOnRootViaSchedulerTask (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10826:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:1982:64)
+    at RootLayout (rsc://React/Server/C:%5CUsers%5Ceilmi%5Califatelco%5Cproject6%5C.next%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__635699bc._.js?2:155:272)

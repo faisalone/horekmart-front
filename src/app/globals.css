@@ -292,3 +292,225 @@ body {
   color: #171717;
   font-family: var(--font-quicksand), 'Quicksand', system-ui, sans-serif;
 }
+
+/* Modern Intersection Animations with Bidirectional Support */
+
+/* Base animation classes - elements start invisible and can animate in both directions */
+.animate-on-scroll {
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Fade animations - bidirectional */
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+}
+
+.fade-in.hidden-animation {
+  opacity: 0;
+}
+
+/* Slide animations - bidirectional */
+.slide-up {
+  opacity: 0;
+  transform: translateY(60px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.slide-up.hidden-animation {
+  opacity: 0;
+  transform: translateY(60px);
+}
+
+.slide-down {
+  opacity: 0;
+  transform: translateY(-60px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-down.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.slide-down.hidden-animation {
+  opacity: 0;
+  transform: translateY(-60px);
+}
+
+.slide-left {
+  opacity: 0;
+  transform: translateX(60px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.slide-left.hidden-animation {
+  opacity: 0;
+  transform: translateX(60px);
+}
+
+.slide-right {
+  opacity: 0;
+  transform: translateX(-60px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.slide-right.hidden-animation {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+/* Scale animations - bidirectional */
+.scale-up {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scale-up.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.scale-up.hidden-animation {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.scale-down {
+  opacity: 0;
+  transform: scale(1.2);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scale-down.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.scale-down.hidden-animation {
+  opacity: 0;
+  transform: scale(1.2);
+}
+
+/* Rotation animations - bidirectional */
+.rotate-in {
+  opacity: 0;
+  transform: rotate(-10deg) scale(0.9);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.rotate-in.visible {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.rotate-in.hidden-animation {
+  opacity: 0;
+  transform: rotate(-10deg) scale(0.9);
+}
+
+/* Blur animations - bidirectional */
+.blur-in {
+  opacity: 0;
+  filter: blur(10px);
+  transition: all 0.8s ease-out;
+}
+
+.blur-in.visible {
+  opacity: 1;
+  filter: blur(0px);
+}
+
+.blur-in.hidden-animation {
+  opacity: 0;
+  filter: blur(10px);
+}
+
+/* Stagger delays for sequential animations */
+.stagger-1 { transition-delay: 0.1s; }
+.stagger-2 { transition-delay: 0.2s; }
+.stagger-3 { transition-delay: 0.3s; }
+.stagger-4 { transition-delay: 0.4s; }
+.stagger-5 { transition-delay: 0.5s; }
+
+/* Section-specific animations */
+.section-header {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.section-header.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-header.hidden-animation {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.product-card-animate {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product-card-animate.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.product-card-animate.hidden-animation {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+}
+
+/* Floating animations for special elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse animation for CTA elements */
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); 
+  }
+  50% { 
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); 
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Modern parallax effect */
+.parallax-element {
+  transition: transform 0.1s ease-out;
+}

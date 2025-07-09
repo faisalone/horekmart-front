@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 
 export interface NavbarProps {
@@ -82,9 +83,13 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
               {/* Left Side - Logo */}
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
-                  <div className="text-3xl font-bold">
-                    <span>VALTOOK</span>
-                  </div>
+                  <Image 
+                    src="/valtook-logo-v2.png" 
+                    alt="VALTOOK" 
+                    width={180} 
+                    height={60} 
+                    className="h-14 w-auto"
+                  />
                 </Link>
               </div>
 
@@ -194,9 +199,13 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
 
               {/* Logo - Center */}
               <Link href="/" className="flex items-center flex-1 justify-center">
-                <div className="text-2xl font-bold">
-                  <span>VALTOOK</span>
-                </div>
+                <Image 
+                  src="/valtook-logo-v2.png" 
+                  alt="VALTOOK" 
+                  width={150} 
+                  height={50} 
+                  className="h-10 w-auto"
+                />
               </Link>
 
               {/* Mobile Right Side Actions */}

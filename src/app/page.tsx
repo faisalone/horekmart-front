@@ -11,6 +11,8 @@ import Button from '@/components/ui/Button';
 import { getMockProducts, getMockCategories } from '@/lib/mock-data';
 import { Product } from '@/types';
 import BannerBlock from '@/components/BannerBlock';
+import AnimatedElement from '@/components/AnimatedElement';
+import { AnimatedSection, useSequentialAnimation } from '@/lib/animations';
 
 export default function HomePage() {
   const [products] = useState(getMockProducts());
@@ -30,18 +32,21 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Promotional Banner */}
-	  <section className="bg-white">
-      	<div className="max-w-7xl mx-auto px-4 py-6">
-			<PromoBanner />
-		</div>
-	  </section>
+      <AnimatedElement animation="slideDown">
+        <section className="bg-white">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <PromoBanner />
+          </div>
+        </section>
+      </AnimatedElement>
 
-      {/* Main Banner Section - 3 Row Masonry Layout with Reusable Components */}
-      <section className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          
-          {/* 3 Row Masonry Grid Layout with Enhanced Mobile Layout */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-4">
+      {/* Main Banner Section - Enhanced 3 Row Masonry Layout */}
+      <AnimatedElement animation="fadeIn" delay={200}>
+        <section className="bg-gradient-to-br from-white to-gray-50">
+          <div className="max-w-7xl mx-auto px-4 py-12">
+            
+            {/* Enhanced 3 Row Masonry Grid Layout with better mobile experience */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-6">
             
             {/* Fashion - Keep original position on mobile, move back on desktop */}
             <BannerBlock
@@ -142,18 +147,20 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </AnimatedElement>
 
-      {/* Flash Deals Section with theme styling */}
-      <section className="theme-gradient-orange-red text-white py-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-4">
+      {/* Flash Deals Section with navbar-consistent theme styling */}
+      <AnimatedElement animation="slideUp" delay={300}>
+        <section className="theme-gradient-blue-purple text-white py-8">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-bold">Flash Deals</h2>
-              <div className="bg-white text-orange-600 px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                Ends in 2h 15m
+              <h2 className="text-3xl font-bold">Flash Deals</h2>
+              <div className="bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse float-animation">
+                ⚡ Ends in 2h 15m
               </div>
             </div>
-            <Link href="/deals" className="text-white hover:text-orange-200 flex items-center transition-colors text-lg font-semibold">
+            <Link href="/deals" className="text-white hover:text-blue-200 flex items-center text-lg font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
               Shop all <ArrowRight className="ml-1 h-5 w-5" />
             </Link>
           </div>
@@ -168,13 +175,15 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </AnimatedElement>
 
-      {/* Popular Products Grid */}
-      <section className="py-8 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Popular items</h2>
-            <Link href="/products" className="text-theme-teal hover:text-theme-teal-dark flex items-center transition-colors text-lg font-semibold">
+      {/* Popular Products Grid with better styling */}
+      <AnimatedElement animation="scaleUp" delay={400}>
+        <section className="py-12 bg-gradient-to-br from-gray-50 to-blue-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Popular items</h2>
+            <Link href="/products" className="text-theme-blue hover:text-theme-blue-dark flex items-center text-lg font-semibold bg-theme-blue/10 hover:bg-theme-blue/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
               Shop all <ArrowRight className="ml-1 h-5 w-5" />
             </Link>
           </div>
@@ -187,13 +196,15 @@ export default function HomePage() {
           />
         </div>
       </section>
+      </AnimatedElement>
 
-      {/* Brand Spotlight with theme styling and slider */}
-      <section className="py-8 bg-theme-gray-light relative">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Shop by brand</h2>
-            <Link href="/brands" className="text-theme-teal hover:text-theme-teal-dark transition-colors text-lg font-semibold flex items-center">
+      {/* Brand Spotlight with consistent theme styling and improved design */}
+      <AnimatedElement animation="slideLeft" delay={500}>
+        <section className="py-12 bg-gradient-to-br from-purple-50 to-blue-50 relative">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Shop by brand</h2>
+            <Link href="/brands" className="text-theme-purple hover:text-theme-purple-dark transition-colors text-lg font-semibold flex items-center bg-theme-purple/10 hover:bg-theme-purple/20 px-4 py-2 rounded-full cursor-pointer">
               All brands <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
@@ -206,9 +217,9 @@ export default function HomePage() {
                 const slider = document.getElementById('brand-slider');
                 if (slider) slider.scrollBy({ left: -300, behavior: 'smooth' });
               }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-purple-100"
             >
-              <ArrowLeft className="h-6 w-6 text-theme-teal" />
+              <ArrowLeft className="h-6 w-6 text-theme-purple" />
             </button>
 
             {/* Right Arrow - Centered on right side */}
@@ -217,16 +228,16 @@ export default function HomePage() {
                 const slider = document.getElementById('brand-slider');
                 if (slider) slider.scrollBy({ left: 300, behavior: 'smooth' });
               }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-purple-100"
             >
-              <ArrowRight className="h-6 w-6 text-theme-teal" />
+              <ArrowRight className="h-6 w-6 text-theme-purple" />
             </button>
 
             {/* Left Gradient Mask */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-theme-gray-light to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-purple-50 to-transparent z-10 pointer-events-none"></div>
             
             {/* Right Gradient Mask */}
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-theme-gray-light to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-purple-50 to-transparent z-10 pointer-events-none"></div>
 
             {/* Slider Container */}
             <div 
@@ -252,7 +263,7 @@ export default function HomePage() {
                 <Link
                   key={brand.name}
                   href={`/brands/${brand.name.toLowerCase()}`}
-                  className="relative bg-white rounded-lg p-6 text-center hover:shadow-lg transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-48"
+                  className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-purple-100/50"
                 >
                   {/* Brand Logo */}
                   <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -266,10 +277,10 @@ export default function HomePage() {
                   {/* Text and Arrow Block - slides in from left on hover */}
                   <div className="flex items-center justify-center gap-2 h-6 overflow-hidden">
                     {/* Arrow - slides in from left */}
-                    <ArrowRight className="h-6 w-6 text-theme-teal transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
+                    <ArrowRight className="h-6 w-6 text-theme-purple transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
                     
                     {/* Product Count Text - slides in from left */}
-                    <p className="font-bold text-gray-900 group-hover:text-theme-teal transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap">
+                    <p className="font-bold text-gray-900 group-hover:text-theme-purple transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap">
                       {brand.items} Products
                     </p>
                   </div>
@@ -279,24 +290,54 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </AnimatedElement>
 
-      {/* Bottom Banner with theme gradient */}
-      <section className="theme-gradient-blue-teal text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Save even more with Walmart+</h2>
-          <p className="text-xl mb-6 text-blue-100">
-            Get free shipping, exclusive deals, and more benefits
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="theme-button-orange font-bold hover:scale-105 transition-transform">
-              Start free trial
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 transition-all">
-              Learn more
-            </Button>
+      {/* Newsletter Subscription with PromoBanner colors but newsletter structure */}
+      <AnimatedElement animation="slideUp" delay={600}>
+        <section className="bg-white">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="relative overflow-hidden bg-theme-blue py-8 md:py-12 rounded-2xl shadow-2xl border-2 border-white/20">
+            {/* Subtle overlay */}
+            <div className="absolute inset-0 bg-theme-blue opacity-90"></div>
+            
+            {/* Subtle glow */}
+            <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
+            
+            {/* Newsletter Content */}
+            <div className="relative px-4 md:px-6 text-center">
+              {/* Newsletter Heading */}
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">
+                Stay in the Loop
+              </h2>
+              <p className="text-lg md:text-xl mb-8 text-white/90 max-w-2xl mx-auto font-semibold">
+                ✨ Get exclusive deals, new arrivals, and special offers delivered straight to your inbox ✨
+              </p>
+
+              {/* Newsletter Form */}
+              <div className="max-w-lg mx-auto">
+                <div className="relative mb-4">
+                  <input
+                    type="email"
+                    placeholder="Enter your email address"
+                    className="w-full pl-4 pr-36 py-4 rounded-full text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white/50 focus:outline-none bg-gradient-to-b from-white to-gray-100 shadow-lg border border-gray-200 font-medium"
+                  />
+                  <div className="absolute right-2 top-2 group">
+                    <button className="theme-button-gradient-blue-purple text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-wider hover:scale-105 transform transition-all duration-300 shadow-xl border-2 border-white/30 cursor-pointer">
+                      Subscribe
+                    </button>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-white/80 mt-4 flex items-center justify-center gap-2 font-medium">
+                  <span>🔒</span>
+                  100% secure • No spam ever • Unsubscribe anytime
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+      </AnimatedElement>
     </div>
   );
 }
