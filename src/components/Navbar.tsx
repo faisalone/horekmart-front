@@ -14,6 +14,7 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
+  const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -21,6 +22,19 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
 
   const toggleMobileSearch = () => {
     setIsMobileSearchOpen(!isMobileSearchOpen);
+  };
+
+  const handleDepartmentsMouseEnter = () => {
+    if (departmentsTimeoutRef.current) {
+      clearTimeout(departmentsTimeoutRef.current);
+    }
+    setIsDepartmentsOpen(true);
+  };
+
+  const handleDepartmentsMouseLeave = () => {
+    departmentsTimeoutRef.current = setTimeout(() => {
+      setIsDepartmentsOpen(false);
+    }, 150); // 150ms delay before closing
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -47,6 +61,15 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isMobileSearchOpen]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (departmentsTimeoutRef.current) {
+        clearTimeout(departmentsTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50">
@@ -77,7 +100,7 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                   />
                   <button
                     type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full transition-colors hover:opacity-80 theme-button-teal"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full cursor-pointer theme-button-teal"
                   >
                     <Search className="h-5 w-5" />
                   </button>
@@ -141,17 +164,17 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                     placeholder="Search..."
                     className={`absolute left-0 top-1/2 transform -translate-y-1/2 h-12 rounded-full border-2 border-gray-300 bg-white text-black outline-none transition-all duration-300 ease-out ${
                       isMobileSearchOpen 
-                        ? 'w-64 pl-14 pr-10 opacity-100 focus:border-theme-secondary-500' 
+                        ? 'w-64 pl-14 pr-10 opacity-100 focus:border-theme-teal' 
                         : 'w-12 opacity-0 pointer-events-none'
                     }`}
                     autoFocus={isMobileSearchOpen}
                   />
                   
-                  {/* Search icon - fixed position, always visible */}
+                  {/* Search icon - fixed position, always visible, matching desktop theme */}
                   <button
                     type={isMobileSearchOpen ? "submit" : "button"}
                     onClick={isMobileSearchOpen ? (searchQuery.trim() ? undefined : toggleMobileSearch) : toggleMobileSearch}
-                    className="search-button relative z-10 w-12 h-12 rounded-full text-black flex items-center justify-center hover:opacity-80 transition-opacity bg-theme-accent-gradient"
+                    className="search-button relative z-10 w-12 h-12 rounded-full text-white flex items-center justify-center cursor-pointer theme-button-teal"
                   >
                     <Search className="h-5 w-5" />
                   </button>
@@ -161,7 +184,7 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                     <button
                       type="button"
                       onClick={toggleMobileSearch}
-                      className="absolute left-56 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 transition-colors z-20"
+                      className="absolute left-56 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors z-20"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -172,7 +195,7 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
               {/* Logo - Center */}
               <Link href="/" className="flex items-center flex-1 justify-center">
                 <div className="text-2xl font-bold">
-                  <span className="bg-gradient-to-r from-theme-light-pink to-theme-light-blue bg-clip-text text-transparent">VALTOOK</span>
+                  <span>VALTOOK</span>
                 </div>
               </Link>
 
@@ -198,7 +221,7 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                 {/* Mobile Menu Button */}
                 <button
                   onClick={toggleMenu}
-                  className="p-2 text-white transition-colors hover:opacity-80"
+                  className="p-2 text-white cursor-pointer transition-colors hover:opacity-80"
                 >
                   {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
@@ -212,12 +235,12 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
       <div className="hidden lg:block text-white theme-gradient-pink-red">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center h-14">
-            {/* Departments Dropdown */}
+            {/* Departments Dropdown - Enhanced smooth interaction */}
             <div className="relative hidden lg:block mr-8">
               <button
-                onMouseEnter={() => setIsDepartmentsOpen(true)}
-                onMouseLeave={() => setIsDepartmentsOpen(false)}
-                className="flex items-center space-x-2 text-white px-4 py-2 rounded transition-colors hover:bg-theme-primary-700/50"
+                onMouseEnter={handleDepartmentsMouseEnter}
+                onMouseLeave={handleDepartmentsMouseLeave}
+                className="flex items-center space-x-2 text-white px-4 py-2 rounded cursor-pointer transition-colors hover:bg-theme-primary-700/50"
               >
                 <Menu className="h-4 w-4" />
                 <span className="text-base font-medium">Departments</span>
@@ -226,21 +249,22 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
               
               {isDepartmentsOpen && (
                 <div
-                  onMouseEnter={() => setIsDepartmentsOpen(true)}
-                  onMouseLeave={() => setIsDepartmentsOpen(false)}
-                  className="absolute top-full left-0 bg-white text-black shadow-lg rounded-md py-2 w-72 mt-1 z-50"
+                  onMouseEnter={handleDepartmentsMouseEnter}
+                  onMouseLeave={handleDepartmentsMouseLeave}
+                  className="absolute top-full left-0 bg-white text-black shadow-lg rounded-md py-2 w-72 z-50 -mt-1"
+                  style={{ paddingTop: '8px', marginTop: '-4px' }}
                 >
-                  <div className="grid grid-cols-1 gap-1 p-3">
-                    <Link href="/departments/electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Electronics</Link>
-                    <Link href="/departments/clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Clothing, Shoes & Accessories</Link>
-                    <Link href="/departments/home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Home & Garden</Link>
-                    <Link href="/departments/grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Grocery & Essentials</Link>
-                    <Link href="/departments/sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Sports & Outdoors</Link>
-                    <Link href="/departments/auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Auto & Tires</Link>
-                    <Link href="/departments/toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Toys & Games</Link>
-                    <Link href="/departments/baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Baby</Link>
-                    <Link href="/departments/health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Health & Wellness</Link>
-                    <Link href="/departments/beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded">Beauty & Personal Care</Link>
+                  <div className="grid grid-cols-1 gap-1 p-3 pt-1">
+                    <Link href="/departments/electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Electronics</Link>
+                    <Link href="/departments/clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Clothing, Shoes & Accessories</Link>
+                    <Link href="/departments/home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Home & Garden</Link>
+                    <Link href="/departments/grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Grocery & Essentials</Link>
+                    <Link href="/departments/sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Sports & Outdoors</Link>
+                    <Link href="/departments/auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Auto & Tires</Link>
+                    <Link href="/departments/toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Toys & Games</Link>
+                    <Link href="/departments/baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Baby</Link>
+                    <Link href="/departments/health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Health & Wellness</Link>
+                    <Link href="/departments/beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Beauty & Personal Care</Link>
                   </div>
                 </div>
               )}

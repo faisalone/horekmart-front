@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Heart, Plus } from 'lucide-react';
+import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -39,7 +39,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           
-          {/* Wishlist Button - Walmart style */}
+          {/* Wishlist Button */}
           <button
             onClick={handleAddToWishlist}
             className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-50"
@@ -72,7 +72,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
             disabled={!product.inStock}
             className="absolute bottom-3 right-3 p-2 theme-button-blue rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:bg-gray-400"
           >
-            <Plus className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4" />
           </button>
         </div>
       </Link>
@@ -80,17 +80,11 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
       <div className="p-4">
         <Link href={`/products/${product.id}`}>
           <div className="space-y-2">
-            {/* Price - Walmart style large and prominent */}
+            {/* Price - Large and prominent */}
             <div className="flex items-baseline gap-2">
-              <div className="flex items-baseline">
-                <span className="text-xs text-gray-600">$</span>
-                <span className="text-xl font-bold text-gray-900">
-                  {Math.floor(product.salePrice || product.price)}
-                </span>
-                <span className="text-sm text-gray-600">
-                  {((product.salePrice || product.price) % 1 * 100).toFixed(0).padStart(2, '0')}
-                </span>
-              </div>
+              <span className="text-xl font-bold text-gray-900">
+                ${(product.salePrice || product.price).toFixed(2)}
+              </span>
               {hasDiscount && (
                 <span className="text-sm text-gray-500 line-through">
                   ${product.price.toFixed(2)}
@@ -99,7 +93,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
             </div>
             
             {/* Product Name with theme hover color */}
-            <h3 className="text-sm text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
+            <h3 className="text-base font-medium text-gray-900 line-clamp-2 group-hover:text-theme-teal transition-colors leading-tight">
               {product.name}
             </h3>
             
@@ -123,20 +117,20 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
               </span>
             </div>
 
-            {/* Shipping Info with theme green */}
-            <div className="text-xs text-gray-600">
-              <div className="flex items-center gap-1">
-                <span className="text-theme-green font-medium">Free shipping</span>
-                <span>arrives in 3+ days</span>
-              </div>
+            {/* Brand and Tags */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-gray-500">by {product.brand}</span>
+              {product.tags?.includes('bestseller') && (
+                <span className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded text-xs font-medium">
+                  Bestseller
+                </span>
+              )}
+              {product.tags?.includes('trending') && (
+                <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded text-xs font-medium">
+                  Trending
+                </span>
+              )}
             </div>
-
-            {/* Options with theme blue */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="text-xs text-theme-blue">
-                +{product.variants.length} options
-              </div>
-            )}
           </div>
         </Link>
       </div>

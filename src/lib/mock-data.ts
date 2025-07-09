@@ -159,10 +159,10 @@ export const mockProducts: Product[] = [
 		description: 'Premium Android phone with S Pen and exceptional camera',
 		price: 1199.99,
 		salePrice: 999.99,
-		image: 'https://images.unsplash.com/photo-1610792516307-e74d6bb9f45e?w=400&h=400&fit=crop',
+		image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop',
 		images: [
-			'https://images.unsplash.com/photo-1610792516307-e74d6bb9f45e?w=400&h=400&fit=crop',
-			'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop',
 		],
 		category: 'Electronics',
 		subcategory: 'Smartphones',

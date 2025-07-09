@@ -194,36 +194,36 @@
   background: var(--theme-teal); 
   color: white;
   border: 2px solid transparent;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 .theme-button-teal:hover { 
   background: var(--theme-teal-dark); 
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 150, 136, 0.3);
+  cursor: pointer;
 }
 
 .theme-button-green { 
   background: var(--theme-green); 
   color: white;
   border: 2px solid transparent;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 .theme-button-green:hover { 
   background: var(--theme-green-dark); 
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+  cursor: pointer;
 }
 
 .theme-button-orange { 
   background: var(--theme-orange); 
   color: white;
   border: 2px solid transparent;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 .theme-button-orange:hover { 
   background: var(--theme-orange-dark); 
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(255, 152, 0, 0.3);
+  cursor: pointer;
 }
 
 /* Gradient Buttons */
@@ -231,12 +231,12 @@
   background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
   color: white;
   border: 2px solid transparent;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 .theme-button-gradient-blue-purple:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(156, 39, 176, 0.4);
-  filter: brightness(1.1);
+  opacity: 0.9;
+  cursor: pointer;
 }
 
 /* Fire Effects with Theme Colors - Enhanced */
