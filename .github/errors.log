@@ -1,0 +1,10 @@
+Error: Invalid src prop (https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop) on `next/image`, hostname "images.unsplash.com" is not configured under images in your `next.config.js`
+See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+    at defaultLoader (http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:2785:49)
+    at http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:213:36
+    at Array.map (<anonymous>)
+    at generateImgAttrs (http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:213:24)
+    at getImgProps (http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:600:27)
+    at http://localhost:3000/_next/static/chunks/node_modules_032b0470._.js:3089:82
+    at HomePage (http://localhost:3000/_next/static/chunks/src_c49641c9._.js:1336:243)
+    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2061:50)

@@ -3,24 +3,292 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Primary Theme Colors - Material Design inspired */
+  --theme-red: #F44336;
+  --theme-red-light: #FFCDD2;
+  --theme-red-dark: #D32F2F;
+  
+  --theme-pink: #E91E63;
+  --theme-pink-light: #F8BBD9;
+  --theme-pink-dark: #C2185B;
+  
+  --theme-purple: #9C27B0;
+  --theme-purple-light: #E1BEE7;
+  --theme-purple-dark: #7B1FA2;
+  
+  --theme-deep-purple: #673AB7;
+  --theme-deep-purple-light: #D1C4E9;
+  --theme-deep-purple-dark: #512DA8;
+  
+  --theme-blue: #3F51B5;
+  --theme-blue-light: #C5CAE9;
+  --theme-blue-dark: #303F9F;
+  
+  --theme-cyan: #00BCD4;
+  --theme-cyan-light: #B2EBF2;
+  --theme-cyan-dark: #0097A7;
+  
+  --theme-teal: #009688;
+  --theme-teal-light: #B2DFDB;
+  --theme-teal-dark: #00695C;
+  
+  --theme-green: #4CAF50;
+  --theme-green-light: #C8E6C9;
+  --theme-green-dark: #388E3C;
+  
+  /* Accent Colors */
+  --theme-orange: #FF9800;
+  --theme-orange-light: #FFE0B2;
+  --theme-orange-dark: #F57C00;
+  
+  /* Neutral Colors */
+  --theme-gray: #9E9E9E;
+  --theme-gray-light: #F5F5F5;
+  --theme-gray-dark: #424242;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Modern Theme Classes with Variations */
+
+/* Solid Color Backgrounds */
+.bg-theme-red { background: var(--theme-red); color: white; }
+.bg-theme-red-light { background: var(--theme-red-light); color: var(--theme-red-dark); }
+.bg-theme-red-dark { background: var(--theme-red-dark); color: white; }
+
+.bg-theme-pink { background: var(--theme-pink); color: white; }
+.bg-theme-pink-light { background: var(--theme-pink-light); color: var(--theme-pink-dark); }
+.bg-theme-pink-dark { background: var(--theme-pink-dark); color: white; }
+
+.bg-theme-purple { background: var(--theme-purple); color: white; }
+.bg-theme-purple-light { background: var(--theme-purple-light); color: var(--theme-purple-dark); }
+.bg-theme-purple-dark { background: var(--theme-purple-dark); color: white; }
+
+.bg-theme-blue { background: var(--theme-blue); color: white; }
+.bg-theme-blue-light { background: var(--theme-blue-light); color: var(--theme-blue-dark); }
+.bg-theme-blue-dark { background: var(--theme-blue-dark); color: white; }
+
+.bg-theme-cyan { background: var(--theme-cyan); color: white; }
+.bg-theme-cyan-light { background: var(--theme-cyan-light); color: var(--theme-cyan-dark); }
+.bg-theme-cyan-dark { background: var(--theme-cyan-dark); color: white; }
+
+.bg-theme-teal { background: var(--theme-teal); color: white; }
+.bg-theme-teal-light { background: var(--theme-teal-light); color: var(--theme-teal-dark); }
+.bg-theme-teal-dark { background: var(--theme-teal-dark); color: white; }
+
+.bg-theme-green { background: var(--theme-green); color: white; }
+.bg-theme-green-light { background: var(--theme-green-light); color: var(--theme-green-dark); }
+.bg-theme-green-dark { background: var(--theme-green-dark); color: white; }
+
+.bg-theme-orange { background: var(--theme-orange); color: white; }
+.bg-theme-orange-light { background: var(--theme-orange-light); color: var(--theme-orange-dark); }
+.bg-theme-orange-dark { background: var(--theme-orange-dark); color: white; }
+
+/* Two-Color Gradient Combinations - Modern and Clean */
+.theme-gradient-blue-purple {
+  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.theme-gradient-purple-pink {
+  background: linear-gradient(135deg, var(--theme-purple) 0%, var(--theme-pink) 100%);
 }
 
+.theme-gradient-pink-red {
+  background: linear-gradient(135deg, var(--theme-pink) 0%, var(--theme-red) 100%);
+}
+
+.theme-gradient-teal-green {
+  background: linear-gradient(135deg, var(--theme-teal) 0%, var(--theme-green) 100%);
+}
+
+.theme-gradient-blue-teal {
+  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-teal) 100%);
+}
+
+.theme-gradient-blue-cyan {
+  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-cyan) 100%);
+}
+
+.theme-gradient-cyan-teal {
+  background: linear-gradient(135deg, var(--theme-cyan) 0%, var(--theme-teal) 100%);
+}
+
+.theme-gradient-orange-red {
+  background: linear-gradient(135deg, var(--theme-orange) 0%, var(--theme-red) 100%);
+}
+
+.theme-gradient-purple-deep {
+  background: linear-gradient(135deg, var(--theme-purple) 0%, var(--theme-deep-purple) 100%);
+}
+
+/* Diagonal Gradients - Alternative Angle */
+.theme-gradient-blue-purple-diagonal {
+  background: linear-gradient(45deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
+}
+
+.theme-gradient-teal-cyan-diagonal {
+  background: linear-gradient(45deg, var(--theme-teal) 0%, var(--theme-cyan) 100%);
+}
+
+/* Text Gradients - Enhanced Collection */
+.theme-text-blue-purple {
+  background: linear-gradient(90deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-text-purple-pink {
+  background: linear-gradient(90deg, var(--theme-purple) 0%, var(--theme-pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-text-teal-green {
+  background: linear-gradient(90deg, var(--theme-teal) 0%, var(--theme-green) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-text-blue-cyan {
+  background: linear-gradient(90deg, var(--theme-blue) 0%, var(--theme-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-text-orange-red {
+  background: linear-gradient(90deg, var(--theme-orange) 0%, var(--theme-red) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Button Styles with Modern Look */
+.theme-button-blue { 
+  background: var(--theme-blue); 
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.theme-button-blue:hover { 
+  background: var(--theme-blue-dark); 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(63, 81, 181, 0.3);
+}
+
+.theme-button-purple { 
+  background: var(--theme-purple); 
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.theme-button-purple:hover { 
+  background: var(--theme-purple-dark); 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(156, 39, 176, 0.3);
+}
+
+.theme-button-teal { 
+  background: var(--theme-teal); 
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.theme-button-teal:hover { 
+  background: var(--theme-teal-dark); 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 150, 136, 0.3);
+}
+
+.theme-button-green { 
+  background: var(--theme-green); 
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.theme-button-green:hover { 
+  background: var(--theme-green-dark); 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+}
+
+.theme-button-orange { 
+  background: var(--theme-orange); 
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.theme-button-orange:hover { 
+  background: var(--theme-orange-dark); 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 152, 0, 0.3);
+}
+
+/* Gradient Buttons */
+.theme-button-gradient-blue-purple {
+  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.theme-button-gradient-blue-purple:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(156, 39, 176, 0.4);
+  filter: brightness(1.1);
+}
+
+/* Fire Effects with Theme Colors - Enhanced */
+.theme-fire-blue {
+  background: linear-gradient(to top, rgba(63, 81, 181, 0.8) 0%, rgba(0, 188, 212, 0.3) 100%);
+}
+
+.theme-fire-purple {
+  background: linear-gradient(to top, rgba(156, 39, 176, 0.8) 0%, rgba(103, 58, 183, 0.3) 100%);
+}
+
+.theme-fire-teal {
+  background: linear-gradient(to top, rgba(0, 150, 136, 0.8) 0%, rgba(0, 188, 212, 0.3) 100%);
+}
+
+.theme-fire-orange {
+  background: linear-gradient(to top, rgba(255, 152, 0, 0.8) 0%, rgba(244, 67, 54, 0.3) 100%);
+}
+
+.theme-fire-pink {
+  background: linear-gradient(to top, rgba(233, 30, 99, 0.8) 0%, rgba(156, 39, 176, 0.3) 100%);
+}
+
+/* Banner/Block Overlays */
+.theme-overlay-dark {
+  background: linear-gradient(135deg, rgba(33, 33, 33, 0.8) 0%, rgba(66, 66, 66, 0.9) 100%);
+}
+
+.theme-overlay-blue {
+  background: linear-gradient(135deg, rgba(63, 81, 181, 0.8) 0%, rgba(103, 58, 183, 0.9) 100%);
+}
+
+.theme-overlay-teal {
+  background: linear-gradient(135deg, rgba(0, 150, 136, 0.8) 0%, rgba(0, 188, 212, 0.9) 100%);
+}
+
+/* Badge Styles */
+.theme-badge-yellow {
+  background: var(--theme-orange);
+  color: #000;
+  font-weight: bold;
+}
+
+.theme-badge-gradient {
+  background: linear-gradient(135deg, var(--theme-orange) 0%, var(--theme-red) 100%);
+  color: white;
+  font-weight: bold;
+}
+
+/* Remove dark mode for eCommerce site - always use light theme */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: #171717;
+  font-family: var(--font-quicksand), 'Quicksand', system-ui, sans-serif;
 }

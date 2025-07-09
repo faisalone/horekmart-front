@@ -1,0 +1,587 @@
+import { Product, Category } from '@/types';
+
+export const mockCategories: Category[] = [
+	{
+		id: '1',
+		name: 'Electronics',
+		slug: 'electronics',
+		description: 'Latest gadgets and tech accessories',
+		image: '/images/categories/electronics.jpg',
+		children: [
+			{
+				id: '1-1',
+				name: 'Smartphones',
+				slug: 'smartphones',
+				parentId: '1',
+			},
+			{ id: '1-2', name: 'Laptops', slug: 'laptops', parentId: '1' },
+			{
+				id: '1-3',
+				name: 'Headphones',
+				slug: 'headphones',
+				parentId: '1',
+			},
+		],
+	},
+	{
+		id: '2',
+		name: 'Clothing',
+		slug: 'clothing',
+		description: 'Fashion for everyone',
+		image: '/images/categories/clothing.jpg',
+		children: [
+			{
+				id: '2-1',
+				name: "Men's Clothing",
+				slug: 'mens-clothing',
+				parentId: '2',
+			},
+			{
+				id: '2-2',
+				name: "Women's Clothing",
+				slug: 'womens-clothing',
+				parentId: '2',
+			},
+			{ id: '2-3', name: 'Shoes', slug: 'shoes', parentId: '2' },
+		],
+	},
+	{
+		id: '3',
+		name: 'Home & Garden',
+		slug: 'home-garden',
+		description: 'Everything for your home and outdoor spaces',
+		image: '/images/categories/home-garden.jpg',
+		children: [
+			{
+				id: '3-1',
+				name: 'Furniture',
+				slug: 'furniture',
+				parentId: '3',
+			},
+			{
+				id: '3-2',
+				name: 'Garden Tools',
+				slug: 'garden-tools',
+				parentId: '3',
+			},
+			{
+				id: '3-3',
+				name: 'Home Decor',
+				slug: 'home-decor',
+				parentId: '3',
+			},
+		],
+	},
+	{
+		id: '4',
+		name: 'Sports & Fitness',
+		slug: 'sports-fitness',
+		description: 'Gear for active lifestyles',
+		image: '/images/categories/sports.jpg',
+		children: [
+			{
+				id: '4-1',
+				name: 'Fitness Equipment',
+				slug: 'fitness',
+				parentId: '4',
+			},
+			{ id: '4-2', name: 'Outdoor Gear', slug: 'outdoor', parentId: '4' },
+			{
+				id: '4-3',
+				name: 'Athletic Wear',
+				slug: 'athletic-wear',
+				parentId: '4',
+			},
+		],
+	},
+];
+
+export const mockProducts: Product[] = [
+	{
+		id: '1',
+		name: 'iPhone 15 Pro',
+		description:
+			'The latest iPhone with advanced camera system and A17 Pro chip',
+		price: 999.99,
+		salePrice: 899.99,
+		image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1695048754512-8c1c4df2bb6c?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1696446702833-426ffa147dfa?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Smartphones',
+		brand: 'Apple',
+		rating: 4.8,
+		reviewCount: 1234,
+		inStock: true,
+		variants: [
+			{
+				id: '1-color-1',
+				type: 'color',
+				name: 'Natural Titanium',
+				value: 'natural',
+				available: true,
+				image: '/images/products/iphone-15-pro-natural.jpg',
+			},
+			{
+				id: '1-color-2',
+				type: 'color',
+				name: 'Blue Titanium',
+				value: 'blue',
+				available: true,
+				image: '/images/products/iphone-15-pro-blue.jpg',
+			},
+			{
+				id: '1-storage-1',
+				type: 'size',
+				name: '128GB',
+				value: '128gb',
+				available: true,
+			},
+			{
+				id: '1-storage-2',
+				type: 'size',
+				name: '256GB',
+				value: '256gb',
+				available: true,
+				priceAdjustment: 100,
+			},
+		],
+		tags: ['new', 'featured'],
+		createdAt: new Date('2024-01-01'),
+		updatedAt: new Date('2024-01-15'),
+	},
+	{
+		id: '2',
+		name: 'Samsung Galaxy S24 Ultra',
+		description: 'Premium Android phone with S Pen and exceptional camera',
+		price: 1199.99,
+		salePrice: 999.99,
+		image: 'https://images.unsplash.com/photo-1610792516307-e74d6bb9f45e?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1610792516307-e74d6bb9f45e?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Smartphones',
+		brand: 'Samsung',
+		rating: 4.7,
+		reviewCount: 987,
+		inStock: true,
+		variants: [
+			{
+				id: '2-color-1',
+				type: 'color',
+				name: 'Titanium Gray',
+				value: 'gray',
+				available: true,
+			},
+			{
+				id: '2-color-2',
+				type: 'color',
+				name: 'Titanium Violet',
+				value: 'violet',
+				available: true,
+			},
+		],
+		tags: ['android', 'flagship'],
+		createdAt: new Date('2024-01-02'),
+		updatedAt: new Date('2024-01-16'),
+	},
+	{
+		id: '3',
+		name: 'MacBook Pro 14-inch',
+		description: 'Powerful laptop with M3 chip for professionals',
+		price: 1999.99,
+		salePrice: 1799.99,
+		image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Laptops',
+		brand: 'Apple',
+		rating: 4.9,
+		reviewCount: 456,
+		inStock: true,
+		variants: [
+			{
+				id: '3-color-1',
+				type: 'color',
+				name: 'Space Gray',
+				value: 'gray',
+				available: true,
+			},
+			{
+				id: '3-color-2',
+				type: 'color',
+				name: 'Silver',
+				value: 'silver',
+				available: true,
+			},
+		],
+		tags: ['laptop', 'professional'],
+		createdAt: new Date('2024-01-03'),
+		updatedAt: new Date('2024-01-17'),
+	},
+	{
+		id: '4',
+		name: 'Sony WH-1000XM5',
+		description: 'Industry-leading noise canceling wireless headphones',
+		price: 349.99,
+		salePrice: 279.99,
+		image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Audio',
+		brand: 'Sony',
+		rating: 4.7,
+		reviewCount: 892,
+		inStock: true,
+		variants: [
+			{
+				id: '4-color-1',
+				type: 'color',
+				name: 'Silver',
+				value: 'silver',
+				available: true,
+			},
+			{
+				id: '4-color-2',
+				type: 'color',
+				name: 'Black',
+				value: 'black',
+				available: true,
+			},
+		],
+		tags: ['sale', 'audio', 'noise-canceling'],
+		createdAt: new Date('2024-01-05'),
+		updatedAt: new Date('2024-01-20'),
+	},
+	{
+		id: '5',
+		name: 'Apple iPad Air 11-inch',
+		description: 'Powerful, colorful, and wonderful iPad Air',
+		price: 599.99,
+		salePrice: 499.99,
+		image: 'https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Tablets',
+		brand: 'Apple',
+		rating: 4.6,
+		reviewCount: 567,
+		inStock: true,
+		variants: [
+			{
+				id: '5-color-1',
+				type: 'color',
+				name: 'Space Gray',
+				value: 'gray',
+				available: true,
+			},
+			{
+				id: '5-color-2',
+				type: 'color',
+				name: 'Silver',
+				value: 'silver',
+				available: true,
+			},
+		],
+		tags: ['tablet', 'sale', 'apple'],
+		createdAt: new Date('2024-01-08'),
+		updatedAt: new Date('2024-01-25'),
+	},
+	{
+		id: '6',
+		name: 'Nintendo Switch OLED',
+		description: 'Enhanced Nintendo Switch with vibrant OLED screen',
+		price: 349.99,
+		salePrice: 299.99,
+		image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Gaming',
+		brand: 'Nintendo',
+		rating: 4.8,
+		reviewCount: 1023,
+		inStock: true,
+		variants: [
+			{
+				id: '6-color-1',
+				type: 'color',
+				name: 'Neon Blue/Red',
+				value: 'neon',
+				available: true,
+			},
+			{
+				id: '6-color-2',
+				type: 'color',
+				name: 'White',
+				value: 'white',
+				available: true,
+			},
+		],
+		tags: ['gaming', 'sale', 'nintendo'],
+		createdAt: new Date('2024-01-03'),
+		updatedAt: new Date('2024-01-18'),
+	},
+	{
+		id: '7',
+		name: 'Samsung 65" 4K Smart TV',
+		description: 'Crystal UHD 4K Smart TV with HDR and streaming apps',
+		price: 899.99,
+		salePrice: 699.99,
+		image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1567690187548-f07b1d7bf5a9?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'TVs',
+		brand: 'Samsung',
+		rating: 4.5,
+		reviewCount: 743,
+		inStock: true,
+		variants: [
+			{
+				id: '7-size-1',
+				type: 'size',
+				name: '55"',
+				value: '55inch',
+				available: true,
+				priceAdjustment: -150,
+			},
+			{
+				id: '7-size-2',
+				type: 'size',
+				name: '65"',
+				value: '65inch',
+				available: true,
+			},
+		],
+		tags: ['tv', 'sale', '4k'],
+		createdAt: new Date('2024-01-07'),
+		updatedAt: new Date('2024-01-22'),
+	},
+	{
+		id: '8',
+		name: 'Dyson V15 Detect Vacuum',
+		description: 'Cordless vacuum with laser dust detection',
+		price: 749.99,
+		salePrice: 599.99,
+		image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&h=400&fit=crop',
+		],
+		category: 'Home & Garden',
+		subcategory: 'Appliances',
+		brand: 'Dyson',
+		rating: 4.7,
+		reviewCount: 456,
+		inStock: true,
+		variants: [
+			{
+				id: '8-color-1',
+				type: 'color',
+				name: 'Gold',
+				value: 'gold',
+				available: true,
+			},
+			{
+				id: '8-color-2',
+				type: 'color',
+				name: 'Purple',
+				value: 'purple',
+				available: true,
+			},
+		],
+		tags: ['vacuum', 'sale', 'cordless'],
+		createdAt: new Date('2024-01-10'),
+		updatedAt: new Date('2024-01-26'),
+	},
+	{
+		id: '9',
+		name: 'Instant Pot Duo 7-in-1',
+		description:
+			'Electric pressure cooker, slow cooker, rice cooker & more',
+		price: 199.99,
+		salePrice: 149.99,
+		image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1574781330855-d0db3307a4d2?w=400&h=400&fit=crop',
+		],
+		category: 'Home & Garden',
+		subcategory: 'Kitchen',
+		brand: 'Instant Pot',
+		rating: 4.6,
+		reviewCount: 2134,
+		inStock: true,
+		variants: [
+			{
+				id: '9-size-1',
+				type: 'size',
+				name: '6 Quart',
+				value: '6qt',
+				available: true,
+			},
+			{
+				id: '9-size-2',
+				type: 'size',
+				name: '8 Quart',
+				value: '8qt',
+				available: true,
+				priceAdjustment: 30,
+			},
+		],
+		tags: ['kitchen', 'sale', 'cooking'],
+		createdAt: new Date('2024-01-04'),
+		updatedAt: new Date('2024-01-19'),
+	},
+	{
+		id: '10',
+		name: 'Apple AirPods Pro (2nd Gen)',
+		description: 'Active noise cancellation with spatial audio',
+		price: 249.99,
+		salePrice: 199.99,
+		image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1619459752920-2b8e8b88e7d5?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Audio',
+		brand: 'Apple',
+		rating: 4.8,
+		reviewCount: 3421,
+		inStock: true,
+		variants: [
+			{
+				id: '10-color-1',
+				type: 'color',
+				name: 'White',
+				value: 'white',
+				available: true,
+			},
+		],
+		tags: ['airpods', 'sale', 'wireless'],
+		createdAt: new Date('2024-01-06'),
+		updatedAt: new Date('2024-01-21'),
+	},
+	{
+		id: '11',
+		name: 'Fitbit Versa 4',
+		description: 'Fitness smartwatch with built-in GPS and health tracking',
+		price: 199.99,
+		salePrice: 159.99,
+		image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1579586337278-3f436f25d4d6?w=400&h=400&fit=crop',
+		],
+		category: 'Electronics',
+		subcategory: 'Wearables',
+		brand: 'Fitbit',
+		rating: 4.4,
+		reviewCount: 765,
+		inStock: true,
+		variants: [
+			{
+				id: '11-color-1',
+				type: 'color',
+				name: 'Black',
+				value: 'black',
+				available: true,
+			},
+			{
+				id: '11-color-2',
+				type: 'color',
+				name: 'Pink',
+				value: 'pink',
+				available: true,
+			},
+		],
+		tags: ['fitness', 'sale', 'smartwatch'],
+		createdAt: new Date('2024-01-09'),
+		updatedAt: new Date('2024-01-24'),
+	},
+	{
+		id: '12',
+		name: 'Adidas Ultra Boost 22',
+		description: 'Premium running shoes with responsive BOOST midsole',
+		price: 180.0,
+		image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
+		images: [
+			'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
+			'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop',
+		],
+		category: 'Sports & Fitness',
+		subcategory: 'Athletic Wear',
+		brand: 'Adidas',
+		rating: 4.6,
+		reviewCount: 324,
+		inStock: true,
+		variants: [
+			{
+				id: '12-color-1',
+				type: 'color',
+				name: 'Core Black',
+				value: 'black',
+				available: true,
+			},
+			{
+				id: '12-color-2',
+				type: 'color',
+				name: 'Cloud White',
+				value: 'white',
+				available: true,
+			},
+		],
+		tags: ['running', 'comfort'],
+		createdAt: new Date('2024-01-12'),
+		updatedAt: new Date('2024-01-28'),
+	},
+];
+
+export function getMockProducts(): Product[] {
+	return mockProducts;
+}
+
+export function getMockProductById(id: string): Product | undefined {
+	return mockProducts.find((product) => product.id === id);
+}
+
+export function getMockProductsByCategory(category: string): Product[] {
+	return mockProducts.filter(
+		(product) => product.category.toLowerCase() === category.toLowerCase()
+	);
+}
+
+export function getMockCategories(): Category[] {
+	return mockCategories;
+}
+
+export function searchMockProducts(query: string): Product[] {
+	const lowercaseQuery = query.toLowerCase();
+	return mockProducts.filter(
+		(product) =>
+			product.name.toLowerCase().includes(lowercaseQuery) ||
+			product.description.toLowerCase().includes(lowercaseQuery) ||
+			product.brand.toLowerCase().includes(lowercaseQuery) ||
+			product.category.toLowerCase().includes(lowercaseQuery)
+	);
+}

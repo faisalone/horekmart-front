@@ -1,0 +1,77 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+
+interface BannerBlockProps {
+  title: string;
+  description: string;
+  imageUrl: string;
+  link: string;
+  className?: string;
+  height?: string;
+  badge?: string;
+  textSize?: 'small' | 'medium' | 'large' | 'xlarge';
+}
+
+const BannerBlock = ({
+  title,
+  imageUrl,
+  link,
+  className = '',
+  height = 'h-48',
+  badge
+}: BannerBlockProps) => {
+  const getBgColor = () => {
+    // Use theme overlay classes for modern look
+    return 'theme-overlay-dark';
+  };
+
+  const getTextColor = () => {
+    // Always use white text for better contrast and consistency
+    return 'text-white';
+  };
+
+  const bgColorClass = getBgColor();
+  const textColorClass = getTextColor();
+
+  return (
+    <Link href={link} className={`group relative overflow-hidden rounded-xl ${height} cursor-pointer block ${className}`}>
+      <Image
+        src={imageUrl}
+        alt={title}
+        fill
+        className="object-cover transition-transform duration-700 group-hover:scale-105"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      />
+      
+      {/* Static bottom shape for title with dynamic colors - Extended to prevent edge visibility */}
+      <div className={`absolute -bottom-1 -left-1 -right-1 ${bgColorClass} overflow-hidden h-14 md:h-16`}>
+        {/* Title container - slides up and disappears completely on hover */}
+        <div className="transform translate-y-0 group-hover:-translate-y-full transition-transform duration-300 ease-out h-full">
+          <div className="px-4 py-3 text-center h-full flex items-center justify-center">
+            <div className={`text-lg font-bold ${textColorClass} truncate w-full max-w-full`}>{title}</div>
+          </div>
+        </div>
+        
+        {/* Shop Now button - slides up from bottom on hover - Theme styled */}
+        <div className="absolute inset-x-0 top-full group-hover:top-0 transition-all duration-300 ease-out theme-overlay-blue text-white h-full">
+          <div className="px-4 py-3 text-center h-full flex items-center justify-center">
+            <div className="text-lg font-bold hover:text-yellow-300 transition-colors duration-200 truncate w-full max-w-full">
+              SHOP NOW
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Optional badge with theme styling */}
+      {badge && (
+        <div className="absolute top-4 right-4 theme-badge-gradient text-white px-3 py-1 rounded-full font-bold text-xs shadow-lg">
+          {badge}
+        </div>
+      )}
+    </Link>
+  );
+};
+
+export default BannerBlock;
