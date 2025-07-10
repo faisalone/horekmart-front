@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, ArrowUp, Shield, CreditCard, Truck, Award, Globe, ChevronRight, Twitter } from 'lucide-react';
+import { useGetLogoQuery } from '@/lib/api';
 
 const Footer = () => {
   return (
@@ -44,24 +45,16 @@ const Footer = () => {
 
       {/* Main Footer Content - Professional Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        
         {/* Top Row - Main Navigation Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
-          
-          {/* Company Info - Professional */}
-          <div className="lg:col-span-2 lg:pr-8 lg:border-r lg:border-gray-700">
-            <div className="mb-6">
-              <Image 
-                src="/valtook-logo-v2.png" 
-                alt="VALTOOK" 
-                width={180} 
-                height={60} 
-                className="mb-4"
-              />
-              <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
-              </p>
-            </div>
+          {/* Footer Logo Column */}
+          <div className="mb-8 lg:mb-0 flex flex-col items-center lg:items-start">
+            <Link href="/" className="mb-4 block">
+              <LogoFromApiFooter />
+            </Link>
+            <p className="text-gray-300 text-lg leading-relaxed mb-6 text-center lg:text-left">
+              Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
+            </p>
             
             {/* Professional Trust Indicators */}
             <div className="grid grid-cols-3 gap-4 mb-8">
@@ -208,5 +201,25 @@ const Footer = () => {
     </footer>
   );
 };
+
+function LogoFromApiFooter() {
+  const { data: logoUrl, isLoading, isError } = useGetLogoQuery();
+  if (isLoading) {
+    return <div className="h-10 w-32 bg-gray-700 animate-pulse rounded-lg" />;
+  }
+  if (isError || !logoUrl) {
+    return <span className="text-lg font-bold text-gray-200">VALTOOK</span>;
+  }
+  return (
+    <Image
+      src={logoUrl}
+      alt="VALTOOK"
+      width={120}
+      height={40}
+      className="h-10 w-auto"
+      priority
+    />
+  );
+}
 
 export default Footer;

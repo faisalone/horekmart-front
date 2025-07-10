@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useGetLogoQuery } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
@@ -72,6 +73,31 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
     };
   }, []);
 
+  // Logo component with skeleton effect and API caching
+  function LogoFromApi() {
+    const { data: logoUrl, isLoading, isError } = useGetLogoQuery();
+    if (isLoading) {
+      return (
+        <div className="h-14 w-44 bg-gray-200 animate-pulse rounded-lg" />
+      );
+    }
+    if (isError || !logoUrl) {
+      return (
+        <span className="text-xl font-bold text-gray-700">VALTOOK</span>
+      );
+    }
+    return (
+      <Image
+        src={logoUrl}
+        alt="VALTOOK"
+        width={180}
+        height={60}
+        className="h-14 w-auto"
+        priority
+      />
+    );
+  }
+
   return (
     <header className="sticky top-0 z-50">
       {/* Top Header - Modern blue to purple gradient */}
@@ -83,13 +109,7 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
               {/* Left Side - Logo */}
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
-                  <Image 
-                    src="/valtook-logo-v2.png" 
-                    alt="VALTOOK" 
-                    width={180} 
-                    height={60} 
-                    className="h-14 w-auto"
-                  />
+                  <LogoFromApi />
                 </Link>
               </div>
 
