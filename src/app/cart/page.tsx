@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getProductImageUrl } from '@/lib/utils';
 import { CartItem, Product } from '@/types';
 import { getMockProductById } from '@/lib/mock-data';
 
@@ -102,7 +102,7 @@ export default function CartPage() {
                     <div className="flex-shrink-0">
                       <Link href={`/products/${product.id}`}>
                         <Image
-                          src={product.image}
+                          src={getProductImageUrl(product)}
                           alt={product.name}
                           width={80}
                           height={80}
@@ -120,7 +120,7 @@ export default function CartPage() {
                               {product.name}
                             </h4>
                           </Link>
-                          <p className="text-sm text-gray-500 mt-1">{product.brand}</p>
+                          <p className="text-sm text-gray-500 mt-1">{product.vendor?.business_name || 'Unknown Vendor'}</p>
                           
                           {/* Selected Variants */}
                           {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (

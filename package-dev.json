@@ -1,0 +1,16 @@
+{
+  "name": "horekmart-project",
+  "version": "1.0.0",
+  "description": "Scripts to run both frontend and backend",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd .. && npm run dev",
+    "dev:backend": "cd backend && php artisan serve --host=0.0.0.0 --port=8000",
+    "backend:migrate": "cd backend && php artisan migrate:fresh --seed",
+    "backend:serve": "cd backend && php artisan serve",
+    "test:api": "curl -X POST http://localhost:8000/api/admin/login -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"admin@example.com\\\",\\\"password\\\":\\\"password123\\\"}\""
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

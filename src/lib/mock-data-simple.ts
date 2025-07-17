@@ -11,7 +11,3 @@ export function getMockProducts(): Product[] {
 export function getMockCategories(): Category[] {
 	return mockCategories;
 }
-
-export function getMockProductById(id: string): Product | undefined {
-	return mockProducts.find((product) => product.id.toString() === id);
-}

@@ -50,13 +50,13 @@ const Footer = () => {
           
           {/* Company Info - Professional */}
           <div className="lg:col-span-2 lg:pr-8 lg:border-r lg:border-gray-700">
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-center">
               <Image 
-                src="/valtook-logo-v2.png" 
-                alt="VALTOOK" 
+                src="/logo-light.svg" 
+                alt="HOREKMART" 
                 width={180} 
                 height={60} 
-                className="mb-4"
+                className="mb-4 h-40 w-auto"
               />
               <p className="text-gray-300 text-lg leading-relaxed mb-6">
                 Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
@@ -139,12 +139,12 @@ const Footer = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Phone className="h-8 w-8 mx-auto mb-3 text-blue-400" />
-                <p className="text-white font-medium text-lg">1-800-VALTOOK</p>
+                <p className="text-white font-medium text-lg">1-800-HOREKMART</p>
                 <p className="text-sm text-gray-400 mt-1">24/7 Customer Support</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Mail className="h-8 w-8 mx-auto mb-3 text-green-400" />
-                <p className="text-white font-medium text-lg">support@valtook.com</p>
+                <p className="text-white font-medium text-lg">support@horekmart.com</p>
                 <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
@@ -179,7 +179,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-400 mb-4 md:mb-0">
-              <span>© 2024 VALTOOK. All rights reserved.</span>
+              <span>© 2024 HOREKMART. All rights reserved.</span>
               <span className="hidden md:inline">•</span>
               <span className="text-gray-500">Built with excellence</span>
             </div>

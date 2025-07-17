@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Product } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getProductImageUrl } from '@/lib/utils';
 
 export interface ProductCardProps {
   product: Product;
@@ -12,7 +12,14 @@ export interface ProductCardProps {
 }
 
 const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: ProductCardProps) => {
-  const hasDiscount = product.salePrice && product.salePrice < product.price;
+  // Normalize the product data to handle both API and legacy formats
+  const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+  const salePrice = product.sale_price ? parseFloat(product.sale_price) : product.salePrice;
+  const hasDiscount = salePrice && salePrice < price;
+  const inStock = product.in_stock ?? product.inStock ?? true;
+  
+  // Use utility function to get the correct image URL
+  const productImage = getProductImageUrl(product);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -32,7 +39,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
       <Link href={`/products/${product.id}`}>
         <div className="relative aspect-square overflow-hidden bg-gray-50">
           <Image
-            src={product.image}
+            src={productImage}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-200"
@@ -51,15 +58,15 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
           <div className="absolute top-3 left-3 flex flex-col gap-1">
             {hasDiscount && (
               <div className="bg-theme-green text-white text-xs font-bold px-2 py-1 rounded">
-                Save ${(product.price - product.salePrice!).toFixed(0)}
+                Save ${(price - salePrice!).toFixed(0)}
               </div>
             )}
-            {product.tags?.includes('rollback') && (
+            {product.is_featured && (
               <div className="bg-theme-blue text-white text-xs font-bold px-2 py-1 rounded">
-                Rollback
+                Featured
               </div>
             )}
-            {product.tags?.includes('new') && (
+            {product.status === 'published' && (
               <div className="theme-badge-gradient text-white text-xs font-bold px-2 py-1 rounded">
                 New
               </div>
@@ -69,7 +76,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
           {/* Quick Add Button with theme styling */}
           <button
             onClick={handleAddToCart}
-            disabled={!product.inStock}
+            disabled={!inStock}
             className="absolute bottom-3 right-3 p-2 theme-button-blue rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:bg-gray-400"
           >
             <ShoppingCart className="h-4 w-4" />
@@ -83,11 +90,11 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
             {/* Price - Large and prominent */}
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-gray-900">
-                ${(product.salePrice || product.price).toFixed(2)}
+                ${(salePrice || price).toFixed(2)}
               </span>
               {hasDiscount && (
                 <span className="text-sm text-gray-500 line-through">
-                  ${product.price.toFixed(2)}
+                  ${price.toFixed(2)}
                 </span>
               )}
             </div>
@@ -97,37 +104,26 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
               {product.name}
             </h3>
             
-            {/* Rating and Reviews */}
-            <div className="flex items-center gap-1">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      'h-3 w-3',
-                      i < Math.floor(product.rating)
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-gray-500">
-                ({product.reviewCount})
+            {/* Category and Stock info */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">
+                {product.category?.name || 'General'}
               </span>
-            </div>
-
-            {/* Brand and Tags */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-gray-500">by {product.brand}</span>
-              {product.tags?.includes('bestseller') && (
-                <span className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded text-xs font-medium">
-                  Bestseller
+              {product.is_featured && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  ⭐ Featured
                 </span>
               )}
-              {product.tags?.includes('trending') && (
-                <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded text-xs font-medium">
-                  Trending
+            </div>
+
+            {/* Stock Status */}
+            <div className="flex items-center justify-between">
+              <span className={`text-sm ${inStock ? 'text-green-600' : 'text-red-600'}`}>
+                {inStock ? `${product.stock_quantity} in stock` : 'Out of stock'}
+              </span>
+              {product.vendor && (
+                <span className="text-xs text-gray-400">
+                  by {product.vendor.business_name}
                 </span>
               )}
             </div>

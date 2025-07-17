@@ -1,21 +1,43 @@
+export interface ProductImage {
+	id: number;
+	product_id: number;
+	file_name: string;
+	file_path: string;
+	file_url: string;
+	mime_type: string;
+	file_size: number;
+	width: number;
+	height: number;
+	alt_text?: string;
+	sort_order: number;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface Product {
-	id: string;
+	id: number;
 	name: string;
+	slug: string;
 	description: string;
-	price: number;
+	sku: string;
+	price: string;
+	sale_price?: string | null;
+	stock_quantity: number;
+	in_stock: boolean;
+	image?: string | null;
+	thumbnail?: string | null;
+	images?: ProductImage[];
+	status: string;
+	category_id: number;
+	vendor_id: number;
+	is_featured: boolean;
+	created_at: string;
+	updated_at: string;
+	category?: Category;
+	vendor?: Vendor;
+	// Legacy properties for compatibility
 	salePrice?: number;
-	image: string;
-	images?: string[];
-	category: string;
-	subcategory?: string;
-	brand: string;
-	rating: number;
-	reviewCount: number;
-	inStock: boolean;
-	variants?: ProductVariant[];
-	tags?: string[];
-	createdAt: Date;
-	updatedAt: Date;
+	inStock?: boolean;
 }
 
 export interface ProductVariant {
@@ -44,13 +66,40 @@ export interface Cart {
 	shipping: number;
 }
 
+export interface Vendor {
+	id: number;
+	name: string;
+	email: string;
+	business_name: string;
+	business_registration_number?: string | null;
+	description?: string;
+	phone: string;
+	address: string;
+	city: string;
+	state: string;
+	country: string;
+	postal_code: string;
+	status: string;
+	documents?: string | null;
+	approved_at?: string | null;
+	approved_by?: number | null;
+	commission_rate: string;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface Category {
-	id: string;
+	id: number;
 	name: string;
 	slug: string;
 	description?: string;
-	image?: string;
-	parentId?: string;
+	image?: string | null;
+	parent_id?: number | null;
+	sort_order: number;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
 	children?: Category[];
 }
 

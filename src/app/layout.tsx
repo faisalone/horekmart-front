@@ -3,6 +3,7 @@ import { Inter, Quicksand } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { ClientWrapper } from "@/app/client-wrapper";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -29,11 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${quicksand.variable} font-sans antialiased`} suppressHydrationWarning>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>
   );

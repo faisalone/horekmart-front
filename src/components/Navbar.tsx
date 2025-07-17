@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, ChevronDown, Store } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export interface NavbarProps {
   cartItemCount?: number;
@@ -16,6 +17,9 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use the global authentication state
+  const { isAuthenticated, loading } = useAdminAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -23,6 +27,16 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
 
   const toggleMobileSearch = () => {
     setIsMobileSearchOpen(!isMobileSearchOpen);
+  };
+
+  const handleSellerClick = () => {
+    if (loading) return; // Don't redirect while checking auth status
+    
+    if (isAuthenticated) {
+      window.location.href = '/admin';
+    } else {
+      window.location.href = '/admin/login';
+    }
   };
 
   const handleDepartmentsMouseEnter = () => {
@@ -84,11 +98,11 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
                   <Image 
-                    src="/valtook-logo-v2.png" 
-                    alt="VALTOOK" 
+                    src="/logo-light.svg" 
+                    alt="HOREKMART" 
                     width={180} 
                     height={60} 
-                    className="h-14 w-auto"
+                    className="h-28 w-auto"
                   />
                 </Link>
               </div>
@@ -153,6 +167,20 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                     <div className="font-medium">${(cartItemCount * 25.99).toFixed(2)}</div>
                   </div>
                 </Link>
+
+                {/* Seller Button */}
+                <button 
+                  onClick={handleSellerClick}
+                  disabled={loading}
+                  className={`flex items-center space-x-2 border-2 border-white text-white px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 hover:bg-white hover:text-purple-600 cursor-pointer ${
+                    loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <Store className="h-5 w-5" />
+                  <span className="text-sm font-bold">
+                    {loading ? '...' : isAuthenticated ? 'Dashboard' : 'Start Selling'}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -200,16 +228,28 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
               {/* Logo - Center */}
               <Link href="/" className="flex items-center flex-1 justify-center">
                 <Image 
-                  src="/valtook-logo-v2.png" 
-                  alt="VALTOOK" 
+                  src="/logo-light.svg" 
+                  alt="HOREKMART" 
                   width={150} 
                   height={50} 
-                  className="h-10 w-auto"
+                  className="h-24 w-auto"
                 />
               </Link>
 
               {/* Mobile Right Side Actions */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                {/* Seller Button - Mobile */}
+                <button 
+                  onClick={handleSellerClick}
+                  disabled={loading}
+                  className={`flex items-center justify-center border-2 border-white text-white p-2.5 rounded-lg transition-all duration-300 hover:bg-white hover:text-purple-600 cursor-pointer ${
+                    loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  title={loading ? 'Loading...' : isAuthenticated ? 'Go to Dashboard' : 'Start Selling'}
+                >
+                  <Store className="h-5 w-5" />
+                </button>
+
                 {/* Cart */}
                 <Link 
                   href="/cart" 
@@ -355,6 +395,19 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                 </div>
                 Reorder
               </Link>
+              <button
+                onClick={() => {
+                  handleSellerClick();
+                  setIsMenuOpen(false);
+                }}
+                disabled={loading}
+                className={`flex items-center px-4 py-3 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white rounded-lg font-semibold transition-all duration-300 mx-2 mb-2 cursor-pointer ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <Store className="h-5 w-5 mr-3" />
+                {loading ? 'Loading...' : isAuthenticated ? 'Go to Dashboard' : 'Start Selling'}
+              </button>
             </div>
           </div>
         </div>

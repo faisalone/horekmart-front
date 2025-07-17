@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ArrowLeft, ShoppingCart } from 'lucide-react';
@@ -8,18 +8,49 @@ import ProductGrid from '@/components/ProductGrid';
 import PromoBanner from '@/components/PromoBanner';
 import ProductCard from '@/components/ProductCard';
 import Button from '@/components/ui/Button';
-import { getMockProducts, getMockCategories } from '@/lib/mock-data';
-import { Product } from '@/types';
+import { publicApi } from '@/lib/public-api';
+import { Product, Category } from '@/types';
 import BannerBlock from '@/components/BannerBlock';
 import AnimatedElement from '@/components/AnimatedElement';
 import { AnimatedSection, useSequentialAnimation } from '@/lib/animations';
 
 export default function HomePage() {
-  const [products] = useState(getMockProducts());
-  const [categories] = useState(getMockCategories());
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch featured products and categories
+        const [featuredProducts, categoriesData] = await Promise.all([
+          publicApi.getFeaturedProducts(),
+          publicApi.getCategories(),
+        ]);
+
+        setProducts(featuredProducts);
+        // Sort categories by sort_order and take first 9
+        const sortedCategories = (categoriesData || [])
+          .sort((a: Category, b: Category) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .slice(0, 9);
+        setCategories(sortedCategories);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Keep loading as false to show the page even if API fails
+        setProducts([]);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
   
   const featuredProducts = products.slice(0, 8);
-  const saleProducts = products.filter(p => p.salePrice && p.salePrice < p.price);
+  const saleProducts = products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price));
 
   const handleAddToCart = (product: Product) => {
     console.log('Adding to cart:', product.name);
@@ -47,104 +78,42 @@ export default function HomePage() {
             
             {/* Enhanced 3 Row Masonry Grid Layout with better mobile experience */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-6">
-            
-            {/* Fashion - Keep original position on mobile, move back on desktop */}
-            <BannerBlock
-              title="Fashion"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop"
-              link="/fashion"
-              className="col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1"
-              height="h-64"
-              textSize="medium"
-            />
-
-            <BannerBlock
-              title="Home & Garden"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop"
-              link="/home"
-              className="col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2"
-              height="h-64"
-              textSize="medium"
-            />
-
-            {/* Electronics - Move ahead on desktop, same as mobile on tablet */}
-            <BannerBlock
-              title="Electronics"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=800&fit=crop"
-              link="/electronics"
-              className="col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3"
-              height="h-64"
-              textSize="xlarge"
-            />
-
-            {/* Sports - Move back on desktop to make room for Toys */}
-            <BannerBlock
-              title="Sports & Fitness"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop"
-              link="/sports"
-              className="col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6"
-              height="h-48"
-              textSize="small"
-            />
-
-            <BannerBlock
-              title="Beauty & Wellness"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&h=400&fit=crop"
-              link="/beauty"
-              className="col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7"
-              height="h-48"
-              textSize="small"
-            />
-
-            <BannerBlock
-              title="Automotive"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=400&fit=crop"
-              link="/automotive"
-              className="col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8"
-              height="h-48"
-              textSize="small"
-            />
-
-            {/* Toys - Position and sizing should match mobile exactly */}
-            <BannerBlock
-              title="Toys & Games"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&h=1000&fit=crop"
-              link="/toys"
-              className="col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4"
-              height="h-[25rem]"
-              textSize="large"
-            />
-
-            {/* Grocery - Same position as mobile on tablet */}
-            <BannerBlock
-              title="Grocery & Fresh Food"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&h=400&fit=crop"
-              link="/grocery"
-              className="col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10"
-              height="h-48"
-              textSize="medium"
-            />
-
-            {/* Baby - Same position as mobile on tablet */}
-            <BannerBlock
-              title="Baby & Kids"
-              description=""
-              imageUrl="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=1200&h=400&fit=crop"
-              link="/baby"
-              className="col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5"
-              height="h-48"
-              textSize="large"
-            />
-
-          </div>
+              {categories.map((cat, idx) => (
+                <BannerBlock
+                  key={cat.id}
+                  title={cat.name}
+                  description={cat.description || ''}
+                  imageUrl={cat.image || 'https://via.placeholder.com/400x300?text=Category'}
+                  link={`/category/${cat.slug}`}
+                  className={
+                    idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
+                    idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
+                    idx === 2 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3' :
+                    idx === 3 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6' :
+                    idx === 4 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7' :
+                    idx === 5 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8' :
+                    idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
+                    idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
+                    idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
+                    ''
+                  }
+                  height={
+                    idx === 6 ? 'h-[25rem]' :
+                    idx === 2 ? 'h-64' :
+                    idx === 0 || idx === 1 ? 'h-64' :
+                    idx === 3 || idx === 4 || idx === 5 || idx === 7 || idx === 8 ? 'h-48' :
+                    'h-48'
+                  }
+                  textSize={
+                    idx === 2 ? 'xlarge' :
+                    idx === 6 || idx === 8 ? 'large' :
+                    idx === 0 || idx === 1 || idx === 7 ? 'medium' :
+                    idx === 3 || idx === 4 || idx === 5 ? 'small' :
+                    'medium'
+                  }
+                />
+              ))}
+            </div>
         </div>
       </section>
       </AnimatedElement>
@@ -246,19 +215,19 @@ export default function HomePage() {
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {[
-                { name: 'Apple', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg', items: products.filter(p => p.brand === 'Apple').length },
-                { name: 'Samsung', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg', items: products.filter(p => p.brand === 'Samsung').length },
-                { name: 'Nike', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg', items: products.filter(p => p.brand === 'Nike').length },
-                { name: 'Adidas', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg', items: products.filter(p => p.brand === 'Adidas').length },
-                { name: 'Sony', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Sony_logo.svg', items: products.filter(p => p.brand === 'Sony').length },
-                { name: 'Dyson', logo: 'https://logos-world.net/wp-content/uploads/2020/12/Dyson-Logo-700x394.png', items: products.filter(p => p.brand === 'Dyson').length },
-                { name: 'LG', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/LG_symbol.svg', items: products.filter(p => p.brand === 'LG').length || 5 },
-                { name: 'Microsoft', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg', items: products.filter(p => p.brand === 'Microsoft').length || 8 },
-                { name: 'Google', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', items: products.filter(p => p.brand === 'Google').length || 6 },
-                { name: 'Amazon', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg', items: products.filter(p => p.brand === 'Amazon').length || 12 },
-                { name: 'Tesla', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Tesla_T_symbol.svg', items: products.filter(p => p.brand === 'Tesla').length || 4 },
-                { name: 'HP', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/HP_logo_2012.svg', items: products.filter(p => p.brand === 'HP').length || 7 },
-                { name: 'Dell', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/48/Dell_Logo.svg', items: products.filter(p => p.brand === 'Dell').length || 9 },
+                { name: 'John Electronics', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg', items: products.filter(p => p.vendor?.business_name === 'John Electronics Store').length },
+                { name: 'Fashion Hub', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg', items: products.filter(p => p.vendor?.business_name === 'Fashion Hub Inc.').length },
+                { name: 'Home Solutions', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg', items: products.filter(p => p.vendor?.business_name === 'Home Solutions Ltd.').length },
+                { name: 'Electronics', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg', items: products.filter(p => p.category?.name === 'Electronics').length },
+                { name: 'Clothing', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Sony_logo.svg', items: products.filter(p => p.category?.name === 'Clothing').length },
+                { name: 'Home & Garden', logo: 'https://logos-world.net/wp-content/uploads/2020/12/Dyson-Logo-700x394.png', items: products.filter(p => p.category?.name === 'Home & Garden').length },
+                { name: 'Books', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/LG_symbol.svg', items: products.filter(p => p.category?.name === 'Books').length || 5 },
+                { name: 'Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg', items: products.filter(p => p.category?.name === 'Sports & Outdoors').length || 8 },
+                { name: 'Featured', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', items: products.filter(p => p.is_featured).length || 6 },
+                { name: 'On Sale', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg', items: products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price)).length || 12 },
+                { name: 'In Stock', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Tesla_T_symbol.svg', items: products.filter(p => p.in_stock).length || 4 },
+                { name: 'Premium', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/HP_logo_2012.svg', items: products.filter(p => parseFloat(p.price) > 500).length || 7 },
+                { name: 'Budget', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/48/Dell_Logo.svg', items: products.filter(p => parseFloat(p.price) < 100).length || 9 },
               ].map((brand) => (
                 <Link
                   key={brand.name}
@@ -267,9 +236,11 @@ export default function HomePage() {
                 >
                   {/* Brand Logo */}
                   <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                    <img 
+                    <Image 
                       src={brand.logo} 
                       alt={`${brand.name} logo`}
+                      width={80}
+                      height={80}
                       className="max-w-full max-h-full object-contain transition-all duration-300 group-hover:scale-110"
                     />
                   </div>

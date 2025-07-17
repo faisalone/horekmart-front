@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Filter, Grid, List } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import Button from '@/components/ui/Button';
-import { getMockProducts, getMockCategories } from '@/lib/mock-data';
+import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
 import { Product, Category, SearchFilters } from '@/types';
 
@@ -12,6 +12,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<SearchFilters>({
     sortBy: 'name',
     sortOrder: 'asc',
@@ -20,11 +21,27 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
-    const mockProducts = getMockProducts();
-    const mockCategories = getMockCategories();
-    setProducts(mockProducts);
-    setCategories(mockCategories);
-    setFilteredProducts(mockProducts);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [productsResponse, categoriesData] = await Promise.all([
+          publicApi.getProducts(),
+          publicApi.getCategories(),
+        ]);
+        setProducts(productsResponse.data);
+        setCategories(categoriesData);
+        setFilteredProducts(productsResponse.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setProducts([]);
+        setCategories([]);
+        setFilteredProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -33,33 +50,28 @@ export default function ProductsPage() {
     // Apply category filter
     if (filters.category) {
       filtered = filtered.filter(product => 
-        product.category.toLowerCase() === filters.category!.toLowerCase()
+        product.category?.name.toLowerCase() === filters.category!.toLowerCase()
       );
     }
 
     // Apply price range filter
     if (filters.priceRange) {
       filtered = filtered.filter(product => {
-        const price = product.salePrice || product.price;
+        const price = product.sale_price ? parseFloat(product.sale_price) : parseFloat(product.price);
         return price >= filters.priceRange![0] && price <= filters.priceRange![1];
       });
     }
 
-    // Apply brand filter
+    // Apply vendor filter (replacing brand filter)
     if (filters.brand && filters.brand.length > 0) {
       filtered = filtered.filter(product => 
-        filters.brand!.includes(product.brand)
+        product.vendor && filters.brand!.includes(product.vendor.business_name)
       );
-    }
-
-    // Apply rating filter
-    if (filters.rating) {
-      filtered = filtered.filter(product => product.rating >= filters.rating!);
     }
 
     // Apply stock filter
     if (filters.inStock !== undefined) {
-      filtered = filtered.filter(product => product.inStock === filters.inStock);
+      filtered = filtered.filter(product => product.in_stock === filters.inStock);
     }
 
     // Apply sorting
@@ -73,16 +85,12 @@ export default function ProductsPage() {
             bValue = b.name.toLowerCase();
             break;
           case 'price':
-            aValue = a.salePrice || a.price;
-            bValue = b.salePrice || b.price;
-            break;
-          case 'rating':
-            aValue = a.rating;
-            bValue = b.rating;
+            aValue = a.sale_price ? parseFloat(a.sale_price) : parseFloat(a.price);
+            bValue = b.sale_price ? parseFloat(b.sale_price) : parseFloat(b.price);
             break;
           case 'newest':
-            aValue = a.createdAt;
-            bValue = b.createdAt;
+            aValue = new Date(a.created_at);
+            bValue = new Date(b.created_at);
             break;
           default:
             return 0;
@@ -110,7 +118,7 @@ export default function ProductsPage() {
     });
   };
 
-  const uniqueBrands = [...new Set(products.map(p => p.brand))];
+  const uniqueBrands = [...new Set(products.map(p => p.vendor?.business_name).filter(Boolean))] as string[];
   // Price range calculation - reserved for future dynamic price filter implementation
   // const priceRange = products.reduce(
   //   (range, product) => {
