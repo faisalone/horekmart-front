@@ -15,6 +15,9 @@ import {
 	BulkAction,
 	GeneralSettings,
 	Category,
+	Variation,
+	VariationValue,
+	ProductVariant,
 } from '@/types/admin';
 
 class AdminApiClient {
@@ -260,6 +263,17 @@ class AdminApiClient {
 					error.response.data.errors
 				).flat();
 				throw new Error(errorMessages.join(', '));
+			}
+			throw error;
+		}
+	}
+
+	async deleteProductThumbnail(productId: string | number): Promise<void> {
+		try {
+			await this.client.delete(`/admin/products/${productId}/thumbnail`);
+		} catch (error: any) {
+			if (error.response?.data?.message) {
+				throw new Error(error.response.data.message);
 			}
 			throw error;
 		}
@@ -517,6 +531,131 @@ class AdminApiClient {
 		);
 
 		return response.data.data;
+	}
+
+	// Variation Management
+	async getVariations(): Promise<Variation[]> {
+		const response = await this.client.get<ApiResponse<Variation[]>>(
+			'/public/variations'
+		);
+		return response.data.data;
+	}
+
+	async createVariation(data: {
+		name: string;
+		slug?: string;
+	}): Promise<Variation> {
+		const response = await this.client.post<ApiResponse<Variation>>(
+			'/variations',
+			data
+		);
+		return response.data.data;
+	}
+
+	async updateVariation(
+		id: number,
+		data: { name: string; slug?: string }
+	): Promise<Variation> {
+		const response = await this.client.put<ApiResponse<Variation>>(
+			`/variations/${id}`,
+			data
+		);
+		return response.data.data;
+	}
+
+	async deleteVariation(id: number): Promise<void> {
+		await this.client.delete(`/variations/${id}`);
+	}
+
+	// Variation Values Management
+	async getVariationValues(variationId?: number): Promise<VariationValue[]> {
+		const params = variationId ? { variation_id: variationId } : {};
+		const response = await this.client.get<ApiResponse<VariationValue[]>>(
+			'/public/variation-values',
+			{ params }
+		);
+		return response.data.data;
+	}
+
+	async createVariationValue(data: {
+		variation_id: number;
+		name: string;
+		slug?: string;
+	}): Promise<VariationValue> {
+		const response = await this.client.post<ApiResponse<VariationValue>>(
+			'/variation-values',
+			data
+		);
+		return response.data.data;
+	}
+
+	async updateVariationValue(
+		id: number,
+		data: { variation_id: number; name: string; slug?: string }
+	): Promise<VariationValue> {
+		const response = await this.client.put<ApiResponse<VariationValue>>(
+			`/variation-values/${id}`,
+			data
+		);
+		return response.data.data;
+	}
+
+	async deleteVariationValue(id: number): Promise<void> {
+		await this.client.delete(`/variation-values/${id}`);
+	}
+
+	// Product Variants Management
+	async getProductVariants(productId?: number): Promise<ProductVariant[]> {
+		const params = productId ? { product_id: productId } : {};
+		const response = await this.client.get<ApiResponse<ProductVariant[]>>(
+			'/public/product-variants',
+			{ params }
+		);
+		return response.data.data;
+	}
+
+	async getProductVariantsForProduct(
+		productId: number
+	): Promise<ProductVariant[]> {
+		const response = await this.client.get<ApiResponse<ProductVariant[]>>(
+			`/public/products/${productId}/variants`
+		);
+		return response.data.data;
+	}
+
+	async createProductVariant(data: {
+		product_id: number;
+		sku: string;
+		price_override?: number;
+		quantity: number;
+		variation_values: number[];
+	}): Promise<ProductVariant> {
+		const response = await this.client.post<ApiResponse<ProductVariant>>(
+			'/product-variants',
+			data
+		);
+		return response.data.data;
+	}
+
+	async updateProductVariant(
+		id: number,
+		data: {
+			product_id: number;
+			sku: string;
+			price_override?: number;
+			quantity: number;
+			variation_values: number[];
+		}
+	): Promise<ProductVariant> {
+		const response = await this.client.put<ApiResponse<ProductVariant>>(
+			`/product-variants/${id}`,
+			data
+		);
+		return response.data.data;
+	}
+
+	async deleteProductVariant(id: number): Promise<void> {
+		await this.client.delete(`/product-variants/${id}`);
 	}
 }
 

@@ -97,17 +97,39 @@ export interface ProductImage {
 	updated_at: string;
 }
 
-export interface ProductVariant {
-	id: string;
+// Variation system types based on API documentation
+export interface Variation {
+	id: number;
 	name: string;
-	value: string;
-	price: number;
-	price_adjustment: number;
-	stock_quantity: number;
-	sku: string;
-	attributes: VariantAttribute[];
+	slug: string;
+	created_at: string;
+	updated_at: string;
+	values?: VariationValue[];
 }
 
+export interface VariationValue {
+	id: number;
+	variation_id: number;
+	name: string;
+	slug: string;
+	created_at: string;
+	updated_at: string;
+	variation?: Variation;
+}
+
+export interface ProductVariant {
+	id: number;
+	product_id: number;
+	sku: string;
+	price_override?: string | null;
+	quantity: number;
+	created_at: string;
+	updated_at: string;
+	variation_values: VariationValue[];
+	combinations?: { [key: string]: string }; // For organized display like {Size: "Large", Color: "Red"}
+}
+
+// Legacy interface for backward compatibility
 export interface VariantAttribute {
 	name: string;
 	value: string;

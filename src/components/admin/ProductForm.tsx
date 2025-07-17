@@ -3,18 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/admin-api';
-import { Product, Category, Vendor } from '@/types/admin';
+import { Product, Category, Vendor, ProductVariant } from '@/types/admin';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect } from '@/components/ui/select-custom';
 import { ThumbnailUpload } from '@/components/admin/ThumbnailUpload';
 import { ImageUpload, UploadedImage as ImageUploadType } from '@/components/admin/ImageUpload';
+import ProductVariantManager from '@/components/admin/ProductVariantManager';
 import { useToast } from '@/hooks/useToast';
 import {
   Save,
   Eye,
   EyeOff,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface ProductFormProps {
@@ -41,6 +44,11 @@ interface ProductFormData {
   dimensions?: string;
   meta_title?: string;
   meta_description?: string;
+  meta_keywords?: string;
+  canonical_url?: string;
+  og_title?: string;
+  og_description?: string;
+  focus_keyword?: string;
 }
 
 interface UploadedImage {
@@ -70,11 +78,28 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     dimensions: '',
     meta_title: '',
     meta_description: '',
+    meta_keywords: '',
+    canonical_url: '',
+    og_title: '',
+    og_description: '',
+    focus_keyword: '',
   });
+
+  const [keywordInput, setKeywordInput] = useState('');
+  
+  // Comprehensive list of available tags
+  const allAvailableTags = [
+    'electronics', 'smartphone', 'laptop', 'accessories', 'gaming', 'home', 'fashion', 'books', 'sports', 'beauty', 
+    'automotive', 'health', 'technology', 'mobile', 'computer', 'tablet', 'headphones', 'speakers', 'camera', 'tv',
+    'kitchen', 'furniture', 'decor', 'garden', 'tools', 'outdoor', 'fitness', 'travel', 'music', 'movies',
+    'clothing', 'shoes', 'jewelry', 'watches', 'bags', 'makeup', 'skincare', 'perfume', 'toys', 'kids',
+    'office', 'stationery', 'art', 'craft', 'pets', 'food', 'drinks', 'supplements', 'medical', 'baby'
+  ];
 
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [thumbnail, setThumbnail] = useState<File | string | undefined>(undefined);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
   
   // Get the toast notification functionality
   const { showToast, showError, showSuccess, showWarning } = useToast();
@@ -112,6 +137,11 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         dimensions: product.dimensions || '',
         meta_title: product.meta_title || '',
         meta_description: product.meta_description || '',
+        meta_keywords: (product as any).meta_keywords || '',
+        canonical_url: (product as any).canonical_url || '',
+        og_title: (product as any).og_title || '',
+        og_description: (product as any).og_description || '',
+        focus_keyword: (product as any).focus_keyword || '',
       });
 
       // Set existing images
@@ -130,6 +160,11 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
       // Set existing thumbnail
       if ((product as any).thumbnail) {
         setThumbnail((product as any).thumbnail);
+      }
+
+      // Set existing variants
+      if (product.variants && product.variants.length > 0) {
+        setVariants(product.variants);
       }
     }
   }, [product, mode]);
@@ -150,10 +185,9 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
 
   const handleDeleteExistingThumbnail = async (productId: string | number) => {
     try {
-      // Assuming there's an API endpoint for deleting thumbnails
-      // If not, we'll handle it differently
-      console.log('Delete thumbnail for product:', productId);
-      // For now, just clear it locally - implement API call if available
+      await adminApi.deleteProductThumbnail(productId);
+      // Clear the local thumbnail state
+      setThumbnail(undefined);
     } catch (error) {
       console.error('Error deleting thumbnail:', error);
       throw error;
@@ -394,28 +428,9 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         </Card>
 
         {/* Images and Thumbnail */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Thumbnail Upload */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Product Thumbnail</CardTitle>
-              <CardDescription className="text-gray-400">
-                SEO thumbnail for meta tags and social sharing
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ThumbnailUpload
-                thumbnail={thumbnail || undefined}
-                onThumbnailChange={(newThumbnail) => setThumbnail(newThumbnail || undefined)}
-                onDeleteExistingThumbnail={handleDeleteExistingThumbnail}
-                productId={product?.id}
-                disabled={isLoading}
-              />
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* Product Images */}
-          <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Product Gallery</CardTitle>
               <CardDescription className="text-gray-400">
@@ -436,53 +451,53 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
           </Card>
         </div>
 
-        {/* Advanced Settings */}
+        {/* Product Variants */}
+        <ProductVariantManager
+          productId={product?.id}
+          variants={variants}
+          onVariantsChange={setVariants}
+          disabled={isLoading || (mode === 'create' && !product?.id)}
+        />
+
+        {/* SEO & Meta Settings */}
         <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
+          <CardHeader 
+            className="cursor-pointer hover:bg-gray-750 transition-colors"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-white">Advanced Settings</CardTitle>
-                <CardDescription className="text-gray-400">Additional product configuration</CardDescription>
+                <CardTitle className="text-white">SEO & Meta Settings</CardTitle>
+                <CardDescription className="text-gray-400">Search engine optimization and meta information</CardDescription>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-gray-300 hover:text-white hover:bg-gray-700"
-              >
-                {showAdvanced ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
+              <div className="text-gray-300">
+                {showAdvanced ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
+              </div>
             </div>
           </CardHeader>
           {showAdvanced && (
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Weight (kg)
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.weight || ''}
-                    onChange={(e) => handleInputChange('weight', e.target.value ? parseFloat(e.target.value) : undefined)}
-                    placeholder="0.00"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                  />
+              {/* Thumbnail Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  SEO Thumbnail
+                </label>
+                <div className="text-sm text-gray-400 mb-2">
+                  Used for meta tags, social sharing, and search engine previews
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Dimensions (L x W x H)
-                  </label>
-                  <Input
-                    value={formData.dimensions || ''}
-                    onChange={(e) => handleInputChange('dimensions', e.target.value)}
-                    placeholder="e.g., 10 x 5 x 2 cm"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                  />
-                </div>
+                <ThumbnailUpload
+                  thumbnail={thumbnail || undefined}
+                  onThumbnailChange={(newThumbnail) => setThumbnail(newThumbnail || undefined)}
+                  onDeleteExistingThumbnail={handleDeleteExistingThumbnail}
+                  productId={product?.id}
+                  disabled={isLoading}
+                />
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   SEO Title
@@ -490,10 +505,14 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                 <Input
                   value={formData.meta_title || ''}
                   onChange={(e) => handleInputChange('meta_title', e.target.value)}
-                  placeholder="SEO optimized title"
+                  placeholder="SEO optimized title (55-60 characters recommended)"
                   className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                 />
+                <div className="text-xs text-gray-400 mt-1">
+                  {formData.meta_title?.length || 0}/60 characters
+                </div>
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   SEO Description
@@ -501,8 +520,146 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                 <textarea
                   value={formData.meta_description || ''}
                   onChange={(e) => handleInputChange('meta_description', e.target.value)}
-                  placeholder="SEO optimized description"
+                  placeholder="SEO optimized description (150-160 characters recommended)"
                   rows={3}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                />
+                <div className="text-xs text-gray-400 mt-1">
+                  {formData.meta_description?.length || 0}/160 characters
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Meta Keywords
+                </label>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {formData.meta_keywords?.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                      <span key={index} className="inline-flex items-center px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                        {tag.trim()}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tags = formData.meta_keywords?.split(',').filter(t => t.trim() !== tag.trim()) || [];
+                            handleInputChange('meta_keywords', tags.join(', '));
+                          }}
+                          className="ml-1 text-blue-200 hover:text-white"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <Input
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const value = keywordInput.trim();
+                        if (value) {
+                          const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
+                          if (!currentTags.includes(value)) {
+                            const newTags = [...currentTags, value];
+                            handleInputChange('meta_keywords', newTags.join(', '));
+                          }
+                          setKeywordInput('');
+                        }
+                      }
+                    }}
+                    placeholder="Type a keyword and press Enter"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
+                      const availableTags = allAvailableTags.filter(tag => !currentTags.includes(tag));
+                      const tagsToShow = availableTags.slice(0, Math.min(12, availableTags.length));
+                      
+                      return tagsToShow.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            const newTags = [...currentTags, tag];
+                            handleInputChange('meta_keywords', newTags.join(', '));
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                        >
+                          + {tag}
+                        </button>
+                      ));
+                    })()}
+                  </div>
+                  {(() => {
+                    const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
+                    const availableTags = allAvailableTags.filter(tag => !currentTags.includes(tag));
+                    const remainingCount = availableTags.length;
+                    
+                    if (remainingCount > 12) {
+                      return (
+                        <div className="text-xs text-gray-400">
+                          {remainingCount - 12} more tags available...
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+                
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Focus Keyword
+                  </label>
+                  <Input
+                    value={formData.focus_keyword || ''}
+                    onChange={(e) => handleInputChange('focus_keyword', e.target.value)}
+                    placeholder="Primary keyword for this product"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                  <div className="text-xs text-gray-400 mt-1">
+                    Main keyword you want to rank for in search engines
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Canonical URL
+                </label>
+                <Input
+                  value={formData.canonical_url || ''}
+                  onChange={(e) => handleInputChange('canonical_url', e.target.value)}
+                  placeholder="https://example.com/products/product-name"
+                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                />
+                <div className="text-xs text-gray-400 mt-1">
+                  Full URL for canonical link tag
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Open Graph Title
+                </label>
+                <Input
+                  value={formData.og_title || ''}
+                  onChange={(e) => handleInputChange('og_title', e.target.value)}
+                  placeholder="Title for social media sharing"
+                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Open Graph Description
+                </label>
+                <textarea
+                  value={formData.og_description || ''}
+                  onChange={(e) => handleInputChange('og_description', e.target.value)}
+                  placeholder="Description for social media sharing"
+                  rows={2}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
                 />
               </div>

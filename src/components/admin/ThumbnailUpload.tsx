@@ -263,6 +263,7 @@ export function ThumbnailUpload({
           {/* Remove Button */}
           {!disabled && !uploading && (
             <Button
+              type="button"
               variant="destructive"
               size="sm"
               onClick={removeThumbnail}
@@ -295,6 +296,7 @@ export function ThumbnailUpload({
           {/* Replace Button */}
           <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={handleFileInputClick}

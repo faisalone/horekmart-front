@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   FolderTree,
+  Tags,
 } from 'lucide-react';
 import { AdminMenuItem } from '@/types/admin';
 
@@ -32,6 +33,11 @@ const menuItems: AdminMenuItem[] = [
     title: 'Categories',
     href: '/admin/categories',
     icon: FolderTree,
+  },
+  {
+    title: 'Variations',
+    href: '/admin/variations',
+    icon: Tags,
   },
   {
     title: 'Vendors',
