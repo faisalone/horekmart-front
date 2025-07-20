@@ -49,7 +49,8 @@ export const CartVariantSelector: React.FC<CartVariantSelectorProps> = ({
   const fetchVariants = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/v1/products/${productId}/variants`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${apiUrl}/v1/products/${productId}/variants`);
       const data = await response.json();
       
       if (data.success && data.data.variants) {
