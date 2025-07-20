@@ -31,6 +31,8 @@ export interface Product {
 	category_id: number;
 	vendor_id: number;
 	is_featured: boolean;
+	weight?: number | string;
+	weight_unit?: 'kg' | 'g' | 'lb' | 'oz';
 	created_at: string;
 	updated_at: string;
 	category?: Category;
@@ -48,6 +50,41 @@ export interface ProductVariant {
 	available: boolean;
 	priceAdjustment?: number;
 	image?: string;
+}
+
+// API Response variant structure
+export interface ApiProductVariant {
+	id: number;
+	sku: string;
+	price_override?: string | null;
+	offer_price_override?: string | null;
+	final_price: string;
+	final_offer_price?: string | null;
+	quantity: number;
+	combinations: Record<
+		string,
+		Array<{
+			id: number;
+			variation_id: number;
+			name: string;
+			slug: string;
+			created_at: string;
+			updated_at: string;
+			pivot: {
+				product_variant_id: number;
+				variation_value_id: number;
+			};
+			variation: {
+				id: number;
+				name: string;
+				slug: string;
+				created_at: string;
+				updated_at: string;
+			};
+		}>
+	>;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface CartItem {

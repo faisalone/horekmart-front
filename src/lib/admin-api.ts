@@ -536,7 +536,7 @@ class AdminApiClient {
 	// Variation Management
 	async getVariations(): Promise<Variation[]> {
 		const response = await this.client.get<ApiResponse<Variation[]>>(
-			'/public/variations'
+			'/v1/variations'
 		);
 		return response.data.data;
 	}
@@ -571,7 +571,7 @@ class AdminApiClient {
 	async getVariationValues(variationId?: number): Promise<VariationValue[]> {
 		const params = variationId ? { variation_id: variationId } : {};
 		const response = await this.client.get<ApiResponse<VariationValue[]>>(
-			'/public/variation-values',
+			'/v1/variation-values',
 			{ params }
 		);
 		return response.data.data;
@@ -608,7 +608,7 @@ class AdminApiClient {
 	async getProductVariants(productId?: number): Promise<ProductVariant[]> {
 		const params = productId ? { product_id: productId } : {};
 		const response = await this.client.get<ApiResponse<ProductVariant[]>>(
-			'/public/product-variants',
+			'/v1/product-variants',
 			{ params }
 		);
 		return response.data.data;
@@ -618,7 +618,7 @@ class AdminApiClient {
 		productId: number
 	): Promise<ProductVariant[]> {
 		const response = await this.client.get<ApiResponse<ProductVariant[]>>(
-			`/public/products/${productId}/variants`
+			`/v1/products/${productId}/variants`
 		);
 		return response.data.data;
 	}

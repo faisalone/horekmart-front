@@ -386,7 +386,7 @@ export default function ProductsPage() {
             Filter and search products in real-time
             {filters.search && data && (
               <span className="ml-2 text-blue-400">
-                • Found {data.meta.total} results for "{filters.search}"
+                • Found {data.meta.total} results for &quot;{filters.search}&quot;
               </span>
             )}
           </CardDescription>

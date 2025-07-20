@@ -146,7 +146,7 @@ export function ImageUpload({
       // Update images with new valid files
       onImagesChange([...images, ...newImages]);
     }
-  }, [images, onImagesChange, disabled, uploading, maxFiles, maxSize, showError, showWarning]);
+  }, [images, onImagesChange, disabled, uploading, maxFiles, maxSize, showError]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

@@ -5,12 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ShoppingCart, Menu, X, ChevronDown, Store } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useCart } from '@/contexts/CartContext';
+import { formatCurrency } from '@/lib/currency';
 
-export interface NavbarProps {
-  cartItemCount?: number;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface NavbarProps {}
 
-const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
+const Navbar = ({ }: NavbarProps = {}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
@@ -20,6 +21,9 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
   
   // Use the global authentication state
   const { isAuthenticated, loading } = useAdminAuth();
+  
+  // Use cart context
+  const { state: cartState } = useCart();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -150,21 +154,21 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                 {/* Cart */}
                 <Link 
                   href="/cart" 
-                  className="relative flex items-center space-x-2 text-white transition-colors hover:opacity-80"
+                  className="relative flex items-center space-x-3 text-white transition-colors hover:opacity-80"
                 >
                   <div className="relative">
                     <ShoppingCart className="h-8 w-8" />
-                    {cartItemCount > 0 && (
+                    {cartState.totalItems > 0 && (
                       <span 
-                        className="absolute -top-2 -right-2 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center bg-theme-accent-gradient"
+                        className="absolute -top-3 -right-3 bg-white text-purple-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
                       >
-                        {cartItemCount}
+                        {cartState.totalItems}
                       </span>
                     )}
                   </div>
                   <div className="text-base">
                     <div className="text-sm opacity-80">Cart</div>
-                    <div className="font-medium">${(cartItemCount * 25.99).toFixed(2)}</div>
+                    <div className="font-medium">{formatCurrency(cartState.totalPrice)}</div>
                   </div>
                 </Link>
 
@@ -257,11 +261,11 @@ const Navbar = ({ cartItemCount = 0 }: NavbarProps) => {
                 >
                   <div className="relative">
                     <ShoppingCart className="h-6 w-6" />
-                    {cartItemCount > 0 && (
+                    {cartState.totalItems > 0 && (
                       <span 
-                        className="absolute -top-2 -right-2 text-black text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center bg-theme-accent-gradient"
+                        className="absolute -top-3 -right-3 bg-white text-purple-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
                       >
-                        {cartItemCount}
+                        {cartState.totalItems}
                       </span>
                     )}
                   </div>

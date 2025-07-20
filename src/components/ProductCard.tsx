@@ -2,7 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Product } from '@/types';
-import { cn, getProductImageUrl } from '@/lib/utils';
+import { cn, getProductImageUrl, getProductUrl } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 export interface ProductCardProps {
   product: Product;
@@ -36,7 +37,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
       'group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200',
       className
     )}>
-      <Link href={`/products/${product.id}`}>
+      <Link href={getProductUrl(product)}>
         <div className="relative aspect-square overflow-hidden bg-gray-50">
           <Image
             src={productImage}
@@ -58,7 +59,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
           <div className="absolute top-3 left-3 flex flex-col gap-1">
             {hasDiscount && (
               <div className="bg-theme-green text-white text-xs font-bold px-2 py-1 rounded">
-                Save ${(price - salePrice!).toFixed(0)}
+                Save {formatCurrency(price - salePrice!)}
               </div>
             )}
             {product.is_featured && (
@@ -85,16 +86,16 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
       </Link>
 
       <div className="p-4">
-        <Link href={`/products/${product.id}`}>
+        <Link href={getProductUrl(product)}>
           <div className="space-y-2">
             {/* Price - Large and prominent */}
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-gray-900">
-                ${(salePrice || price).toFixed(2)}
+                {formatCurrency(salePrice || price)}
               </span>
               {hasDiscount && (
                 <span className="text-sm text-gray-500 line-through">
-                  ${price.toFixed(2)}
+                  {formatCurrency(price)}
                 </span>
               )}
             </div>

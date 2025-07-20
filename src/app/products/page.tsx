@@ -7,6 +7,8 @@ import Button from '@/components/ui/Button';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
 import { Product, Category, SearchFilters } from '@/types';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useProductCheckout } from '@/services/ProductCheckoutService';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,6 +21,10 @@ export default function ProductsPage() {
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Cart and wishlist contexts
+  const { toggleItem: toggleWishlist } = useWishlist();
+  const { addToCart: addToCartService } = useProductCheckout();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,6 +136,30 @@ export default function ProductsPage() {
   //   },
   //   { min: Infinity, max: 0 }
   // );
+
+  // Handler functions for cart and wishlist
+  const handleAddToCart = async (product: Product) => {
+    try {
+      await addToCartService(product.id.toString(), 1);
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+    }
+  };
+
+  const handleAddToWishlist = (product: Product) => {
+    const wishlistItem = {
+      productId: product.id.toString(),
+      productName: product.name,
+      productImage: product.images?.[0]?.file_url || product.image || product.thumbnail || undefined,
+      productSlug: product.slug,
+      categorySlug: product.category?.slug,
+      price: parseFloat(product.price),
+      salePrice: product.sale_price ? parseFloat(product.sale_price) : undefined,
+      inStock: product.in_stock,
+    };
+
+    toggleWishlist(wishlistItem);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -378,8 +408,8 @@ export default function ProductsPage() {
           {/* Products Grid */}
           <ProductGrid
             products={filteredProducts}
-            onAddToCart={(product) => console.log('Adding to cart:', product.name)}
-            onAddToWishlist={(product) => console.log('Adding to wishlist:', product.name)}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
           />
         </div>
       </div>

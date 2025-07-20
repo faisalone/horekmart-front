@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/admin-api';
 import { Variation, VariationValue, ProductVariant } from '@/types/admin';
@@ -29,6 +29,7 @@ interface ProductVariantManagerProps {
 interface VariantFormData {
   sku: string;
   price_override?: number;
+  offer_price_override?: number;
   quantity: number;
   variation_values: number[];
 }
@@ -44,6 +45,7 @@ export default function ProductVariantManager({
   const [variantForm, setVariantForm] = useState<VariantFormData>({
     sku: '',
     price_override: undefined,
+    offer_price_override: undefined,
     quantity: 0,
     variation_values: [],
   });
@@ -131,6 +133,7 @@ export default function ProductVariantManager({
     setVariantForm({
       sku: '',
       price_override: undefined,
+      offer_price_override: undefined,
       quantity: 0,
       variation_values: [],
     });
@@ -208,6 +211,7 @@ export default function ProductVariantManager({
     setVariantForm({
       sku: variant.sku,
       price_override: variant.price_override ? parseFloat(variant.price_override) : undefined,
+      offer_price_override: variant.offer_price_override ? parseFloat(variant.offer_price_override) : undefined,
       quantity: variant.quantity,
       variation_values: variant.variation_values.map(v => v.id),
     });
@@ -236,7 +240,7 @@ export default function ProductVariantManager({
       .join(', ');
   };
 
-  const generateSKU = () => {
+  const generateSKU = useCallback(() => {
     if (Object.keys(selectedVariations).length === 0 || !productId) return '';
     
     // Format product ID with HM prefix
@@ -250,7 +254,7 @@ export default function ProductVariantManager({
       .filter(Boolean);
     
     return `${productIdStr}-${values.join('-')}`.toUpperCase();
-  };
+  }, [selectedVariations, productId, allVariationValues]);
 
   // Auto-generate SKU when variations change
   useEffect(() => {
@@ -260,7 +264,7 @@ export default function ProductVariantManager({
         setVariantForm(prev => ({ ...prev, sku: generatedSKU }));
       }
     }
-  }, [selectedVariations, productId, allVariationValues]);
+  }, [selectedVariations, productId, allVariationValues, generateSKU]);
 
   return (
     <Card className="bg-gray-800 border-gray-700">
@@ -336,7 +340,7 @@ export default function ProductVariantManager({
                 </div>
 
                 {/* Variant Details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       SKU *
@@ -363,6 +367,23 @@ export default function ProductVariantManager({
                         price_override: e.target.value ? parseFloat(e.target.value) : undefined 
                       }))}
                       placeholder="Leave empty to use product price"
+                      className="bg-gray-600 border-gray-500 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Offer Price Override
+                    </label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={variantForm.offer_price_override || ''}
+                      onChange={(e) => setVariantForm(prev => ({ 
+                        ...prev, 
+                        offer_price_override: e.target.value ? parseFloat(e.target.value) : undefined 
+                      }))}
+                      placeholder="Leave empty to use product sale price"
                       className="bg-gray-600 border-gray-500 text-white placeholder-gray-400 focus:border-blue-500"
                     />
                   </div>
@@ -461,7 +482,7 @@ export default function ProductVariantManager({
                       </div>
 
                       {/* Variant Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             SKU *
@@ -488,6 +509,23 @@ export default function ProductVariantManager({
                               price_override: e.target.value ? parseFloat(e.target.value) : undefined 
                             }))}
                             placeholder="Leave empty to use product price"
+                            className="bg-gray-600 border-gray-500 text-white placeholder-gray-400 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Offer Price Override
+                          </label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={variantForm.offer_price_override || ''}
+                            onChange={(e) => setVariantForm(prev => ({ 
+                              ...prev, 
+                              offer_price_override: e.target.value ? parseFloat(e.target.value) : undefined 
+                            }))}
+                            placeholder="Leave empty to use product sale price"
                             className="bg-gray-600 border-gray-500 text-white placeholder-gray-400 focus:border-blue-500"
                           />
                         </div>
@@ -546,6 +584,9 @@ export default function ProductVariantManager({
                           <div className="text-gray-300">
                             <p className="text-sm">
                               Price: {variant.price_override ? `$${variant.price_override}` : 'Inherits product price'}
+                            </p>
+                            <p className="text-sm">
+                              Offer Price: {variant.offer_price_override ? `$${variant.offer_price_override}` : 'Inherits product sale price'}
                             </p>
                             <p className="text-sm">Quantity: {variant.quantity}</p>
                           </div>

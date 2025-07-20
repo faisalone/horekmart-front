@@ -341,6 +341,37 @@ body {
   font-family: var(--font-quicksand), 'Quicksand', system-ui, sans-serif;
 }
 
+/* Global button cursor styles */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.cursor-pointer,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled {
+  cursor: not-allowed;
+}
+
+/* Global link cursor styles */
+a,
+Link,
+[role="link"] {
+  cursor: pointer;
+}
+
+/* Interactive elements cursor styles */
+[onClick],
+[onClickCapture],
+.clickable {
+  cursor: pointer;
+}
+
 /* Custom styles for dark theme number inputs */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -692,4 +723,45 @@ input[type="number"] {
 /* Modern parallax effect */
 .parallax-element {
   transition: transform 0.1s ease-out;
+}
+
+/* Price transition animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes price-change {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+.animate-price-change {
+  animation: price-change 0.5s ease-out;
+}
+
+/* Enhanced transitions for pricing */
+.price-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.price-highlight {
+  animation: price-change 0.6s ease-out;
 }

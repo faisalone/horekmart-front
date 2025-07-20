@@ -122,6 +122,7 @@ export interface ProductVariant {
 	product_id: number;
 	sku: string;
 	price_override?: string | null;
+	offer_price_override?: string | null;
 	quantity: number;
 	created_at: string;
 	updated_at: string;

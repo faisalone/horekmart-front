@@ -45,14 +45,15 @@ const QuantitySelector = ({
   };
 
   return (
-    <div className={cn('flex items-center border border-gray-300 rounded-md', className)}>
+    <div className={cn('inline-flex items-center bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden', className)}>
       <button
         type="button"
         onClick={handleDecrease}
         disabled={disabled || quantity <= min}
-        className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center justify-center w-8 h-8 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-r border-gray-200"
+        aria-label="Decrease quantity"
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="h-3.5 w-3.5" />
       </button>
       
       <input
@@ -62,16 +63,17 @@ const QuantitySelector = ({
         min={min}
         max={max}
         disabled={disabled}
-        className="w-16 text-center border-0 bg-transparent focus:outline-none focus:ring-0 disabled:opacity-50"
+        className="w-12 h-8 text-center text-sm font-semibold bg-gray-50 border-0 focus:outline-none focus:ring-0 focus:bg-white disabled:opacity-50 transition-colors"
       />
       
       <button
         type="button"
         onClick={handleIncrease}
         disabled={disabled || quantity >= max}
-        className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center justify-center w-8 h-8 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-l border-gray-200"
+        aria-label="Increase quantity"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3.5 w-3.5" />
       </button>
     </div>
   );

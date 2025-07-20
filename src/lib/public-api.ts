@@ -46,17 +46,89 @@ class PublicApiClient {
 		}
 
 		const response = await this.client.get<PaginatedResponse<Product>>(
-			`/public/products?${queryParams}`
+			`/v1/products?${queryParams}`
 		);
-		return response.data;
+
+		// Ensure all products have their images loaded
+		const productsWithImages = await Promise.all(
+			response.data.data.map(async (product) => {
+				if (!product.images || product.images.length === 0) {
+					try {
+						const productWithImages = await this.getProduct(
+							product.id.toString()
+						);
+						return { ...product, images: productWithImages.images };
+					} catch (error) {
+						console.warn(
+							`Could not fetch images for product ${product.id}:`,
+							error
+						);
+						return product;
+					}
+				}
+				return product;
+			})
+		);
+
+		return {
+			...response.data,
+			data: productsWithImages,
+		};
 	}
 
 	/**
 	 * Get a single product by ID
 	 */
 	async getProduct(id: string): Promise<Product> {
-		const response = await this.client.get<Product>(
-			`/public/products/${id}`
+		const response = await this.client.get<Product>(`/v1/products/${id}`);
+		return response.data;
+	}
+
+	/**
+	 * Get a single product by category path and slug
+	 */
+	async getProductByPath(
+		categoryPath: string,
+		slug: string
+	): Promise<{
+		product: Product;
+		category_path: string[];
+		full_category_path: string[];
+		breadcrumb: Category[];
+	}> {
+		const response = await this.client.get(`/v1/${categoryPath}/${slug}`);
+		const data = response.data;
+
+		// If the product doesn't have images, fetch them separately
+		if (
+			data.product &&
+			(!data.product.images || data.product.images.length === 0)
+		) {
+			try {
+				const productWithImages = await this.getProduct(
+					data.product.id.toString()
+				);
+				data.product = { ...data.product, ...productWithImages };
+			} catch (error) {
+				console.warn('Could not fetch product images:', error);
+			}
+		}
+
+		return data;
+	}
+
+	/**
+	 * Get product variants by product ID
+	 */
+	async getProductVariants(productId: string): Promise<{
+		success: boolean;
+		data: {
+			product: Product;
+			variants: any[];
+		};
+	}> {
+		const response = await this.client.get(
+			`/v1/products/${productId}/variants`
 		);
 		return response.data;
 	}
@@ -65,9 +137,7 @@ class PublicApiClient {
 	 * Get all categories
 	 */
 	async getCategories(): Promise<Category[]> {
-		const response = await this.client.get<Category[]>(
-			'/public/categories'
-		);
+		const response = await this.client.get<Category[]>('/v1/categories');
 		return response.data;
 	}
 
@@ -76,9 +146,31 @@ class PublicApiClient {
 	 */
 	async getFeaturedProducts(): Promise<Product[]> {
 		const response = await this.client.get<Product[]>(
-			'/public/featured-products'
+			'/v1/featured-products'
 		);
-		return response.data;
+
+		// Ensure all products have their images loaded
+		const productsWithImages = await Promise.all(
+			response.data.map(async (product) => {
+				if (!product.images || product.images.length === 0) {
+					try {
+						const productWithImages = await this.getProduct(
+							product.id.toString()
+						);
+						return { ...product, images: productWithImages.images };
+					} catch (error) {
+						console.warn(
+							`Could not fetch images for product ${product.id}:`,
+							error
+						);
+						return product;
+					}
+				}
+				return product;
+			})
+		);
+
+		return productsWithImages;
 	}
 }
 

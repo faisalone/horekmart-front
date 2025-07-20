@@ -13,11 +13,17 @@ import { Product, Category } from '@/types';
 import BannerBlock from '@/components/BannerBlock';
 import AnimatedElement from '@/components/AnimatedElement';
 import { AnimatedSection, useSequentialAnimation } from '@/lib/animations';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useProductCheckout } from '@/services/ProductCheckoutService';
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Cart and wishlist contexts
+  const { toggleItem: toggleWishlist } = useWishlist();
+  const { addToCart: addToCartService } = useProductCheckout();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,12 +58,27 @@ export default function HomePage() {
   const featuredProducts = products.slice(0, 8);
   const saleProducts = products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price));
 
-  const handleAddToCart = (product: Product) => {
-    console.log('Adding to cart:', product.name);
+  const handleAddToCart = async (product: Product) => {
+    try {
+      await addToCartService(product.id.toString(), 1);
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+    }
   };
 
   const handleAddToWishlist = (product: Product) => {
-    console.log('Adding to wishlist:', product.name);
+    const wishlistItem = {
+      productId: product.id.toString(),
+      productName: product.name,
+      productImage: product.images?.[0]?.file_url || product.image || product.thumbnail || undefined,
+      productSlug: product.slug,
+      categorySlug: product.category?.slug,
+      price: parseFloat(product.price),
+      salePrice: product.sale_price ? parseFloat(product.sale_price) : undefined,
+      inStock: product.in_stock,
+    };
+
+    toggleWishlist(wishlistItem);
   };
 
   return (
@@ -83,7 +104,7 @@ export default function HomePage() {
                   key={cat.id}
                   title={cat.name}
                   description={cat.description || ''}
-                  imageUrl={cat.image || 'https://via.placeholder.com/400x300?text=Category'}
+                  imageUrl={cat.image || 'https://placehold.co/400x300?text=Category'}
                   link={`/category/${cat.slug}`}
                   className={
                     idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
