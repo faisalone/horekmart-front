@@ -66,7 +66,7 @@ export const useProductPage = (
 	const variantEngine = useMemo(() => {
 		if (!product) return null;
 		return createVariantSelectionEngine(variants, selectedOptions);
-	}, [variants, selectedOptions]);
+	}, [product, variants, selectedOptions]);
 
 	// Derived state
 	const pricingDisplay = useMemo(() => {

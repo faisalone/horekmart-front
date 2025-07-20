@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 
@@ -46,7 +46,7 @@ export const CartVariantSelector: React.FC<CartVariantSelectorProps> = ({
     }
   }, [currentVariantOptions]);
 
-  const fetchVariants = async () => {
+  const fetchVariants = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`http://localhost:8000/api/v1/products/${productId}/variants`);
@@ -61,7 +61,7 @@ export const CartVariantSelector: React.FC<CartVariantSelectorProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
   const extractAvailableVariations = (variants: Variant[]) => {
     const variations: Record<string, VariationValue[]> = {};
