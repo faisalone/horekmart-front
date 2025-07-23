@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/admin-api';
 import { Vendor, TableFilter } from '@/types/admin';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Filters from '@/components/admin/Filters';
+import { vendorsFilterConfig } from '@/config/adminFilters';
 import {
   Search,
   Filter,
@@ -235,12 +237,18 @@ export default function VendorsPage() {
     },
   });
 
-  const handleSearch = (value: string) => {
-    setFilters(prev => ({ ...prev, search: value, page: 1 }));
+  // Filter handlers
+  const handleFiltersChange = (newFilters: Partial<VendorFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
-  const handleStatusFilter = (status: string) => {
-    setFilters(prev => ({ ...prev, status, page: 1 }));
+  const handleClearFilters = () => {
+    setFilters({
+      search: '',
+      status: '',
+      page: 1,
+      per_page: 15,
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -327,38 +335,15 @@ export default function VendorsPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter and search vendors</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search vendors..."
-                  value={filters.search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <select
-              value={filters.status}
-              onChange={(e) => handleStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="suspended">Suspended</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+      <Filters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+        config={vendorsFilterConfig}
+        isLoading={isLoading}
+        resultCount={pagination?.total}
+        searchQuery={filters.search}
+      />
 
       {/* Vendors Table */}
       <Card>

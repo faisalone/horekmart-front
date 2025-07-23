@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -15,12 +15,15 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { adminApi } from '@/lib/admin-api';
+import { formatCurrency } from '@/lib/currency';
 import { Product, TableFilter } from '@/types/admin';
 import { PaginatedResponse } from '@/types/admin';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect } from '@/components/ui/select-custom';
+import Filters from '@/components/admin/Filters';
+import { productsFilterConfig, updateFilterConfigOptions } from '@/config/adminFilters';
 import {
   Search,
   Plus,
@@ -38,7 +41,6 @@ import { ProductViewModal } from '@/components/admin/ProductViewModal';
 const columnHelper = createColumnHelper<Product>();
 
 export default function ProductsPage() {
-  const [searchInput, setSearchInput] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [filters, setFilters] = useState<TableFilter>({
@@ -46,19 +48,11 @@ export default function ProductsPage() {
     status: '',
     category_id: '',
     vendor_id: '',
-    sort_by: 'created_at',
-    sort_order: 'desc',
+    sort_by: undefined,
+    sort_order: undefined,
     page: 1,
     per_page: 10,
   });
-
-  // Professional debounce hook from use-debounce package
-  const [debouncedSearch] = useDebounce(searchInput, 300);
-
-  // Update filters when debounced search changes
-  useEffect(() => {
-    setFilters(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -93,7 +87,10 @@ export default function ProductsPage() {
   const deleteProductMutation = useMutation({
     mutationFn: (id: number) => adminApi.deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['admin-products'],
+        type: 'all'
+      });
     },
   });
 
@@ -170,11 +167,11 @@ export default function ProductsPage() {
       cell: ({ row }) => (
         <div>
           <div className="font-medium text-gray-200">
-            ${row.original.price}
+            {formatCurrency(Number(row.original.price))}
           </div>
           {row.original.sale_price && (
             <div className="text-sm text-red-400">
-              Sale: ${row.original.sale_price}
+              Sale: {formatCurrency(Number(row.original.sale_price))}
             </div>
           )}
         </div>
@@ -185,22 +182,15 @@ export default function ProductsPage() {
       header: 'Stock',
       cell: ({ getValue, row }) => (
         <div className="text-center">
-          <div className={cn(
-            'font-medium',
-            getValue() === 0 ? 'text-red-400' : 
-            getValue() < 10 ? 'text-yellow-400' : 'text-green-400'
-          )}>
-            {getValue()}
-          </div>
-          <div className={cn(
-            'text-xs px-2 py-1 rounded-md',
+          <span className={cn(
+            'px-3 py-1 text-sm rounded-md font-medium',
             row.original.in_stock ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
           )}>
-            {row.original.in_stock ? 'In Stock' : 'Out of Stock'}
-          </div>
+            {row.original.in_stock ? `Stock (${getValue()})` : 'Out of Stock'}
+          </span>
         </div>
       ),
-      size: 80,
+      size: 120,
     }),
     columnHelper.accessor('status', {
       header: 'Status',
@@ -217,11 +207,6 @@ export default function ProductsPage() {
           </span>
         );
       },
-      size: 100,
-    }),
-    columnHelper.accessor('created_at', {
-      header: 'Created',
-      cell: ({ getValue }) => new Date(getValue()).toLocaleDateString(),
       size: 100,
     }),
     columnHelper.display({
@@ -274,40 +259,50 @@ export default function ProductsPage() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleSearch = (value: string) => {
-    setSearchInput(value);
+  // Filter handlers
+  const handleFiltersChange = (newFilters: Partial<TableFilter>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
-  const handleStatusFilter = (status: string) => {
-    setFilters(prev => ({ ...prev, status, page: 1 }));
-  };
-
-  const handleCategoryFilter = (category_id: string) => {
-    setFilters(prev => ({ ...prev, category_id, page: 1 }));
-  };
-
-  const handleVendorFilter = (vendor_id: string) => {
-    setFilters(prev => ({ ...prev, vendor_id, page: 1 }));
-  };
-
-  const handleSortChange = (sortValue: string) => {
-    const [sort_by, sort_order] = sortValue.split('_');
-    setFilters(prev => ({ ...prev, sort_by, sort_order: sort_order as 'asc' | 'desc', page: 1 }));
-  };
-
-  const clearAllFilters = () => {
-    setSearchInput('');
+  const handleClearFilters = () => {
     setFilters({ 
       search: '', 
       status: '', 
       category_id: '', 
       vendor_id: '', 
-      sort_by: 'created_at', 
-      sort_order: 'desc', 
+      sort_by: undefined, 
+      sort_order: undefined, 
       page: 1, 
       per_page: 10 
     });
   };
+
+  // Create dynamic filter config with categories and vendors
+  const filterConfig = React.useMemo(() => {
+    let config = { ...productsFilterConfig };
+    
+    // Add categories to category filter
+    if (categoriesData?.data) {
+      config = updateFilterConfigOptions(config, 'category_id', 
+        categoriesData.data.map(category => ({
+          value: category.id.toString(),
+          label: category.name
+        }))
+      );
+    }
+    
+    // Add vendors to vendor filter
+    if (vendorsData?.data) {
+      config = updateFilterConfigOptions(config, 'vendor_id',
+        vendorsData.data.map(vendor => ({
+          value: vendor.id.toString(),
+          label: vendor.business_name || vendor.name
+        }))
+      );
+    }
+    
+    return config;
+  }, [categoriesData?.data, vendorsData?.data]);
 
   if (error) {
     return (
@@ -346,164 +341,45 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Products</h1>
-          <p className="text-gray-400 mt-1">Manage your product catalog</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={handleAddProduct} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Product
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            Filters
-            {(filters.search || filters.status || filters.category_id || filters.vendor_id) && (
-              <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
-                Active
-              </span>
-            )}
-            {isFetching && (
-              <span className="px-2 py-1 bg-yellow-600 text-white text-xs rounded-full flex items-center gap-1">
-                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                Searching...
-              </span>
-            )}
-          </CardTitle>
-          <CardDescription className="text-gray-400">
-            Filter and search products in real-time
-            {filters.search && data && (
-              <span className="ml-2 text-blue-400">
-                • Found {data.meta.total} results for &quot;{filters.search}&quot;
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Search Row */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchInput}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    handleSearch(e.target.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                />
-                {isFetching && searchInput && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                <CustomSelect
-                  value={filters.status || ''}
-                  onValueChange={(value) => handleStatusFilter(value as string)}
-                  placeholder="All Status"
-                  options={[
-                    { value: '', label: 'All Status' },
-                    { value: 'draft', label: 'Draft' },
-                    { value: 'published', label: 'Published' },
-                    { value: 'inactive', label: 'Inactive' }
-                  ]}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-                <CustomSelect
-                  value={filters.category_id || ''}
-                  onValueChange={(value) => handleCategoryFilter(value as string)}
-                  placeholder="All Categories"
-                  options={[
-                    { value: '', label: 'All Categories' },
-                    ...(categoriesData?.data ? categoriesData.data.map(category => ({
-                      value: category.id.toString(),
-                      label: category.name
-                    })) : [])
-                  ]}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Vendor</label>
-                <CustomSelect
-                  value={filters.vendor_id || ''}
-                  onValueChange={(value) => handleVendorFilter(value as string)}
-                  placeholder="All Vendors"
-                  options={[
-                    { value: '', label: 'All Vendors' },
-                    ...(vendorsData?.data ? vendorsData.data.map(vendor => ({
-                      value: vendor.id.toString(),
-                      label: vendor.business_name || vendor.name
-                    })) : [])
-                  ]}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Sort By</label>
-                <CustomSelect
-                  value={`${filters.sort_by}_${filters.sort_order}`}
-                  onValueChange={(value) => handleSortChange(value as string)}
-                  placeholder="Sort by..."
-                  options={[
-                    { value: 'created_at_desc', label: 'Newest First' },
-                    { value: 'created_at_asc', label: 'Oldest First' },
-                    { value: 'name_asc', label: 'Name A-Z' },
-                    { value: 'name_desc', label: 'Name Z-A' },
-                    { value: 'price_desc', label: 'Price High to Low' },
-                    { value: 'price_asc', label: 'Price Low to High' },
-                    { value: 'stock_quantity_desc', label: 'Stock High to Low' },
-                    { value: 'stock_quantity_asc', label: 'Stock Low to High' }
-                  ]}
-                />
-              </div>
-              
-              <div className="flex items-end">
-                {(filters.search || filters.status || filters.category_id || filters.vendor_id) && (
-                  <Button
-                    variant="outline"
-                    onClick={clearAllFilters}
-                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
-                  >
-                    Clear All
-                  </Button>
-                )}
-              </div>
-            </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Products</h1>
+            <p className="text-gray-400 mt-1">Manage your product catalog</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center space-x-3">            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              title="Export Products"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+            <Button 
+              onClick={handleAddProduct} 
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+              title="Add Product"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+      {/* Filters */}
+      <Filters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+        config={filterConfig}
+        isLoading={isFetching}
+        resultCount={data?.meta?.total}
+        searchQuery={filters.search}
+      />
 
-      {/* Products Table */}
+      {/* Products List */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -516,45 +392,168 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b border-gray-600">
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="text-left py-3 px-4 font-medium text-gray-200"
-                        style={{ width: header.getSize() }}
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className={cn(
-                              header.column.getCanSort() ? 'cursor-pointer select-none' : '',
-                              'flex items-center space-x-1'
-                            )}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-700 hover:bg-gray-800">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="py-3 px-4 text-gray-300">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id} className="border-b border-gray-600">
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="text-left py-3 px-4 font-medium text-gray-200"
+                          style={{ width: header.getSize() }}
+                        >
+                          {header.isPlaceholder ? null : (
+                            <div
+                              className={cn(
+                                header.column.getCanSort() ? 'cursor-pointer select-none' : '',
+                                'flex items-center space-x-1'
+                              )}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                            </div>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className="border-b border-gray-700 hover:bg-gray-800">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="py-3 px-4 text-gray-300">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {products.map((product) => (
+              <div key={product.id} className="bg-gray-700 rounded-lg p-4 space-y-3">
+                
+                {/* Top Row: Badges left, Actions right */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {/* Status Badge */}
+                    <span className={cn(
+                      'px-2 py-1 text-xs rounded-md capitalize',
+                      product.status === 'published' ? 'bg-green-900/30 text-green-400' :
+                      product.status === 'inactive' ? 'bg-red-900/30 text-red-400' :
+                      'bg-gray-600 text-gray-300'
+                    )}>
+                      {product.status}
+                    </span>
+                    
+                    {/* Stock Badge */}
+                    <span className={cn(
+                      'px-2 py-1 text-xs rounded-md',
+                      product.in_stock ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+                    )}>
+                      {product.in_stock ? 'In Stock' : 'Out'}
+                    </span>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex items-center space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewProduct(product)}
+                      className="text-blue-400 hover:text-blue-300 hover:bg-gray-600 p-2"
+                      title="View Product"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditProduct(product.id)}
+                      className="text-gray-300 hover:text-white hover:bg-gray-600 p-2"
+                      title="Edit Product"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteProduct(product.id)}
+                      disabled={deleteProductMutation.isPending}
+                      className="text-red-400 hover:text-red-300 hover:bg-gray-600 disabled:opacity-50 p-2"
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Second Row: Image left, Title & SKU right */}
+                <div className="flex items-center space-x-3">
+                  {/* Product Image */}
+                  <div className="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    {product.images?.[0]?.file_url || product.image ? (
+                      <Image
+                        src={product.images?.[0]?.file_url || product.image || ''}
+                        alt={product.name || 'Product'}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <Package className="w-8 h-8 text-gray-400" />
+                    )}
+                  </div>
+                  
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-white truncate">{product.name}</h3>
+                    <p className="text-sm text-gray-400">SKU: {product.sku}</p>
+                    <p className="text-sm text-gray-400">{product.vendor?.business_name}</p>
+                    <div className="mt-1">
+                      <span className="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded-md">
+                        {product.category?.name || 'Uncategorized'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Third Row: Price left, Quantity right (only if > 0) */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-gray-400 text-sm">Price:</span>
+                    <div className="mt-1">
+                      <div className="font-medium text-white">{formatCurrency(Number(product.price))}</div>
+                      {product.sale_price && (
+                        <div className="text-xs text-red-400">Sale: {formatCurrency(Number(product.sale_price))}</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {product.stock_quantity > 0 && (
+                    <div className="text-right">
+                      <span className="text-gray-400 text-sm">Quantity:</span>
+                      <div className="mt-1">
+                        <div className={cn(
+                          'font-medium',
+                          product.stock_quantity < 10 ? 'text-yellow-400' : 'text-green-400'
+                        )}>
+                          {product.stock_quantity}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {products.length === 0 && (
@@ -564,7 +563,7 @@ export default function ProductsPage() {
           )}
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 space-y-4 sm:space-y-0">
             <div className="text-sm text-gray-400">
               Showing {data?.meta?.from || 0} to {data?.meta?.to || 0} of {data?.meta?.total || 0} products
             </div>

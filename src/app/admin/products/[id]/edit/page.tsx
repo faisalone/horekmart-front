@@ -37,7 +37,11 @@ export default function EditProductPage() {
   const updateProductMutation = useMutation({
     mutationFn: (productData: Partial<Product>) => adminApi.updateProduct(productId, productData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      // Invalidate all admin-products queries (with any filters)
+      queryClient.invalidateQueries({ 
+        queryKey: ['admin-products'],
+        type: 'all'
+      });
       queryClient.invalidateQueries({ queryKey: ['admin-product', productId] });
       router.push('/admin/products');
     },
@@ -55,8 +59,8 @@ export default function EditProductPage() {
     setIsLoading(true);
     
     try {
-      // First update the product
-      await adminApi.updateProduct(productId, productData);
+      // First update the product using mutation
+      await updateProductMutation.mutateAsync(productData);
       
       // Then upload thumbnail if provided and it's a File
       if (thumbnail && thumbnail instanceof File) {
@@ -88,10 +92,7 @@ export default function EditProductPage() {
         }
       }
       
-      // Invalidate queries and redirect
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-product', productId] });
-      router.push('/admin/products');
+      // The mutation's onSuccess will handle cache invalidation and redirect
       
     } catch (error: any) {
       console.error('Error updating product:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/admin-api';
 import { Product, Category, Vendor, ProductVariant } from '@/types/admin';
@@ -8,12 +8,12 @@ import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect } from '@/components/ui/select-custom';
+import FormHeader from '@/components/admin/FormHeader';
 import { ThumbnailUpload } from '@/components/admin/ThumbnailUpload';
 import { ImageUpload, UploadedImage as ImageUploadType } from '@/components/admin/ImageUpload';
 import ProductVariantManager from '@/components/admin/ProductVariantManager';
 import { useToast } from '@/hooks/useToast';
 import {
-  Save,
   Eye,
   EyeOff,
   ChevronDown,
@@ -41,6 +41,7 @@ interface ProductFormData {
   category_id: number;
   vendor_id: number;
   weight?: number;
+  weight_unit?: 'kg' | 'g';
   dimensions?: string;
   meta_title?: string;
   meta_description?: string;
@@ -75,6 +76,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     category_id: 0,
     vendor_id: 0,
     weight: undefined,
+    weight_unit: 'kg',
     dimensions: '',
     meta_title: '',
     meta_description: '',
@@ -134,6 +136,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         category_id: product.category?.id || 0,
         vendor_id: product.vendor?.id || 0,
         weight: product.weight,
+        weight_unit: product.weight_unit || 'kg',
         dimensions: product.dimensions || '',
         meta_title: product.meta_title || '',
         meta_description: product.meta_description || '',
@@ -194,6 +197,60 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     }
   };
 
+  // Auto-generate SKU - always exactly 10 digits with product name
+  const generateProductSKU = useCallback(() => {
+    if (!formData.name.trim()) return '';
+    
+    // Extract meaningful characters from product name
+    // Example: "iPhone 15 Pro" -> "I1P"
+    const nameCode = formData.name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+      .replace(/[^A-Z0-9]/g, '') // Only keep letters and numbers
+      .substring(0, 4); // Max 4 characters from name for better representation
+    
+    // If editing existing product, use product ID
+    if (product?.id) {
+      const productIdStr = product.id.toString();
+      const hmPrefix = 'HM';
+      
+      // Format: HM{nameCode}XXX{productId} - exactly 10 chars
+      const usedLength = hmPrefix.length + nameCode.length + productIdStr.length;
+      const paddingLength = Math.max(0, 10 - usedLength);
+      const padding = 'X'.repeat(paddingLength);
+      
+      let sku = `${hmPrefix}${nameCode}${padding}${productIdStr}`;
+      
+      // Ensure exactly 10 characters
+      return sku.length > 10 ? sku.substring(0, 10) : sku.padEnd(10, 'X');
+    }
+    
+    // For new products, generate a temporary SKU with timestamp and name
+    const timestamp = Date.now().toString().slice(-2); // Last 2 digits
+    const hmPrefix = 'HM';
+    
+    // Format: HM{nameCode}XX{timestamp}
+    const usedLength = hmPrefix.length + nameCode.length + timestamp.length;
+    const paddingLength = Math.max(0, 10 - usedLength);
+    const padding = 'X'.repeat(paddingLength);
+    
+    let sku = `${hmPrefix}${nameCode}${padding}${timestamp}`;
+    
+    // Ensure exactly 10 characters
+    return sku.length > 10 ? sku.substring(0, 10) : sku.padEnd(10, 'X');
+  }, [formData.name, product]);
+
+  // Auto-generate SKU when product name changes (only if SKU is empty or matches previous auto-generated pattern)
+  useEffect(() => {
+    if (formData.name.trim() && (!formData.sku.trim() || formData.sku.startsWith('HM'))) {
+      const generatedSKU = generateProductSKU();
+      if (generatedSKU && generatedSKU !== formData.sku) {
+        handleInputChange('sku', generatedSKU);
+      }
+    }
+  }, [formData.name, generateProductSKU, handleInputChange]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -229,205 +286,94 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Information */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Basic Information</CardTitle>
-            <CardDescription className="text-gray-400">
-              Enter the basic details for your product
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Product Name *
-                </label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter product name"
-                  required
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  SKU *
-                </label>
-                <Input
-                  value={formData.sku}
-                  onChange={(e) => handleInputChange('sku', e.target.value)}
-                  placeholder="Enter SKU"
-                  required
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                />
-              </div>
-            </div>
+    <div className="max-w-7xl mx-auto">
+      <FormHeader
+        title={mode === 'create' ? 'Create New Product' : 'Edit Product'}
+        subtitle={mode === 'create' 
+          ? 'Add a new product to your inventory' 
+          : `Editing: ${formData.name || 'Product'}`
+        }
+        onCancel={onCancel}
+        isLoading={isLoading}
+        mode={mode}
+        formId="product-form"
+        entityName="Product"
+      />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Description *
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Enter product description"
-                required
-                rows={4}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Short Description
-              </label>
-              <textarea
-                value={formData.short_description}
-                onChange={(e) => handleInputChange('short_description', e.target.value)}
-                placeholder="Enter short description"
-                rows={2}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pricing and Inventory */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Pricing & Inventory</CardTitle>
-            <CardDescription className="text-gray-400">
-              Set pricing and stock information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Regular Price *
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
-                  required
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Sale Price
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.sale_price || ''}
-                  onChange={(e) => handleInputChange('sale_price', e.target.value ? parseFloat(e.target.value) : undefined)}
-                  placeholder="0.00"
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Stock Quantity *
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={formData.stock_quantity}
-                  onChange={(e) => handleInputChange('stock_quantity', parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                  required
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Category and Settings */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Category & Settings</CardTitle>
-            <CardDescription className="text-gray-400">
-              Assign category and configure product settings
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Category *
-                </label>
-                <CustomSelect
-                  value={formData.category_id.toString()}
-                  onValueChange={(value) => handleInputChange('category_id', typeof value === 'string' ? parseInt(value) || 0 : value || 0)}
-                  placeholder="Select a category"
-                  options={[
-                    { value: '0', label: 'Select Category' },
-                    ...categories.map(category => ({
-                      value: category.id.toString(),
-                      label: category.name
-                    }))
-                  ]}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Vendor *
-                </label>
-                <CustomSelect
-                  value={formData.vendor_id.toString()}
-                  onValueChange={(value) => handleInputChange('vendor_id', typeof value === 'string' ? parseInt(value) || 0 : value || 0)}
-                  placeholder="Select a vendor"
-                  options={[
-                    { value: '0', label: 'Select Vendor' },
-                    ...vendors.map(vendor => ({
-                      value: vendor.id.toString(),
-                      label: vendor.business_name || vendor.name
-                    }))
-                  ]}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Status *
-                </label>
-                <CustomSelect
-                  value={formData.status}
-                  onValueChange={(value) => handleInputChange('status', value)}
-                  placeholder="Select status"
-                  options={[
-                    { value: 'draft', label: 'Draft' },
-                    { value: 'published', label: 'Published' },
-                    { value: 'inactive', label: 'Inactive' }
-                  ]}
-                />
-              </div>
-              <div className="flex items-center">
-                <label className="flex items-center space-x-2 text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_featured}
-                    onChange={(e) => handleInputChange('is_featured', e.target.checked)}
-                    className="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
+      <div className="px-6 pb-6">
+        <form id="product-form" onSubmit={handleSubmit} className="xl:grid xl:grid-cols-3 xl:gap-6 space-y-6 xl:space-y-0">
+        {/* Left Column - Main Content */}
+        <div className="xl:col-span-2 space-y-6">
+          {/* Basic Information */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">Basic Information</CardTitle>
+              <CardDescription className="text-gray-400">
+                Enter the basic details for your product
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Product Name *
+                  </label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter product name"
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                   />
-                  <span>Featured Product</span>
-                </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    SKU *
+                  </label>
+                  <Input
+                    value={formData.sku}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().substring(0, 10);
+                      handleInputChange('sku', value);
+                    }}
+                    placeholder="Auto-generated or enter manually"
+                    required
+                    maxLength={10}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 font-mono"
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Images and Thumbnail */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Enter product description"
+                  required
+                  rows={4}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Short Description
+                </label>
+                <textarea
+                  value={formData.short_description}
+                  onChange={(e) => handleInputChange('short_description', e.target.value)}
+                  placeholder="Enter short description"
+                  rows={2}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Images and Thumbnail */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* Product Images */}
           <Card className="bg-gray-800 border-gray-700">
@@ -454,6 +400,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         {/* Product Variants */}
         <ProductVariantManager
           productId={product?.id}
+          productName={formData.name}
           variants={variants}
           onVariantsChange={setVariants}
           disabled={isLoading || (mode === 'create' && !product?.id)}
@@ -666,33 +613,195 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
             </CardContent>
           )}
         </Card>
-
-        {/* Form Actions */}
-        <div className="flex items-center justify-end space-x-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            className="border-gray-600 text-white hover:bg-gray-700"
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                {mode === 'create' ? 'Create Product' : 'Update Product'}
-              </>
-            )}
-          </Button>
         </div>
-      </form>
+
+        {/* Right Sidebar - Sticky */}
+        <div className="xl:col-span-1 space-y-6">
+          <div className="xl:sticky xl:top-[120px] space-y-6 z-10">
+            {/* Pricing and Inventory */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Pricing & Inventory</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Set pricing and stock information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Regular Price *
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Sale Price
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.sale_price || ''}
+                    onChange={(e) => handleInputChange('sale_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder="0.00"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Stock Quantity *
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formData.stock_quantity}
+                    onChange={(e) => handleInputChange('stock_quantity', parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Category and Settings */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Category & Settings</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Organization and classification settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Category *
+                  </label>
+                  <CustomSelect
+                    value={formData.category_id.toString()}
+                    onValueChange={(value) => handleInputChange('category_id', typeof value === 'string' ? parseInt(value) || 0 : value || 0)}
+                    placeholder="Select a category"
+                    options={[
+                      { value: '0', label: 'Select Category' },
+                      ...categories.map(category => ({
+                        value: category.id.toString(),
+                        label: category.name
+                      }))
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Vendor *
+                  </label>
+                  <CustomSelect
+                    value={formData.vendor_id.toString()}
+                    onValueChange={(value) => handleInputChange('vendor_id', typeof value === 'string' ? parseInt(value) || 0 : value || 0)}
+                    placeholder="Select a vendor"
+                    options={[
+                      { value: '0', label: 'Select Vendor' },
+                      ...vendors.map(vendor => ({
+                        value: vendor.id.toString(),
+                        label: vendor.business_name || vendor.name
+                      }))
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Status *
+                  </label>
+                  <CustomSelect
+                    value={formData.status}
+                    onValueChange={(value) => handleInputChange('status', value)}
+                    placeholder="Select status"
+                    options={[
+                      { value: 'draft', label: 'Draft' },
+                      { value: 'published', label: 'Published' },
+                      { value: 'inactive', label: 'Inactive' }
+                    ]}
+                  />
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center space-x-2 text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_featured}
+                      onChange={(e) => handleInputChange('is_featured', e.target.checked)}
+                      className="rounded bg-gray-700 border-gray-600"
+                    />
+                    <span>Featured Product</span>
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Shipping */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Shipping Information</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Configure product shipping details and weight
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label htmlFor="weight" className="block text-sm font-medium text-gray-300 mb-2">
+                    Weight
+                  </label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.weight || ''}
+                    onChange={(e) => handleInputChange('weight', e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder="0.50"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Weight Unit
+                  </label>
+                  <CustomSelect
+                    value={formData.weight_unit || 'kg'}
+                    onValueChange={(value) => handleInputChange('weight_unit', value as 'kg' | 'g')}
+                    placeholder="Select weight unit"
+                    options={[
+                      { value: 'kg', label: 'Kilograms (kg)' },
+                      { value: 'g', label: 'Grams (g)' }
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="dimensions" className="block text-sm font-medium text-gray-300 mb-2">
+                    Dimensions
+                  </label>
+                  <Input
+                    id="dimensions"
+                    type="text"
+                    value={formData.dimensions || ''}
+                    onChange={(e) => handleInputChange('dimensions', e.target.value)}
+                    placeholder="L x W x H"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        </form>
+      </div>
     </div>
   );
 }

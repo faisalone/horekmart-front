@@ -6,6 +6,7 @@ import Badge from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Button from '@/components/ui/Button';
 import { getProductImageUrl, getProductMetaImageUrl } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 import { 
   Package, 
   DollarSign, 
@@ -84,10 +85,6 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
     setSelectedImageIndex(0);
   }, [product?.id]);
   if (!product || !open) return null;
-
-  const formatPrice = (price: string | number) => {
-    return typeof price === 'string' ? `$${price}` : `$${price.toFixed(2)}`;
-  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -301,12 +298,12 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-300">Regular Price</label>
-                      <p className="text-xl font-bold text-green-400">{formatPrice(product.price)}</p>
+                      <p className="text-xl font-bold text-green-400">{formatCurrency(Number(product.price))}</p>
                     </div>
                     {product.sale_price && (
                       <div>
                         <label className="text-sm font-medium text-gray-300">Sale Price</label>
-                        <p className="text-xl font-bold text-red-400">{formatPrice(product.sale_price)}</p>
+                        <p className="text-xl font-bold text-red-400">{formatCurrency(Number(product.sale_price))}</p>
                       </div>
                     )}
                     <div>
@@ -331,6 +328,41 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Shipping */}
+              <Card className="bg-gray-750 border-gray-600">
+                <CardHeader>
+                  <CardTitle className="text-white text-lg flex items-center gap-2">
+                    <Package className="w-5 h-5 text-orange-400" />
+                    Shipping
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-300">Weight</label>
+                      <div className="mt-1">
+                        {product.weight ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium">
+                              {product.weight}
+                            </span>
+                            <span className="px-2 py-1 bg-orange-900/30 text-orange-400 text-xs rounded-md">
+                              {product.weight_unit || 'kg'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">Not specified</span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-300">Dimensions</label>
+                      <p className="text-gray-400 mt-1">Not specified</p>
                     </div>
                   </div>
                 </CardContent>

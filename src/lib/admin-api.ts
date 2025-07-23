@@ -473,18 +473,61 @@ class AdminApiClient {
 		return response.data.data;
 	}
 
-	async createCategory(category: Partial<Category>): Promise<Category> {
-		const response = await this.client.post('/admin/categories', category);
+	async createCategory(
+		category: Partial<Category>,
+		image?: File
+	): Promise<Category> {
+		// If image is provided, upload it first and get the URL
+		let imageUrl = undefined;
+		if (image) {
+			try {
+				const uploadResult = await this.uploadFile(image, 'categories');
+				imageUrl = uploadResult.url;
+			} catch (error) {
+				console.error('Error uploading category image:', error);
+				throw new Error('Failed to upload category image');
+			}
+		}
+
+		// Create category with image URL (if uploaded)
+		const categoryData = {
+			...category,
+			...(imageUrl && { image: imageUrl }),
+		};
+
+		const response = await this.client.post(
+			'/admin/categories',
+			categoryData
+		);
 		return response.data.data;
 	}
 
 	async updateCategory(
 		id: string,
-		category: Partial<Category>
+		category: Partial<Category>,
+		image?: File
 	): Promise<Category> {
+		// If image is provided, upload it first and get the URL
+		let imageUrl = undefined;
+		if (image) {
+			try {
+				const uploadResult = await this.uploadFile(image, 'categories');
+				imageUrl = uploadResult.url;
+			} catch (error) {
+				console.error('Error uploading category image:', error);
+				throw new Error('Failed to upload category image');
+			}
+		}
+
+		// Update category with image URL (if uploaded)
+		const categoryData = {
+			...category,
+			...(imageUrl && { image: imageUrl }),
+		};
+
 		const response = await this.client.put(
 			`/admin/categories/${id}`,
-			category
+			categoryData
 		);
 		return response.data.data;
 	}

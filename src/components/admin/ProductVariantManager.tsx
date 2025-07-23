@@ -21,6 +21,7 @@ import {
 
 interface ProductVariantManagerProps {
   productId?: number;
+  productName?: string;
   variants: ProductVariant[];
   onVariantsChange: (variants: ProductVariant[]) => void;
   disabled?: boolean;
@@ -36,6 +37,7 @@ interface VariantFormData {
 
 export default function ProductVariantManager({
   productId,
+  productName = '',
   variants,
   onVariantsChange,
   disabled = false,
@@ -243,28 +245,73 @@ export default function ProductVariantManager({
   const generateSKU = useCallback(() => {
     if (Object.keys(selectedVariations).length === 0 || !productId) return '';
     
-    // Format product ID with HM prefix
-    const productIdStr = `HM${productId}`;
+    const productIdStr = productId.toString();
+    const hmPrefix = 'HM';
     
-    const values = Object.values(selectedVariations)
+    // Extract product name code (like "I1P" from "iPhone 15 Pro")
+    const productNameCode = productName
+      ? productName
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase())
+          .join('')
+          .replace(/[^A-Z0-9]/g, '')
+          .substring(0, 3) // Max 3 characters from product name for variants
+      : 'PRD'; // Fallback if no product name
+    
+    // Get ALL variant codes from selected variations (no limit)
+    const variantCode = Object.values(selectedVariations)
       .map(valueId => {
         const value = allVariationValues.find(v => v.id === valueId);
-        return value?.slug || value?.name.toLowerCase().replace(/\s+/g, '-');
+        if (!value) return '';
+        
+        // Extract meaningful characters from variant value
+        const words = value.name.split(' ');
+        if (words.length === 1) {
+          // Single word like "Red" -> "R"
+          return value.name.charAt(0).toUpperCase();
+        } else {
+          // Multiple words like "256GB" -> "2" (first digit/letter)
+          return value.name.replace(/[^A-Z0-9]/gi, '').charAt(0).toUpperCase();
+        }
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .join(''); // No limit on variant characters
     
-    return `${productIdStr}-${values.join('-')}`.toUpperCase();
-  }, [selectedVariations, productId, allVariationValues]);
-
-  // Auto-generate SKU when variations change
+    // Format: HM{productNameCode}{variantCode}XX{productId}
+    let sku = `${hmPrefix}${productNameCode}${variantCode}`;
+    
+    // Calculate how much space we have before adding product ID
+    const currentLength = sku.length;
+    const minTotalLength = 10;
+    const maxTotalLength = 12;
+    
+    // If we're already at or near max length, just add product ID
+    if (currentLength + productIdStr.length >= maxTotalLength) {
+      sku = `${sku}${productIdStr}`;
+      // Trim to max 12 if needed
+      return sku.length > maxTotalLength ? sku.substring(0, maxTotalLength) : sku;
+    }
+    
+    // Calculate padding needed to reach minimum 10 characters
+    const withProductId = currentLength + productIdStr.length;
+    if (withProductId < minTotalLength) {
+      const paddingNeeded = minTotalLength - withProductId;
+      const padding = 'X'.repeat(paddingNeeded);
+      sku = `${sku}${padding}${productIdStr}`;
+    } else {
+      sku = `${sku}${productIdStr}`;
+    }
+    
+    return sku;
+  }, [selectedVariations, productId, productName, allVariationValues]);  // Auto-generate SKU when variations change
   useEffect(() => {
-    if (Object.keys(selectedVariations).length > 0 && productId) {
+    if (Object.keys(selectedVariations).length > 0 && productId && productName) {
       const generatedSKU = generateSKU();
       if (generatedSKU) {
         setVariantForm(prev => ({ ...prev, sku: generatedSKU }));
       }
     }
-  }, [selectedVariations, productId, allVariationValues, generateSKU]);
+  }, [selectedVariations, productId, productName, allVariationValues, generateSKU]);
 
   return (
     <Card className="bg-gray-800 border-gray-700">

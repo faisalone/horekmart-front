@@ -72,6 +72,7 @@ export interface Product {
 	vendor_id: number; // Changed from string to number
 	is_featured: boolean; // Changed from 'featured' to 'is_featured'
 	weight?: number;
+	weight_unit?: 'kg' | 'g';
 	dimensions?: string;
 	meta_title?: string;
 	meta_description?: string;
@@ -143,6 +144,7 @@ export interface Category {
 	description?: string;
 	parent_id?: number | null; // Changed from string to number
 	image?: string | null;
+	image_url?: string | null; // Full URL for the image
 	sort_order: number;
 	is_active: boolean;
 	products_count?: number;

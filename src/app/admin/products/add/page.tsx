@@ -26,7 +26,10 @@ export default function AddProductPage() {
   const createProductMutation = useMutation({
     mutationFn: (product: Partial<Product>) => adminApi.createProduct(product),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['admin-products'],
+        type: 'all'
+      });
       router.push('/admin/products');
     },
     onError: (error) => {
@@ -77,8 +80,11 @@ export default function AddProductPage() {
         }
       }
       
-      // Invalidate queries and redirect
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      // Success - the mutation's onSuccess will handle cache invalidation and redirect
+      queryClient.invalidateQueries({ 
+        queryKey: ['admin-products'],
+        type: 'all'
+      });
       router.push('/admin/products');
       
     } catch (error: any) {

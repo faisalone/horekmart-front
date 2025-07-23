@@ -58,6 +58,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 	const actionButtonsRef = useRef<HTMLDivElement>(null);
 	const variantSelectorRef = useRef<HTMLDivElement>(null);
 	const productInfoRef = useRef<HTMLDivElement>(null);
+	const relatedProductsRef = useRef<HTMLDivElement>(null);
 	const [staticSoldCount] = useState(Math.floor(Math.random() * 500) + 50);
 
 	// Context hooks
@@ -109,17 +110,22 @@ export default function ProductPage({ params }: ProductPageProps) {
 				return;
 			}
 
-			if (actionButtonsRef.current && productInfoRef.current && footerRef.current) {
+			if (actionButtonsRef.current && productInfoRef.current) {
 				const buttonsRect = actionButtonsRef.current.getBoundingClientRect();
 				const productInfoRect = productInfoRef.current.getBoundingClientRect();
-				const footerRect = footerRef.current.getBoundingClientRect();
 				const windowHeight = window.innerHeight;
 
-				// Check if scrolling down past the buttons' original position and footer is not in view
-				const isPastButtons = buttonsRect.top <= windowHeight;
-				const isFooterVisible = footerRect.top < windowHeight;
+				// Check if there's a related products section and if it's visible
+				let isStopSectionVisible = false;
+				if (relatedProductsRef.current) {
+					const relatedProductsRect = relatedProductsRef.current.getBoundingClientRect();
+					isStopSectionVisible = relatedProductsRect.top < windowHeight + 100; // 100px buffer
+				}
 
-				if (isPastButtons && !isFooterVisible) {
+				// Check if scrolling down past the buttons' original position
+				const isPastButtons = productInfoRect.bottom < 0;
+
+				if (isPastButtons && !isStopSectionVisible) {
 					setIsButtonsSticky(true);
 				} else {
 					setIsButtonsSticky(false);
@@ -1241,7 +1247,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 										/>
 									)}
 
-									<div className="space-y-3">
+									<div ref={actionButtonsRef} className="space-y-3">
 										{productPageData && productPageData.hasVariations && !productPageData.allVariationsSelected && (
 											<button
 												onClick={handleSelectVariant}
@@ -1277,11 +1283,11 @@ export default function ProductPage({ params }: ProductPageProps) {
 				</div>
 
 				{relatedProducts.length > 0 && (
-					<div className="mt-16">
+					<div ref={relatedProductsRef} className="mt-16">
 						<h3 className="text-2xl font-bold text-gray-900 mb-8">
 							Related Products
 						</h3>
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+						<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
 							{relatedProducts.map((relatedProduct) => (
 								<Link
 									key={relatedProduct.id}
@@ -1298,12 +1304,12 @@ export default function ProductPage({ params }: ProductPageProps) {
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform"
 											/>
 										</div>
-										<div className="p-4">
-											<h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+										<div className="p-3 lg:p-4">
+											<h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm lg:text-base">
 												{relatedProduct.name}
 											</h4>
 											<div className="flex items-center justify-between">
-												<span className="text-lg font-bold text-gray-900">
+												<span className="text-base lg:text-lg font-bold text-gray-900">
 													BDT{' '}
 													{parseFloat(
 														relatedProduct.sale_price || relatedProduct.price
@@ -1366,6 +1372,30 @@ export default function ProductPage({ params }: ProductPageProps) {
 								</button>
 							</>
 						)}
+					</div>
+				</div>
+			)}
+			
+			{/* Sticky action buttons for mobile */}
+			{isButtonsSticky && productPageData && (
+				<div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 lg:hidden">
+					<div className="flex gap-3">
+						<Button
+							onClick={handleBuyNow}
+							disabled={!productPageData.canPurchase}
+							className="flex-1 py-3 text-base font-semibold bg-orange-600 hover:bg-orange-700"
+						>
+							Order Now
+						</Button>
+						<Button
+							onClick={() => handleAddToCart(false)}
+							disabled={!productPageData.canPurchase}
+							variant="outline"
+							className="flex-1 py-3 text-base font-semibold border-blue-600 text-blue-600 hover:bg-blue-50"
+						>
+							<ShoppingCart className="w-4 h-4 mr-2" />
+							Add to Cart
+						</Button>
 					</div>
 				</div>
 			)}
