@@ -28,7 +28,7 @@ import {
 interface CategoryFilters {
   search?: string;
   parent_id?: string | null;
-  is_active?: boolean;
+  is_active?: string;
   page?: number;
   per_page?: number;
   sort_by?: string;
@@ -39,8 +39,8 @@ export default function CategoriesPage() {
   const [filters, setFilters] = useState<CategoryFilters>({
     page: 1,
     per_page: 15,
-    sort_by: 'sort_order',
-    sort_order: 'asc',
+    sort_by: undefined,
+    sort_order: undefined,
   });
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
@@ -66,10 +66,13 @@ export default function CategoriesPage() {
 
   const handleClearFilters = () => {
     setFilters({
+      search: '',
+      parent_id: null,
+      is_active: '',
       page: 1,
       per_page: 15,
-      sort_by: 'sort_order',
-      sort_order: 'asc',
+      sort_by: undefined,
+      sort_order: undefined,
     });
   };
 
