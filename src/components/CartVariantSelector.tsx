@@ -38,7 +38,7 @@ export const CartVariantSelector: React.FC<CartVariantSelectorProps> = ({
 
   useEffect(() => {
     fetchVariants();
-  }, [productId]);
+  }, [productId]); // fetchVariants is stable due to useCallback with productId dependency
 
   useEffect(() => {
     if (currentVariantOptions) {

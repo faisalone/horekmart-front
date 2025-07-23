@@ -220,7 +220,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
       const paddingLength = Math.max(0, 10 - usedLength);
       const padding = 'X'.repeat(paddingLength);
       
-      let sku = `${hmPrefix}${nameCode}${padding}${productIdStr}`;
+      const sku = `${hmPrefix}${nameCode}${padding}${productIdStr}`;
       
       // Ensure exactly 10 characters
       return sku.length > 10 ? sku.substring(0, 10) : sku.padEnd(10, 'X');
@@ -235,7 +235,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     const paddingLength = Math.max(0, 10 - usedLength);
     const padding = 'X'.repeat(paddingLength);
     
-    let sku = `${hmPrefix}${nameCode}${padding}${timestamp}`;
+    const sku = `${hmPrefix}${nameCode}${padding}${timestamp}`;
     
     // Ensure exactly 10 characters
     return sku.length > 10 ? sku.substring(0, 10) : sku.padEnd(10, 'X');
@@ -249,7 +249,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         handleInputChange('sku', generatedSKU);
       }
     }
-  }, [formData.name, generateProductSKU, handleInputChange]);
+  }, [formData.name, formData.sku, generateProductSKU, handleInputChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
