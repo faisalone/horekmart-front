@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { adminApi } from '@/lib/admin-api';
 import { Category } from '@/types/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -319,9 +320,11 @@ function CategoriesList({
               {(() => {
                 const imageUrl = category.image_url || category.image;
                 return imageUrl ? (
-                  <img
+                  <Image
                     src={imageUrl}
                     alt={category.name}
+                    width={48}
+                    height={48}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -463,9 +466,11 @@ function CategoriesGrid({
         <Card key={category.id} className="overflow-hidden bg-gray-800 border-gray-600 hover:border-gray-500 transition-colors">
           {category.image && (
             <div className="aspect-video w-full">
-              <img
+              <Image
                 src={category.image}
                 alt={category.name}
+                width={300}
+                height={200}
                 className="w-full h-full object-cover"
               />
             </div>

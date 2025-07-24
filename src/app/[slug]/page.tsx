@@ -16,7 +16,10 @@ import { Product, Category } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 
-interface CategoryPageProps { }
+interface CategoryPageProps {
+	params: Promise<{ slug: string }>;
+	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
 
 export default function CategoryPage({ }: CategoryPageProps) {
 	const params = useParams();
@@ -82,7 +85,7 @@ export default function CategoryPage({ }: CategoryPageProps) {
 
 	// Filter and sort products
 	useEffect(() => {
-		let filtered = [...products];
+		const filtered = [...products];
 
 		// Apply sorting
 		filtered.sort((a, b) => {

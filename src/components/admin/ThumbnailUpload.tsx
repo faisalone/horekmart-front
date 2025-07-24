@@ -180,16 +180,17 @@ export function ThumbnailUpload({
               maxHeight: '150px' // Limit max height to prevent overflow
             }}
           >
-            <img
+            <Image
               src={thumbnailUrl}
               alt="Product thumbnail"
-              className="block"
+              width={200}
+              height={150}
+              className="block object-contain"
               style={{ 
                 maxWidth: '100%',
                 maxHeight: '100%',
                 width: 'auto',
                 height: 'auto',
-                objectFit: 'contain',
                 margin: '4px', // Small margin for better presentation
                 backgroundColor: 'white',
                 zIndex: 1,

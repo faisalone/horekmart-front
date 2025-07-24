@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { adminApi } from '@/lib/admin-api';
 import { Category } from '@/types/admin';
 import Button from '@/components/ui/Button';
@@ -275,10 +276,12 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
               </div>
               {formData.image && (
                 <div className="mt-2">
-                  <img
+                  <Image
                     src={formData.image}
                     alt="Category preview"
-                    className="w-20 h-20 object-cover rounded border"
+                    width={80}
+                    height={80}
+                    className="object-cover rounded border"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';

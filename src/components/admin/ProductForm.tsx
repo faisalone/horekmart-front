@@ -173,9 +173,9 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     }
   }, [product, mode]);
 
-  const handleInputChange = (field: keyof ProductFormData, value: any) => {
+  const handleInputChange = useCallback((field: keyof ProductFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const handleDeleteExistingImage = async (imageId: number, productId: string | number) => {
     try {

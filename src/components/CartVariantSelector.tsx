@@ -36,34 +36,6 @@ export const CartVariantSelector: React.FC<CartVariantSelectorProps> = ({
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(currentVariantOptions || {});
   const [availableVariations, setAvailableVariations] = useState<Record<string, VariationValue[]>>({});
 
-  useEffect(() => {
-    fetchVariants();
-  }, [productId]); // fetchVariants is stable due to useCallback with productId dependency
-
-  useEffect(() => {
-    if (currentVariantOptions) {
-      setSelectedOptions(currentVariantOptions);
-    }
-  }, [currentVariantOptions]);
-
-  const fetchVariants = useCallback(async () => {
-    try {
-      setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${apiUrl}/v1/products/${productId}/variants`);
-      const data = await response.json();
-      
-      if (data.success && data.data.variants) {
-        setVariants(data.data.variants);
-        extractAvailableVariations(data.data.variants);
-      }
-    } catch (error) {
-      console.error('Error fetching variants:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [productId]);
-
   const extractAvailableVariations = (variants: Variant[]) => {
     const variations: Record<string, VariationValue[]> = {};
     
@@ -84,6 +56,34 @@ export const CartVariantSelector: React.FC<CartVariantSelectorProps> = ({
     
     setAvailableVariations(variations);
   };
+
+  const fetchVariants = useCallback(async () => {
+    try {
+      setLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${apiUrl}/v1/products/${productId}/variants`);
+      const data = await response.json();
+      
+      if (data.success && data.data.variants) {
+        setVariants(data.data.variants);
+        extractAvailableVariations(data.data.variants);
+      }
+    } catch (error) {
+      console.error('Error fetching variants:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    fetchVariants();
+  }, [productId, fetchVariants]); // fetchVariants is stable due to useCallback with productId dependency
+
+  useEffect(() => {
+    if (currentVariantOptions) {
+      setSelectedOptions(currentVariantOptions);
+    }
+  }, [currentVariantOptions]);
 
   const findMatchingVariant = (options: Record<string, string>): Variant | null => {
     return variants.find(variant => {

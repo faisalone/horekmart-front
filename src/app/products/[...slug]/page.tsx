@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -80,6 +80,46 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 	const footerRef = useRef<HTMLDivElement>(null);
 
+	const getAllImages = useCallback((): Array<{
+		url: string;
+		alt: string;
+		type: string;
+	}> => {
+		const images: Array<{ url: string; alt: string; type: string }> = [];
+
+		if (product && product.images && product.images.length > 0) {
+			product.images.forEach((img: ProductImage, index: number) => {
+				images.push({
+					url: img.file_url,
+					alt: img.alt_text || `${product.name} - Image ${index + 1}`,
+					type: 'gallery',
+				});
+			});
+		}
+
+		if (
+			product &&
+			product.thumbnail &&
+			!images.some((img) => img.url === product.thumbnail)
+		) {
+			images.unshift({
+				url: product.thumbnail,
+				alt: `${product.name} - Main Image`,
+				type: 'thumbnail',
+			});
+		}
+
+		if (images.length === 0) {
+			images.push({
+				url: '/placeholder-product.svg',
+				alt: product?.name || 'Product',
+				type: 'placeholder',
+			});
+		}
+
+		return images;
+	}, [product]);
+
 	// Keyboard navigation for image modal
 	useEffect(() => {
 		const handleKeyPress = (e: KeyboardEvent) => {
@@ -101,7 +141,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 		window.addEventListener('keydown', handleKeyPress);
 		return () => window.removeEventListener('keydown', handleKeyPress);
-	}, [showImageModal, product]);
+	}, [showImageModal, product, getAllImages]);
 
 	// Handle sticky buttons on mobile/tablet
 	useEffect(() => {
@@ -351,45 +391,6 @@ export default function ProductPage({ params }: ProductPageProps) {
 	};
 
 	const pricingAnalysis = getPricingAnalysis();
-
-	const getAllImages = (): Array<{
-		url: string;
-		alt: string;
-		type: string;
-	}> => {
-		const images: Array<{ url: string; alt: string; type: string }> = [];
-
-		if (product.images && product.images.length > 0) {
-			product.images.forEach((img: ProductImage, index: number) => {
-				images.push({
-					url: img.file_url,
-					alt: img.alt_text || `${product.name} - Image ${index + 1}`,
-					type: 'gallery',
-				});
-			});
-		}
-
-		if (
-			product.thumbnail &&
-			!images.some((img) => img.url === product.thumbnail)
-		) {
-			images.unshift({
-				url: product.thumbnail,
-				alt: `${product.name} - Main Image`,
-				type: 'thumbnail',
-			});
-		}
-
-		if (images.length === 0) {
-			images.push({
-				url: '/placeholder-product.svg',
-				alt: product.name,
-				type: 'placeholder',
-			});
-		}
-
-		return images;
-	};
 
 	const allImages = getAllImages();
 	const hasMultipleImages = allImages.length > 1;

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-// import Image from 'next/image'; // Unused, removed to prevent CSS conflicts
+import Image from 'next/image';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -372,16 +372,17 @@ export function ImageUpload({
                     }}
                   >
                     {imageSrc ? (
-                      <img
+                      <Image
                         src={imageSrc}
                         alt={image.alt_text || `Image ${index + 1}`}
-                        className="block"
+                        width={200}
+                        height={120}
+                        className="block object-contain"
                         style={{ 
                           maxWidth: '100%',
                           maxHeight: '100%',
                           width: 'auto',
                           height: 'auto',
-                          objectFit: 'contain',
                           backgroundColor: 'white',
                           zIndex: 1,
                           position: 'relative'
