@@ -93,7 +93,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
   return (
     <header className="sticky top-0 z-50">
       {/* Top Header - Modern blue to purple gradient */}
-      <div className="text-white theme-gradient-blue-purple">
+            <div className="text-white theme-gradient-secondary">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center h-20">
             {/* Desktop Layout */}
@@ -123,7 +123,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   />
                   <button
                     type="submit"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full cursor-pointer theme-button-teal"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full cursor-pointer theme-button-secondary"
                   >
                     <Search className="h-5 w-5" />
                   </button>
@@ -211,7 +211,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   <button
                     type={isMobileSearchOpen ? "submit" : "button"}
                     onClick={isMobileSearchOpen ? (searchQuery.trim() ? undefined : toggleMobileSearch) : toggleMobileSearch}
-                    className="search-button relative z-10 w-12 h-12 rounded-full text-white flex items-center justify-center cursor-pointer theme-button-teal"
+                    className="search-button relative z-10 w-12 h-12 rounded-full text-white flex items-center justify-center cursor-pointer theme-button-secondary"
                   >
                     <Search className="h-5 w-5" />
                   </button>
@@ -285,7 +285,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
       </div>
 
       {/* Bottom Header - Departments and Menu - Desktop Only */}
-      <div className="hidden lg:block text-white theme-gradient-pink-red">
+      <div className="hidden lg:block text-white theme-gradient-primary">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center h-14">
             {/* Departments Dropdown - Enhanced smooth interaction */}
@@ -293,7 +293,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
               <button
                 onMouseEnter={handleDepartmentsMouseEnter}
                 onMouseLeave={handleDepartmentsMouseLeave}
-                className="flex items-center space-x-2 text-white px-4 py-2 rounded cursor-pointer transition-colors hover:bg-theme-primary-700/50"
+                className="flex items-center space-x-2 text-white px-4 py-2 rounded cursor-pointer transition-colors hover:bg-theme-primary-dark/50"
               >
                 <Menu className="h-4 w-4" />
                 <span className="text-base font-medium">Departments</span>

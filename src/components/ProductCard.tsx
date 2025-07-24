@@ -58,12 +58,12 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
           {/* Badges with theme styling */}
           <div className="absolute top-3 left-3 flex flex-col gap-1">
             {hasDiscount && (
-              <div className="bg-theme-green text-white text-xs font-bold px-2 py-1 rounded">
+              <div className="bg-theme-secondary text-white text-xs font-bold px-2 py-1 rounded">
                 Save {formatCurrency(price - salePrice!)}
               </div>
             )}
             {product.is_featured && (
-              <div className="bg-theme-blue text-white text-xs font-bold px-2 py-1 rounded">
+              <div className="bg-theme-primary text-white text-xs font-bold px-2 py-1 rounded">
                 Featured
               </div>
             )}
@@ -78,7 +78,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
           <button
             onClick={handleAddToCart}
             disabled={!inStock}
-            className="absolute bottom-3 right-3 p-2 theme-button-blue rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:bg-gray-400"
+            className="absolute bottom-3 right-3 p-2 theme-button-secondary rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:bg-gray-400"
           >
             <ShoppingCart className="h-4 w-4" />
           </button>
@@ -101,7 +101,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: Produ
             </div>
             
             {/* Product Name with theme hover color */}
-            <h3 className="text-base font-medium text-gray-900 line-clamp-2 group-hover:text-theme-teal transition-colors leading-tight">
+            <h3 className="text-base font-medium text-gray-900 line-clamp-2 group-hover:text-theme-secondary transition-colors leading-tight">
               {product.name}
             </h3>
             

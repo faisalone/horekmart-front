@@ -50,11 +50,9 @@ function CartContent() {
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
-              <Link href="/products">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <ArrowLeft className="w-4 h-4" />
-                  Continue Shopping
-                </Button>
+              <Link href="/products" className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 transition-colors px-4 py-2 rounded-md font-medium text-gray-700">
+                <ArrowLeft className="w-4 h-4" />
+                Continue Shopping
               </Link>
             </div>
           </div>
@@ -64,10 +62,8 @@ function CartContent() {
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
             <p className="text-gray-600 mb-6">Add some products to get started!</p>
-            <Link href="/products">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Browse Products
-              </Button>
+            <Link href="/products" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors inline-flex items-center justify-center">
+              Browse Products
             </Link>
           </div>
         </div>
@@ -92,11 +88,9 @@ function CartContent() {
                 <Trash2 className="w-4 h-4" />
                 Clear Cart
               </button>
-              <Link href="/products">
-                <Button variant="outline" className="flex items-center justify-center gap-2 w-full sm:w-auto text-gray-800 border-gray-800">
-                  <ArrowLeft className="w-4 h-4" />
-                  Continue Shopping
-                </Button>
+              <Link href="/products" className="flex items-center justify-center gap-2 w-full sm:w-auto text-gray-800 border border-gray-800 hover:bg-gray-50 transition-colors px-4 py-2 rounded-md font-medium">
+                <ArrowLeft className="w-4 h-4" />
+                Continue Shopping
               </Link>
             </div>
           </div>
@@ -306,7 +300,7 @@ function CartContent() {
               </div>
 
               {/* Checkout Button */}
-              <button
+              <Button 
                 onClick={async () => {
                   try {
                     const checkoutUrl = await prepareCartCheckout(state.items);
@@ -315,22 +309,15 @@ function CartContent() {
                     console.error('Error preparing checkout:', error);
                   }
                 }}
-                className="block mt-6 w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 mt-6"
               >
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  Proceed to Checkout
-                </Button>
-              </button>
+                Proceed to Checkout
+              </Button>
 
               {/* Continue Shopping */}
-			  <Link href="/products" className="block mt-3">
-				<Button
-				  variant="outline"
-				  className="w-full text-gray-800 border-gray-800"
-				>
-				  Continue Shopping
-				</Button>
-			  </Link>
+              <Link href="/products" className="block mt-3 w-full text-gray-800 border border-gray-800 hover:bg-gray-50 transition-colors px-4 py-2 rounded-md font-medium text-center">
+                Continue Shopping
+              </Link>
             </div>
           </div>
         </div>

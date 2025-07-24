@@ -10,12 +10,12 @@ const Badge = ({ className, variant = 'default', size = 'md', children, ...props
   const baseStyles = 'inline-flex items-center justify-center rounded-full font-medium ring-offset-background';
   
   const variants = {
-    default: 'bg-theme-gray-light text-gray-900',
-    secondary: 'bg-theme-blue-light text-theme-blue-dark border border-blue-200',
-    success: 'bg-theme-green-light text-theme-green-dark',
-    warning: 'bg-theme-orange-light text-theme-orange-dark',
-    error: 'bg-theme-red-light text-theme-red-dark',
-    info: 'bg-theme-cyan-light text-theme-cyan-dark',
+    default: 'bg-gray-100 text-gray-900',
+    secondary: 'bg-theme-secondary-light text-white',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800',
+    error: 'bg-theme-primary-light text-white',
+    info: 'bg-theme-secondary-light text-white',
   };
 
   const sizes = {

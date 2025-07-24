@@ -24,51 +24,14 @@
   --ring: 224 71.4% 4.1%;
   --radius: 0.5rem;
   
-  /* Primary Theme Colors - Material Design inspired */
-  --theme-red: #f22540;
-  --theme-red-light: #FFCDD2;
-  --theme-red-dark: #D32F2F;
+  /* Primary Theme Colors */
+  --theme-primary: #f22540;
+  --theme-primary-light: #ff5a70;
+  --theme-primary-dark: #d11330;
   
-  --theme-pink: #E91E63;
-  --theme-pink-light: #F8BBD9;
-  --theme-pink-dark: #C2185B;
-  
-  --theme-purple: #9C27B0;
-  --theme-purple-light: #E1BEE7;
-  --theme-purple-dark: #7B1FA2;
-  
-  --theme-deep-purple: #673AB7;
-  --theme-deep-purple-light: #D1C4E9;
-  --theme-deep-purple-dark: #512DA8;
-  
-  --theme-blue: #3F51B5;
-  --theme-blue-light: #C5CAE9;
-  --theme-blue-dark: #303F9F;
-  
-  --theme-cyan: #00BCD4;
-  --theme-cyan-light: #B2EBF2;
-  --theme-cyan-dark: #0097A7;
-  
-  --theme-teal: #009688;
-  --theme-teal-light: #B2DFDB;
-  --theme-teal-dark: #00695C;
-  
-  --theme-green: #4CAF50;
-  --theme-green-light: #C8E6C9;
-  --theme-green-dark: #388E3C;
-  
-  /* Accent Colors */
-  --theme-orange: #FF9800;
-  --theme-orange-light: #FFE0B2;
-  --theme-orange-dark: #F57C00;
-  
-  /* Neutral Colors */
-  --theme-gray: #9E9E9E;
-  --theme-gray-light: #F5F5F5;
-  --theme-gray-dark: #424242;
-
-  /* Additional Colors */
-  --theme-yellow-light: #ffe7b1;
+  --theme-secondary: #0074bf;
+  --theme-secondary-light: #2196f3;
+  --theme-secondary-dark: #005a9b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -95,217 +58,118 @@
   }
 }
 
-/* Modern Theme Classes with Variations */
-.hm-theme-light { background: var(--theme-yellow-light); color: var(--theme-red); }
+/* Modern Theme Classes */
+.hm-theme-light { background: #f8f9fa; color: var(--theme-primary); }
 
-/* Solid Color Backgrounds */
-.bg-theme-red { background: var(--theme-red); color: white; }
-.bg-theme-red-light { background: var(--theme-red-light); color: var(--theme-red-dark); }
-.bg-theme-red-dark { background: var(--theme-red-dark); color: white; }
+/* Primary Color Backgrounds */
+.bg-theme-primary { background: var(--theme-primary); color: white; }
+.bg-theme-primary-light { background: var(--theme-primary-light); color: white; }
+.bg-theme-primary-dark { background: var(--theme-primary-dark); color: white; }
 
-.bg-theme-pink { background: var(--theme-pink); color: white; }
-.bg-theme-pink-light { background: var(--theme-pink-light); color: var(--theme-pink-dark); }
-.bg-theme-pink-dark { background: var(--theme-pink-dark); color: white; }
+/* Secondary Color Backgrounds */
+.bg-theme-secondary { background: var(--theme-secondary); color: white; }
+.bg-theme-secondary-light { background: var(--theme-secondary-light); color: white; }
+.bg-theme-secondary-dark { background: var(--theme-secondary-dark); color: white; }
 
-.bg-theme-purple { background: var(--theme-purple); color: white; }
-.bg-theme-purple-light { background: var(--theme-purple-light); color: var(--theme-purple-dark); }
-.bg-theme-purple-dark { background: var(--theme-purple-dark); color: white; }
-
-.bg-theme-blue { background: var(--theme-blue); color: white; }
-.bg-theme-blue-light { background: var(--theme-blue-light); color: var(--theme-blue-dark); }
-.bg-theme-blue-dark { background: var(--theme-blue-dark); color: white; }
-
-.bg-theme-cyan { background: var(--theme-cyan); color: white; }
-.bg-theme-cyan-light { background: var(--theme-cyan-light); color: var(--theme-cyan-dark); }
-.bg-theme-cyan-dark { background: var(--theme-cyan-dark); color: white; }
-
-.bg-theme-teal { background: var(--theme-teal); color: white; }
-.bg-theme-teal-light { background: var(--theme-teal-light); color: var(--theme-teal-dark); }
-.bg-theme-teal-dark { background: var(--theme-teal-dark); color: white; }
-
-.bg-theme-green { background: var(--theme-green); color: white; }
-.bg-theme-green-light { background: var(--theme-green-light); color: var(--theme-green-dark); }
-.bg-theme-green-dark { background: var(--theme-green-dark); color: white; }
-
-.bg-theme-orange { background: var(--theme-orange); color: white; }
-.bg-theme-orange-light { background: var(--theme-orange-light); color: var(--theme-orange-dark); }
-.bg-theme-orange-dark { background: var(--theme-orange-dark); color: white; }
-
-/* Two-Color Gradient Combinations - Modern and Clean */
-.theme-gradient-blue-purple {
-  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
+/* Gradient Combinations - Same Color Family */
+.theme-gradient-primary {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
 }
 
-.theme-gradient-purple-pink {
-  background: linear-gradient(135deg, var(--theme-purple) 0%, var(--theme-pink) 100%);
+.theme-gradient-secondary {
+  background: linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-secondary-dark) 100%);
 }
 
-.theme-gradient-pink-red {
-  background: linear-gradient(135deg, var(--theme-pink) 0%, var(--theme-red) 100%);
+/* Alternative gradients with light variations */
+.theme-gradient-primary-light {
+  background: linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-primary) 100%);
 }
 
-.theme-gradient-teal-green {
-  background: linear-gradient(135deg, var(--theme-teal) 0%, var(--theme-green) 100%);
+.theme-gradient-secondary-light {
+  background: linear-gradient(135deg, var(--theme-secondary-light) 0%, var(--theme-secondary) 100%);
 }
 
-.theme-gradient-blue-teal {
-  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-teal) 100%);
+/* Diagonal Gradients */
+.theme-gradient-primary-diagonal {
+  background: linear-gradient(45deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
 }
 
-.theme-gradient-blue-cyan {
-  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-cyan) 100%);
+.theme-gradient-secondary-diagonal {
+  background: linear-gradient(45deg, var(--theme-secondary) 0%, var(--theme-secondary-dark) 100%);
 }
 
-.theme-gradient-cyan-teal {
-  background: linear-gradient(135deg, var(--theme-cyan) 0%, var(--theme-teal) 100%);
-}
-
-.theme-gradient-orange-red {
-  background: linear-gradient(135deg, var(--theme-orange) 0%, var(--theme-red) 100%);
-}
-
-.theme-gradient-purple-deep {
-  background: linear-gradient(135deg, var(--theme-purple) 0%, var(--theme-deep-purple) 100%);
-}
-
-/* Diagonal Gradients - Alternative Angle */
-.theme-gradient-blue-purple-diagonal {
-  background: linear-gradient(45deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
-}
-
-.theme-gradient-teal-cyan-diagonal {
-  background: linear-gradient(45deg, var(--theme-teal) 0%, var(--theme-cyan) 100%);
-}
-
-/* Text Gradients - Enhanced Collection */
-.theme-text-blue-purple {
-  background: linear-gradient(90deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
+/* Text Gradients - Same Color Family */
+.theme-text-primary {
+  background: linear-gradient(90deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.theme-text-purple-pink {
-  background: linear-gradient(90deg, var(--theme-purple) 0%, var(--theme-pink) 100%);
+.theme-text-secondary {
+  background: linear-gradient(90deg, var(--theme-secondary) 0%, var(--theme-secondary-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.theme-text-teal-green {
-  background: linear-gradient(90deg, var(--theme-teal) 0%, var(--theme-green) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.theme-text-blue-cyan {
-  background: linear-gradient(90deg, var(--theme-blue) 0%, var(--theme-cyan) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.theme-text-orange-red {
-  background: linear-gradient(90deg, var(--theme-orange) 0%, var(--theme-red) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Button Styles with Modern Look */
-.theme-button-blue { 
-  background: var(--theme-blue); 
+/* Button Styles */
+.theme-button-primary { 
+  background: var(--theme-primary); 
   color: white;
   border: 2px solid transparent;
   transition: all 0.3s ease;
 }
-.theme-button-blue:hover { 
-  background: var(--theme-blue-dark); 
+.theme-button-primary:hover { 
+  background: var(--theme-primary-dark); 
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(63, 81, 181, 0.3);
+  box-shadow: 0 10px 25px rgba(242, 37, 64, 0.3);
 }
 
-.theme-button-purple { 
-  background: var(--theme-purple); 
+.theme-button-secondary { 
+  background: var(--theme-secondary); 
   color: white;
   border: 2px solid transparent;
   transition: all 0.3s ease;
 }
-.theme-button-purple:hover { 
-  background: var(--theme-purple-dark); 
+.theme-button-secondary:hover { 
+  background: var(--theme-secondary-dark); 
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(156, 39, 176, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 116, 191, 0.3);
 }
 
-.theme-button-teal { 
-  background: var(--theme-teal); 
-  color: white;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.theme-button-teal:hover { 
-  background: var(--theme-teal-dark); 
-  cursor: pointer;
-}
-
-.theme-button-green { 
-  background: var(--theme-green); 
-  color: white;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.theme-button-green:hover { 
-  background: var(--theme-green-dark); 
-  cursor: pointer;
-}
-
-.theme-button-orange { 
-  background: var(--theme-orange); 
-  color: white;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.theme-button-orange:hover { 
-  background: var(--theme-orange-dark); 
-  cursor: pointer;
-}
-
-/* Gradient Buttons */
-.theme-button-gradient-blue-purple {
-  background: linear-gradient(135deg, var(--theme-blue) 0%, var(--theme-purple) 100%);
+/* Gradient Button */
+.theme-button-gradient-primary {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
   color: white;
   border: 2px solid transparent;
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
-.theme-button-gradient-blue-purple:hover {
+.theme-button-gradient-primary:hover {
   opacity: 0.9;
   cursor: pointer;
 }
 
-/* Fire Effects with Theme Colors - Enhanced */
-.theme-fire-blue {
-  background: linear-gradient(to top, rgba(63, 81, 181, 0.8) 0%, rgba(0, 188, 212, 0.3) 100%);
+.theme-button-gradient-secondary {
+  background: linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-secondary-dark) 100%);
+  color: white;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.theme-button-gradient-secondary:hover {
+  opacity: 0.9;
+  cursor: pointer;
 }
 
-.theme-fire-purple {
-  background: linear-gradient(to top, rgba(156, 39, 176, 0.8) 0%, rgba(103, 58, 183, 0.3) 100%);
+/* Fire Effects with Theme Colors */
+.theme-fire-primary {
+  background: linear-gradient(to top, rgba(242, 37, 64, 0.8) 0%, rgba(0, 116, 191, 0.3) 100%);
 }
 
-.theme-fire-teal {
-  background: linear-gradient(to top, rgba(0, 150, 136, 0.8) 0%, rgba(0, 188, 212, 0.3) 100%);
-}
-
-.theme-fire-orange {
-  background: linear-gradient(to top, rgba(255, 152, 0, 0.8) 0%, rgba(244, 67, 54, 0.3) 100%);
-}
-
-.theme-fire-pink {
-  background: linear-gradient(to top, rgba(233, 30, 99, 0.8) 0%, rgba(156, 39, 176, 0.3) 100%);
+.theme-fire-secondary {
+  background: linear-gradient(to top, rgba(0, 116, 191, 0.8) 0%, rgba(242, 37, 64, 0.3) 100%);
 }
 
 /* Banner/Block Overlays */
@@ -313,23 +177,29 @@
   background: linear-gradient(135deg, rgba(33, 33, 33, 0.8) 0%, rgba(66, 66, 66, 0.9) 100%);
 }
 
-.theme-overlay-blue {
-  background: linear-gradient(135deg, rgba(63, 81, 181, 0.8) 0%, rgba(103, 58, 183, 0.9) 100%);
+.theme-overlay-primary {
+  background: linear-gradient(135deg, rgba(242, 37, 64, 0.8) 0%, rgba(209, 19, 48, 0.9) 100%);
 }
 
-.theme-overlay-teal {
-  background: linear-gradient(135deg, rgba(0, 150, 136, 0.8) 0%, rgba(0, 188, 212, 0.9) 100%);
+.theme-overlay-secondary {
+  background: linear-gradient(135deg, rgba(0, 116, 191, 0.8) 0%, rgba(0, 90, 155, 0.9) 100%);
 }
 
 /* Badge Styles */
-.theme-badge-yellow {
-  background: var(--theme-orange);
-  color: #000;
+.theme-badge-primary {
+  background: var(--theme-primary);
+  color: white;
+  font-weight: bold;
+}
+
+.theme-badge-secondary {
+  background: var(--theme-secondary);
+  color: white;
   font-weight: bold;
 }
 
 .theme-badge-gradient {
-  background: linear-gradient(135deg, var(--theme-orange) 0%, var(--theme-red) 100%);
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
   color: white;
   font-weight: bold;
 }

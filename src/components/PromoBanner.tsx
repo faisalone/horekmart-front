@@ -41,33 +41,33 @@ const PromoBanner = () => {
   }, []);
 
   return (
-    <div className="relative overflow-hidden theme-gradient-purple-pink py-4 md:py-6 rounded-2xl shadow-2xl border-2 border-white/20">
+    <div className="relative overflow-hidden theme-gradient-secondary py-4 md:py-6 rounded-2xl shadow-2xl border-2 border-white/20">
       {/* Fire effects using theme colors */}
-      <div className="absolute inset-0 theme-gradient-purple-pink opacity-80"></div>
+      <div className="absolute inset-0 theme-gradient-primary opacity-80"></div>
       
       {/* Fire base glow */}
-      <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-purple-600/40 to-transparent"></div>
+      <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-red-600/40 to-transparent"></div>
       
       {/* Real fire flames - proper proportions with theme colors */}
       <div className="absolute inset-0 opacity-40">
         
         {/* Main fire cluster - realistic sizes with theme colors */}
-        <div className="absolute bottom-0 left-8 w-6 h-12 theme-fire-purple rounded-t-full transform origin-bottom" 
+        <div className="absolute bottom-0 left-8 w-6 h-12 theme-fire-primary rounded-t-full transform origin-bottom" 
              style={{animation: 'realFlame 4s ease-in-out infinite'}}></div>
              
-        <div className="absolute bottom-0 left-12 w-4 h-8 theme-fire-pink rounded-t-full transform origin-bottom" 
+        <div className="absolute bottom-0 left-12 w-4 h-8 theme-fire-secondary rounded-t-full transform origin-bottom" 
              style={{animation: 'realFlame 3.5s ease-in-out infinite reverse'}}></div>
         
-        <div className="absolute bottom-0 left-1/2 w-8 h-14 theme-fire-purple rounded-t-full transform origin-bottom" 
+        <div className="absolute bottom-0 left-1/2 w-8 h-14 theme-fire-primary rounded-t-full transform origin-bottom" 
              style={{animation: 'realFlame 5s ease-in-out infinite'}}></div>
              
-        <div className="absolute bottom-0 left-1/2 ml-6 w-5 h-10 theme-fire-pink rounded-t-full transform origin-bottom" 
+        <div className="absolute bottom-0 left-1/2 ml-6 w-5 h-10 theme-fire-secondary rounded-t-full transform origin-bottom" 
              style={{animation: 'realFlame 3.8s ease-in-out infinite reverse'}}></div>
         
-        <div className="absolute bottom-0 right-8 w-7 h-13 theme-fire-purple rounded-t-full transform origin-bottom" 
+        <div className="absolute bottom-0 right-8 w-7 h-13 theme-fire-primary rounded-t-full transform origin-bottom" 
              style={{animation: 'realFlame 4.5s ease-in-out infinite'}}></div>
              
-        <div className="absolute bottom-0 right-14 w-4 h-9 theme-fire-pink rounded-t-full transform origin-bottom" 
+        <div className="absolute bottom-0 right-14 w-4 h-9 theme-fire-secondary rounded-t-full transform origin-bottom" 
              style={{animation: 'realFlame 4.2s ease-in-out infinite reverse'}}></div>
         
         {/* Small flickering flames */}
@@ -153,8 +153,8 @@ const PromoBanner = () => {
             href="/walmart-plus" 
             className="relative group order-4 md:order-4"
           >
-            <div className="absolute -inset-1 theme-gradient-orange-red rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-            <div className="relative theme-button-gradient-blue-purple text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-wider hover:scale-105 transform transition-all duration-300 shadow-xl border-2 border-white/30">
+            <div className="absolute -inset-1 theme-gradient-primary rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
+            <div className="relative theme-button-gradient-secondary text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-wider hover:scale-105 transform transition-all duration-300 shadow-xl border-2 border-white/30">
               💥 Join Now 💥
             </div>
           </Link>

@@ -105,7 +105,7 @@ export default function HomePage() {
                   title={cat.name}
                   description={cat.description || ''}
                   imageUrl={cat.image || 'https://placehold.co/400x300?text=Category'}
-                  link={`/category/${cat.slug}`}
+                  link={`/${cat.slug}`}
                   className={
                     idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
                     idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
@@ -139,18 +139,18 @@ export default function HomePage() {
       </section>
       </AnimatedElement>
 
-      {/* Flash Deals Section with navbar-consistent theme styling */}
+      {/* Flash Deals Section with new theme colors */}
       <AnimatedElement animation="slideUp" delay={300}>
-        <section className="theme-gradient-blue-purple text-white py-8">
+        <section className="theme-gradient-primary text-white py-8">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <h2 className="text-3xl font-bold">Flash Deals</h2>
-              <div className="bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse float-animation">
+              <div className="bg-white text-theme-primary px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse float-animation">
                 ⚡ Ends in 2h 15m
               </div>
             </div>
-            <Link href="/deals" className="text-white hover:text-blue-200 flex items-center text-lg font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
+            <Link href="/deals" className="text-white hover:text-red-200 flex items-center text-lg font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
               Shop all <ArrowRight className="ml-1 h-5 w-5" />
             </Link>
           </div>
@@ -167,13 +167,13 @@ export default function HomePage() {
       </section>
       </AnimatedElement>
 
-      {/* Popular Products Grid with better styling */}
+      {/* Popular Products Grid with new theme colors */}
       <AnimatedElement animation="scaleUp" delay={400}>
         <section className="py-12 bg-gradient-to-br from-gray-50 to-blue-50">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Popular items</h2>
-            <Link href="/products" className="text-theme-blue hover:text-theme-blue-dark flex items-center text-lg font-semibold bg-theme-blue/10 hover:bg-theme-blue/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
+            <Link href="/products" className="text-theme-secondary hover:text-theme-secondary-dark flex items-center text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
               Shop all <ArrowRight className="ml-1 h-5 w-5" />
             </Link>
           </div>
@@ -188,13 +188,13 @@ export default function HomePage() {
       </section>
       </AnimatedElement>
 
-      {/* Brand Spotlight with consistent theme styling and improved design */}
+      {/* Brand Spotlight with new theme colors */}
       <AnimatedElement animation="slideLeft" delay={500}>
-        <section className="py-12 bg-gradient-to-br from-purple-50 to-blue-50 relative">
+        <section className="py-12 bg-gradient-to-br from-red-50 to-blue-50 relative">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Shop by brand</h2>
-            <Link href="/brands" className="text-theme-purple hover:text-theme-purple-dark transition-colors text-lg font-semibold flex items-center bg-theme-purple/10 hover:bg-theme-purple/20 px-4 py-2 rounded-full cursor-pointer">
+            <Link href="/brands" className="text-theme-primary hover:text-theme-primary-dark transition-colors text-lg font-semibold flex items-center bg-theme-primary/10 hover:bg-theme-primary/20 px-4 py-2 rounded-full cursor-pointer">
               All brands <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
@@ -207,9 +207,9 @@ export default function HomePage() {
                 const slider = document.getElementById('brand-slider');
                 if (slider) slider.scrollBy({ left: -300, behavior: 'smooth' });
               }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-purple-100"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-red-100"
             >
-              <ArrowLeft className="h-6 w-6 text-theme-purple" />
+              <ArrowLeft className="h-6 w-6 text-theme-primary" />
             </button>
 
             {/* Right Arrow - Centered on right side */}
@@ -218,16 +218,16 @@ export default function HomePage() {
                 const slider = document.getElementById('brand-slider');
                 if (slider) slider.scrollBy({ left: 300, behavior: 'smooth' });
               }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-purple-100"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-red-100"
             >
-              <ArrowRight className="h-6 w-6 text-theme-purple" />
+              <ArrowRight className="h-6 w-6 text-theme-primary" />
             </button>
 
             {/* Left Gradient Mask */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-purple-50 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-red-50 to-transparent z-10 pointer-events-none"></div>
             
             {/* Right Gradient Mask */}
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-purple-50 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-red-50 to-transparent z-10 pointer-events-none"></div>
 
             {/* Slider Container */}
             <div 
@@ -253,7 +253,7 @@ export default function HomePage() {
                 <Link
                   key={brand.name}
                   href={`/brands/${brand.name.toLowerCase()}`}
-                  className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-purple-100/50"
+                  className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-red-100/50"
                 >
                   {/* Brand Logo */}
                   <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -269,10 +269,10 @@ export default function HomePage() {
                   {/* Text and Arrow Block - slides in from left on hover */}
                   <div className="flex items-center justify-center gap-2 h-6 overflow-hidden">
                     {/* Arrow - slides in from left */}
-                    <ArrowRight className="h-6 w-6 text-theme-purple transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
+                    <ArrowRight className="h-6 w-6 text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
                     
                     {/* Product Count Text - slides in from left */}
-                    <p className="font-bold text-gray-900 group-hover:text-theme-purple transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap">
+                    <p className="font-bold text-gray-900 group-hover:text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap">
                       {brand.items} Products
                     </p>
                   </div>
@@ -284,13 +284,13 @@ export default function HomePage() {
       </section>
       </AnimatedElement>
 
-      {/* Newsletter Subscription with PromoBanner colors but newsletter structure */}
+      {/* Newsletter Subscription with new theme colors */}
       <AnimatedElement animation="slideUp" delay={600}>
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="relative overflow-hidden bg-theme-blue py-8 md:py-12 rounded-2xl shadow-2xl border-2 border-white/20">
+            <div className="relative overflow-hidden bg-theme-secondary py-8 md:py-12 rounded-2xl shadow-2xl border-2 border-white/20">
             {/* Subtle overlay */}
-            <div className="absolute inset-0 bg-theme-blue opacity-90"></div>
+            <div className="absolute inset-0 bg-theme-secondary opacity-90"></div>
             
             {/* Subtle glow */}
             <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
@@ -314,7 +314,7 @@ export default function HomePage() {
                     className="w-full pl-4 pr-36 py-4 rounded-full text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white/50 focus:outline-none bg-gradient-to-b from-white to-gray-100 shadow-lg border border-gray-200 font-medium"
                   />
                   <div className="absolute right-2 top-2 group">
-                    <button className="theme-button-gradient-blue-purple text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-wider hover:scale-105 transform transition-all duration-300 shadow-xl border-2 border-white/30 cursor-pointer">
+                    <button className="theme-button-gradient-secondary text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-wider hover:scale-105 transform transition-all duration-300 shadow-xl border-2 border-white/30 cursor-pointer">
                       Subscribe
                     </button>
                   </div>
