@@ -73,17 +73,37 @@ export default {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
-				// Main Theme Colors
-				'theme-primary': {
-					DEFAULT: '#f22540',
-					light: '#ff5a70',
-					dark: '#d11330',
+				// Main Theme Colors - Cosmic Galaxy Theme
+				'hm-theme-secondary': {
+					50: '#faf7ff',
+					100: '#f3edff',
+					200: '#e9ddff',
+					300: '#d4bdff',
+					400: '#b794ff',
+					500: '#9c6aff',
+					600: '#ffe7b1',
+					700: '#7c3aff',
+					800: '#6a2fa3',
+					900: '#5a2a87',
+					950: '#3b1a5c',
 				},
-				'theme-secondary': {
-					DEFAULT: '#0074bf',
-					light: '#2196f3',
-					dark: '#005a9b',
+				'theme-accent': {
+					50: '#f0f9ff',
+					100: '#e0f2fe',
+					200: '#bae6fd',
+					300: '#7dd3fc',
+					400: '#38bdf8',
+					500: '#0ea5e9',
+					600: '#0284c7',
+					700: '#0369a1',
+					800: '#075985',
+					900: '#0c4a6e',
+					950: '#082f49',
 				},
+				// Gradient combinations
+				'cosmic-from': '#7c3aff', // Deep purple
+				'cosmic-via': '#ff0066', // Magenta
+				'cosmic-to': '#0ea5e9', // Electric blue
 				gray: {
 					50: '#f9fafb',
 					100: '#f3f4f6',
@@ -105,14 +125,14 @@ export default {
 			},
 			// Add gradient utilities for the theme
 			backgroundImage: {
+				'cosmic-gradient':
+					'linear-gradient(135deg, var(--cosmic-from, #7c3aff) 0%, var(--cosmic-via, #ff0066) 50%, var(--cosmic-to, #0ea5e9) 100%)',
+				'cosmic-gradient-reverse':
+					'linear-gradient(315deg, var(--cosmic-from, #7c3aff) 0%, var(--cosmic-via, #ff0066) 50%, var(--cosmic-to, #0ea5e9) 100%)',
 				'theme-primary-gradient':
-					'linear-gradient(135deg, #f22540 0%, #d11330 100%)',
-				'theme-secondary-gradient':
-					'linear-gradient(135deg, #0074bf 0%, #005a9b 100%)',
-				'theme-primary-light-gradient':
-					'linear-gradient(135deg, #ff5a70 0%, #f22540 100%)',
-				'theme-secondary-light-gradient':
-					'linear-gradient(135deg, #2196f3 0%, #0074bf 100%)',
+					'linear-gradient(135deg, var(--theme-primary-600, #8a4fff) 0%, var(--theme-primary-700, #7c3aff) 100%)',
+				'theme-accent-gradient':
+					'linear-gradient(135deg, var(--theme-secondary-500, #ff2d92) 0%, var(--theme-accent-500, #0ea5e9) 100%)',
 			},
 		},
 	},

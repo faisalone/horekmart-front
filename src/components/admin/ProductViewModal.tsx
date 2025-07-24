@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Head from 'next/head';
 import { Product } from '@/types/admin';
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Button from '@/components/ui/Button';
 import { getProductImageUrl, getProductMetaImageUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
+import RichTextDisplay from '@/components/ui/RichTextDisplay';
 import { 
   Package, 
   DollarSign, 
@@ -84,6 +85,23 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
   React.useEffect(() => {
     setSelectedImageIndex(0);
   }, [product?.id]);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onOpenChange(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener('keydown', handleEscape);
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [open, onOpenChange]);
+
   if (!product || !open) return null;
 
   const getStatusVariant = (status: string) => {
@@ -116,8 +134,14 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
           <meta name="twitter:image" content={getProductMetaImageUrl(product)} />
         </Head>
       )}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-gray-800 border border-gray-700 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/30 backdrop-blur-sm"
+        onClick={() => onOpenChange(false)}
+      >
+      <div 
+        className="bg-gray-800 border border-gray-700 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div>
@@ -131,7 +155,8 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
             variant="ghost"
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white hover:bg-gray-700 transition-colors rounded-lg p-2"
+            title="Close Modal"
           >
             <XIcon className="w-5 h-5" />
           </Button>
@@ -404,9 +429,7 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
                     <CardTitle className="text-white text-lg">Description</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-300 leading-relaxed">
-                      {product.description}
-                    </p>
+                    <RichTextDisplay content={product.description} textColor="white" />
                   </CardContent>
                 </Card>
               )}

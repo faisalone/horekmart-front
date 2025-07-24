@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import { publicApi } from '@/lib/public-api';
 import { Product, Category } from '@/types';
 import BannerBlock from '@/components/BannerBlock';
+import BannerBlockSkeleton from '@/components/BannerBlockSkeleton';
 import AnimatedElement from '@/components/AnimatedElement';
 import { AnimatedSection, useSequentialAnimation } from '@/lib/animations';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -99,41 +100,70 @@ export default function HomePage() {
             
             {/* Enhanced 3 Row Masonry Grid Layout with better mobile experience */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-6">
-              {categories.map((cat, idx) => (
-                <BannerBlock
-                  key={cat.id}
-                  title={cat.name}
-                  description={cat.description || ''}
-                  imageUrl={cat.image || 'https://placehold.co/400x300?text=Category'}
-                  link={`/${cat.slug}`}
-                  className={
-                    idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
-                    idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
-                    idx === 2 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3' :
-                    idx === 3 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6' :
-                    idx === 4 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7' :
-                    idx === 5 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8' :
-                    idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
-                    idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
-                    idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
-                    ''
-                  }
-                  height={
-                    idx === 6 ? 'h-[25rem]' :
-                    idx === 2 ? 'h-64' :
-                    idx === 0 || idx === 1 ? 'h-64' :
-                    idx === 3 || idx === 4 || idx === 5 || idx === 7 || idx === 8 ? 'h-48' :
-                    'h-48'
-                  }
-                  textSize={
-                    idx === 2 ? 'xlarge' :
-                    idx === 6 || idx === 8 ? 'large' :
-                    idx === 0 || idx === 1 || idx === 7 ? 'medium' :
-                    idx === 3 || idx === 4 || idx === 5 ? 'small' :
-                    'medium'
-                  }
-                />
-              ))}
+              {loading ? (
+                // Show skeleton loaders while loading
+                Array.from({ length: 9 }, (_, idx) => (
+                  <BannerBlockSkeleton
+                    key={idx}
+                    className={
+                      idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
+                      idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
+                      idx === 2 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3' :
+                      idx === 3 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6' :
+                      idx === 4 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7' :
+                      idx === 5 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8' :
+                      idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
+                      idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
+                      idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
+                      ''
+                    }
+                    height={
+                      idx === 6 ? 'h-[25rem]' :
+                      idx === 2 ? 'h-64' :
+                      idx === 0 || idx === 1 ? 'h-64' :
+                      idx === 3 || idx === 4 || idx === 5 || idx === 7 || idx === 8 ? 'h-48' :
+                      'h-48'
+                    }
+                  />
+                ))
+              ) : (
+                // Show actual categories when loaded
+                categories.map((cat, idx) => (
+                  <BannerBlock
+                    key={cat.id}
+                    title={cat.name}
+                    description={cat.description || ''}
+                    imageUrl={cat.image || 'https://placehold.co/400x300?text=Category'}
+                    link={`/${cat.slug}`}
+                    className={
+                      idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
+                      idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
+                      idx === 2 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3' :
+                      idx === 3 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6' :
+                      idx === 4 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7' :
+                      idx === 5 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8' :
+                      idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
+                      idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
+                      idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
+                      ''
+                    }
+                    height={
+                      idx === 6 ? 'h-[25rem]' :
+                      idx === 2 ? 'h-64' :
+                      idx === 0 || idx === 1 ? 'h-64' :
+                      idx === 3 || idx === 4 || idx === 5 || idx === 7 || idx === 8 ? 'h-48' :
+                      'h-48'
+                    }
+                    textSize={
+                      idx === 2 ? 'xlarge' :
+                      idx === 6 || idx === 8 ? 'large' :
+                      idx === 0 || idx === 1 || idx === 7 ? 'medium' :
+                      idx === 3 || idx === 4 || idx === 5 ? 'small' :
+                      'medium'
+                    }
+                  />
+                ))
+              )}
             </div>
         </div>
       </section>
@@ -155,13 +185,21 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {saleProducts.slice(0, 8).map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {loading ? (
+              // Show skeleton loading cards
+              Array.from({ length: 8 }, (_, index) => (
+                <ProductCard key={`skeleton-${index}`} isLoading={true} />
+              ))
+            ) : (
+              // Show actual sale products
+              saleProducts.slice(0, 8).map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onAddToCart={handleAddToCart}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -183,6 +221,7 @@ export default function HomePage() {
             onAddToCart={handleAddToCart}
             onAddToWishlist={handleAddToWishlist}
             className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+            loading={loading}
           />
         </div>
       </section>

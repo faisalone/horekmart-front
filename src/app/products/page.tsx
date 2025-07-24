@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Filter, Grid, List } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import Button from '@/components/ui/Button';
+import SortingHeader from '@/components/SortingHeader';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
 import { Product, Category, SearchFilters } from '@/types';
@@ -20,11 +21,20 @@ export default function ProductsPage() {
     sortOrder: 'asc',
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Cart and wishlist contexts
   const { toggleItem: toggleWishlist } = useWishlist();
   const { addToCart: addToCartService } = useProductCheckout();
+
+  // Sort options for the sorting header
+  const sortOptions = [
+    { value: 'name-asc', label: '🔤 Name A-Z' },
+    { value: 'name-desc', label: '🔤 Name Z-A' },
+    { value: 'price-asc', label: '💰 Price: Low to High' },
+    { value: 'price-desc', label: '💎 Price: High to Low' },
+    { value: 'rating-desc', label: '⭐ Highest Rated' },
+    { value: 'newest-desc', label: '🆕 Newest First' }
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,15 +171,24 @@ export default function ProductsPage() {
     toggleWishlist(wishlistItem);
   };
 
+  // Handler for sort change from SortingHeader
+  const handleSortChange = (value: string) => {
+    const [sortBy, sortOrder] = value.split('-');
+    handleFilterChange({ sortBy: sortBy as any, sortOrder: sortOrder as any });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">All Products</h1>
-        <p className="text-gray-600">
-          Discover our complete collection of {products.length} amazing products
-        </p>
-      </div>
+      {/* Sorting Header */}
+      <SortingHeader
+        totalProducts={products.length}
+        filteredProducts={filteredProducts.length}
+        sortBy={`${filters.sortBy}-${filters.sortOrder}`}
+        onSortChange={handleSortChange}
+        sortOptions={sortOptions}
+        showAdditionalInfo={false}
+        isLoading={loading}
+      />
 
       {/* Filters and Controls */}
       <div className="flex flex-col lg:flex-row gap-8">
@@ -342,74 +361,13 @@ export default function ProductsPage() {
 
         {/* Main Content */}
         <div className="flex-1">
-          {/* Controls Bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="lg:hidden"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </Button>
-              <span className="text-sm text-gray-600">
-                {filteredProducts.length} products found
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Sort */}
-              <select
-                value={`${filters.sortBy}-${filters.sortOrder}`}
-                onChange={(e) => {
-                  const [sortBy, sortOrder] = e.target.value.split('-');
-                  handleFilterChange({ sortBy: sortBy as any, sortOrder: sortOrder as any });
-                }}
-                className="text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="name-asc">Name A-Z</option>
-                <option value="name-desc">Name Z-A</option>
-                <option value="price-asc">Price Low to High</option>
-                <option value="price-desc">Price High to Low</option>
-                <option value="rating-desc">Highest Rated</option>
-                <option value="newest-desc">Newest First</option>
-              </select>
-
-              {/* View Mode */}
-              <div className="flex border border-gray-300 rounded-md overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'p-2 text-sm',
-                    viewMode === 'grid' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  )}
-                >
-                  <Grid className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'p-2 text-sm',
-                    viewMode === 'list' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  )}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Products Grid */}
           <ProductGrid
             products={filteredProducts}
             onAddToCart={handleAddToCart}
             onAddToWishlist={handleAddToWishlist}
+            loading={loading}
+            className="grid-cols-2 lg:grid-cols-3"
           />
         </div>
       </div>

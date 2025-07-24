@@ -20,19 +20,11 @@ const ProductGrid = ({
   if (loading) {
     return (
       <div className={cn(
-        'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6',
-        className
+        'grid gap-6',
+        className || 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
       )}>
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="aspect-square bg-gray-200 animate-pulse" />
-            <div className="p-4 space-y-2">
-              <div className="h-4 bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
-              <div className="h-6 bg-gray-200 rounded animate-pulse w-1/3" />
-            </div>
-          </div>
+          <ProductCard key={i} isLoading={true} />
         ))}
       </div>
     );
@@ -51,8 +43,8 @@ const ProductGrid = ({
 
   return (
     <div className={cn(
-      'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6',
-      className
+      'grid gap-6',
+      className || 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
     )}>
       {products.map((product) => (
         <ProductCard

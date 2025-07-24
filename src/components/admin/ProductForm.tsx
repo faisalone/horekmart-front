@@ -13,6 +13,7 @@ import { ThumbnailUpload } from '@/components/admin/ThumbnailUpload';
 import { ImageUpload, UploadedImage as ImageUploadType } from '@/components/admin/ImageUpload';
 import ProductVariantManager from '@/components/admin/ProductVariantManager';
 import { useToast } from '@/hooks/useToast';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 import {
   Eye,
   EyeOff,
@@ -348,13 +349,11 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Description *
                 </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Enter product description"
-                  required
-                  rows={4}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                <RichTextEditor
+                  content={formData.description}
+                  onChange={(content) => handleInputChange('description', content)}
+                  placeholder="Enter detailed product description with formatting..."
+                  disabled={isLoading}
                 />
               </div>
 

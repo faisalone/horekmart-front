@@ -37,6 +37,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
+import RichTextDisplay from '@/components/ui/RichTextDisplay';
 
 interface ProductPageProps {
 	params: Promise<{ slug: string[] }>;
@@ -944,13 +945,23 @@ export default function ProductPage({ params }: ProductPageProps) {
 												<div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
 												Description
 											</h4>
-											<p className="text-gray-700 text-base lg:text-lg leading-relaxed">
-												{showFullDescription
-													? product.description
-													: product.description.length > 300
-													? `${product.description.substring(0, 300)}...`
-													: product.description}
-											</p>
+											<div className="text-gray-700 text-base lg:text-lg leading-relaxed">
+												{showFullDescription ? (
+													<RichTextDisplay 
+														content={product.description} 
+														textColor="gray"
+													/>
+												) : (
+													<RichTextDisplay 
+														content={
+															product.description.length > 300
+																? `${product.description.substring(0, 300)}...`
+																: product.description
+														}
+														textColor="gray"
+													/>
+												)}
+											</div>
 											{product.description.length > 300 && (
 												<button
 													onClick={() =>

@@ -6,13 +6,59 @@ import { cn, getProductImageUrl, getProductUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 
 export interface ProductCardProps {
-  product: Product;
+  product?: Product;
   onAddToCart?: (product: Product) => void;
   onAddToWishlist?: (product: Product) => void;
   className?: string;
+  isLoading?: boolean;
 }
 
-const ProductCard = ({ product, onAddToCart, onAddToWishlist, className }: ProductCardProps) => {
+const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoading = false }: ProductCardProps) => {
+  // Show skeleton if loading or no product
+  if (isLoading || !product) {
+    return (
+      <div className={cn(
+        'group relative bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse',
+        className
+      )}>
+        {/* Image skeleton */}
+        <div className="relative aspect-square overflow-hidden bg-gray-200">
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer"></div>
+          
+          {/* Action buttons skeleton */}
+          <div className="absolute top-3 right-3 w-8 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-3 right-3 w-8 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {/* Price skeleton */}
+          <div className="flex items-baseline gap-2">
+            <div className="h-6 bg-gray-300 rounded w-20 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+          </div>
+          
+          {/* Product name skeleton */}
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-300 rounded w-full animate-pulse"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4 animate-pulse"></div>
+          </div>
+          
+          {/* Category and stock skeleton */}
+          <div className="flex items-center justify-between">
+            <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+            <div className="h-5 bg-gray-200 rounded w-12 animate-pulse"></div>
+          </div>
+
+          {/* Stock status skeleton */}
+          <div className="flex items-center justify-between">
+            <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+            <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Normalize the product data to handle both API and legacy formats
   const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
   const salePrice = product.sale_price ? parseFloat(product.sale_price) : product.salePrice;
