@@ -4,6 +4,7 @@ import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Product } from '@/types';
 import { cn, getProductImageUrl, getProductUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
+import { AutoFontText } from '@/components/AutoFontText';
 
 export interface ProductCardProps {
   product?: Product;
@@ -117,7 +118,9 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
           <div className="space-y-2">
             {/* Category */}
             <div className="text-sm text-gray-500">
-              {product.category?.name || 'General'}
+              <AutoFontText>
+                {product.category?.name || 'General'}
+              </AutoFontText>
             </div>
             
             {/* Price - Stack vertically on mobile, horizontal on desktop */}
@@ -134,13 +137,17 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
             
             {/* Product Name with theme hover color - Allow up to 3 lines */}
             <h3 className="text-base font-medium text-gray-900 line-clamp-3 group-hover:text-theme-secondary transition-colors leading-tight">
-              {product.name}
+              <AutoFontText>
+                {product.name}
+              </AutoFontText>
             </h3>
             
             {/* Vendor */}
             {product.vendor && (
               <div className="text-sm text-gray-400">
-                by {product.vendor.business_name}
+                <AutoFontText>
+                  by {product.vendor.business_name}
+                </AutoFontText>
               </div>
             )}
           </div>

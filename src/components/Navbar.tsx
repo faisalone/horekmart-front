@@ -7,6 +7,7 @@ import { Search, ShoppingCart, Menu, X, ChevronDown, Store } from 'lucide-react'
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/currency';
+import { AutoFontText } from '@/components/AutoFontText';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface NavbarProps {}
@@ -146,8 +147,12 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     </div>
                   </div>
                   <div className="text-base">
-                    <div className="text-sm opacity-80">Reorder</div>
-                    <div className="font-medium">My Items</div>
+                    <div className="text-sm opacity-80">
+                      <AutoFontText>Reorder</AutoFontText>
+                    </div>
+                    <div className="font-medium">
+                      <AutoFontText>My Items</AutoFontText>
+                    </div>
                   </div>
                 </Link>
 
@@ -167,7 +172,9 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     )}
                   </div>
                   <div className="text-base">
-                    <div className="text-sm opacity-80">Cart</div>
+                    <div className="text-sm opacity-80">
+                      <AutoFontText>Cart</AutoFontText>
+                    </div>
                     <div className="font-medium">{formatCurrency(cartState.totalPrice)}</div>
                   </div>
                 </Link>
@@ -182,7 +189,9 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 >
                   <Store className="h-5 w-5" />
                   <span className="text-sm font-bold">
-                    {loading ? '...' : isAuthenticated ? 'Dashboard' : 'Start Selling'}
+                    <AutoFontText>
+                      {loading ? '...' : isAuthenticated ? 'Dashboard' : 'Start Selling'}
+                    </AutoFontText>
                   </span>
                 </button>
               </div>
@@ -296,7 +305,9 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 className="flex items-center space-x-2 text-white px-4 py-2 rounded cursor-pointer transition-colors hover:bg-theme-primary-dark/50"
               >
                 <Menu className="h-4 w-4" />
-                <span className="text-base font-medium">Departments</span>
+                <span className="text-base font-medium">
+                  <AutoFontText>Departments</AutoFontText>
+                </span>
                 <ChevronDown className="h-3 w-3" />
               </button>
               
@@ -308,16 +319,36 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   style={{ paddingTop: '8px', marginTop: '-4px' }}
                 >
                   <div className="grid grid-cols-1 gap-1 p-3 pt-1">
-                    <Link href="/departments/electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Electronics</Link>
-                    <Link href="/departments/clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Clothing, Shoes & Accessories</Link>
-                    <Link href="/departments/home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Home & Garden</Link>
-                    <Link href="/departments/grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Grocery & Essentials</Link>
-                    <Link href="/departments/sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Sports & Outdoors</Link>
-                    <Link href="/departments/auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Auto & Tires</Link>
-                    <Link href="/departments/toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Toys & Games</Link>
-                    <Link href="/departments/baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Baby</Link>
-                    <Link href="/departments/health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Health & Wellness</Link>
-                    <Link href="/departments/beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">Beauty & Personal Care</Link>
+                    <Link href="/departments/electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Electronics</AutoFontText>
+                    </Link>
+                    <Link href="/departments/clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Clothing, Shoes & Accessories</AutoFontText>
+                    </Link>
+                    <Link href="/departments/home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Home & Garden</AutoFontText>
+                    </Link>
+                    <Link href="/departments/grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Grocery & Essentials</AutoFontText>
+                    </Link>
+                    <Link href="/departments/sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Sports & Outdoors</AutoFontText>
+                    </Link>
+                    <Link href="/departments/auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Auto & Tires</AutoFontText>
+                    </Link>
+                    <Link href="/departments/toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Toys & Games</AutoFontText>
+                    </Link>
+                    <Link href="/departments/baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Baby</AutoFontText>
+                    </Link>
+                    <Link href="/departments/health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Health & Wellness</AutoFontText>
+                    </Link>
+                    <Link href="/departments/beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                      <AutoFontText>Beauty & Personal Care</AutoFontText>
+                    </Link>
                   </div>
                 </div>
               )}

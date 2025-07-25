@@ -21,9 +21,17 @@ export default {
 					'system-ui',
 					'sans-serif',
 				],
+				'noto-bengali': [
+					'var(--font-noto-bengali)',
+					'Noto Sans Bengali',
+					'system-ui',
+					'sans-serif',
+				],
 				sans: [
 					'var(--font-quicksand)',
 					'Quicksand',
+					'var(--font-noto-bengali)',
+					'Noto Sans Bengali',
 					'system-ui',
 					'sans-serif',
 				],
