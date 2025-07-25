@@ -79,27 +79,53 @@ export const useProductPage = (
 		return pricingEngine.getCurrentStock();
 	}, [pricingEngine]);
 
+	const hasVariations = useMemo(() => {
+		if (!variantEngine) return false;
+		return variantEngine.hasVariations();
+	}, [variantEngine]);
+
 	const isInStock = useMemo(() => {
 		if (!pricingEngine) return false;
 
-		// If a specific variant is selected, check that variant's stock
-		if (selectedVariant) {
-			return pricingEngine.isAvailableForPurchase();
+		console.log('🔍 Debug isInStock calculation:', {
+			hasVariations,
+			selectedVariant: selectedVariant?.id,
+			productInStock: product?.in_stock,
+			productStockQuantity: product?.stock_quantity,
+			variants: variants.length,
+			variantQuantities: variants.map((v) => ({
+				id: v.id,
+				quantity: v.quantity,
+			})),
+		});
+
+		// If product has variations
+		if (hasVariations) {
+			// If a specific variant is selected, check that variant's stock
+			if (selectedVariant) {
+				const result = pricingEngine.isAvailableForPurchase();
+				console.log(
+					'✅ Variant selected - isAvailableForPurchase:',
+					result
+				);
+				return result;
+			}
+			// No specific variant selected, check if ANY variant has stock
+			const result = pricingEngine.hasAnyStock();
+			console.log('🔄 No variant selected - hasAnyStock:', result);
+			return result;
 		}
 
-		// No specific variant selected, check if ANY variant has stock
-		return pricingEngine.hasAnyStock();
-	}, [pricingEngine, selectedVariant]);
+		// No variations, check base product stock
+		const result = pricingEngine.isAvailableForPurchase();
+		console.log('📦 No variations - isAvailableForPurchase:', result);
+		return result;
+	}, [pricingEngine, selectedVariant, hasVariations, product, variants]);
 
 	const canPurchaseCurrentSelection = useMemo(() => {
 		if (!pricingEngine) return false;
 		return pricingEngine.isAvailableForPurchase();
 	}, [pricingEngine]);
-
-	const hasVariations = useMemo(() => {
-		if (!variantEngine) return false;
-		return variantEngine.hasVariations();
-	}, [variantEngine]);
 
 	const allVariationsSelected = useMemo(() => {
 		if (!variantEngine) return true;
@@ -107,12 +133,19 @@ export const useProductPage = (
 	}, [variantEngine]);
 
 	const canPurchase = useMemo(() => {
-		return canAddToCart(
-			canPurchaseCurrentSelection,
+		const result = canAddToCart(
+			isInStock,
 			hasVariations,
 			allVariationsSelected
 		);
-	}, [canPurchaseCurrentSelection, hasVariations, allVariationsSelected]);
+		console.log('🛒 canPurchase calculation:', {
+			isInStock,
+			hasVariations,
+			allVariationsSelected,
+			result,
+		});
+		return result;
+	}, [isInStock, hasVariations, allVariationsSelected]);
 
 	// Handlers
 	const handleVariantSelection = (variationName: string, valueId: string) => {

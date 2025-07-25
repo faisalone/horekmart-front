@@ -101,25 +101,6 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
             <Heart className="h-4 w-4 text-gray-600" />
           </button>
 
-          {/* Badges with theme styling */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1">
-            {hasDiscount && (
-              <div className="bg-theme-secondary text-white text-xs font-bold px-2 py-1 rounded">
-                Save {formatCurrency(price - salePrice!)}
-              </div>
-            )}
-            {product.is_featured && (
-              <div className="bg-theme-primary text-white text-xs font-bold px-2 py-1 rounded">
-                Featured
-              </div>
-            )}
-            {product.status === 'published' && (
-              <div className="theme-badge-gradient text-white text-xs font-bold px-2 py-1 rounded">
-                New
-              </div>
-            )}
-          </div>
-
           {/* Quick Add Button with theme styling */}
           <button
             onClick={handleAddToCart}
@@ -134,46 +115,34 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
       <div className="p-4">
         <Link href={getProductUrl(product)}>
           <div className="space-y-2">
-            {/* Price - Large and prominent */}
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-gray-900">
+            {/* Category */}
+            <div className="text-sm text-gray-500">
+              {product.category?.name || 'General'}
+            </div>
+            
+            {/* Price - Stack vertically on mobile, horizontal on desktop */}
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-0 sm:gap-2">
+              <span className="text-base sm:text-lg font-bold text-gray-900">
                 {formatCurrency(salePrice || price)}
               </span>
               {hasDiscount && (
-                <span className="text-sm text-gray-500 line-through">
+                <span className="text-xs sm:text-sm text-gray-500 line-through">
                   {formatCurrency(price)}
                 </span>
               )}
             </div>
             
-            {/* Product Name with theme hover color */}
-            <h3 className="text-base font-medium text-gray-900 line-clamp-2 group-hover:text-theme-secondary transition-colors leading-tight">
+            {/* Product Name with theme hover color - Allow up to 3 lines */}
+            <h3 className="text-base font-medium text-gray-900 line-clamp-3 group-hover:text-theme-secondary transition-colors leading-tight">
               {product.name}
             </h3>
             
-            {/* Category and Stock info */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">
-                {product.category?.name || 'General'}
-              </span>
-              {product.is_featured && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  ⭐ Featured
-                </span>
-              )}
-            </div>
-
-            {/* Stock Status */}
-            <div className="flex items-center justify-between">
-              <span className={`text-sm ${inStock ? 'text-green-600' : 'text-red-600'}`}>
-                {inStock ? `${product.stock_quantity} in stock` : 'Out of stock'}
-              </span>
-              {product.vendor && (
-                <span className="text-xs text-gray-400">
-                  by {product.vendor.business_name}
-                </span>
-              )}
-            </div>
+            {/* Vendor */}
+            {product.vendor && (
+              <div className="text-sm text-gray-400">
+                by {product.vendor.business_name}
+              </div>
+            )}
           </div>
         </Link>
       </div>

@@ -2,16 +2,16 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 const PromoBanner = () => {
-  const [timeRemaining, setTimeRemaining] = useState({ hours: 0, minutes: 0 });
+  const [timeRemaining, setTimeRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
     // Set the target time for early access (you can modify this date/time)
     const targetDate = new Date();
-    targetDate.setHours(targetDate.getHours() + 2); // Example: 2 hours from now
-    targetDate.setMinutes(0);
-    targetDate.setSeconds(0);
+    targetDate.setDate(targetDate.getDate() + 2); // Example: 2 days from now
+    targetDate.setHours(23, 59, 59, 999); // End of day
 
     const calculateTimeRemaining = () => {
       const now = new Date().getTime();
@@ -19,149 +19,123 @@ const PromoBanner = () => {
       const difference = target - now;
 
       if (difference > 0) {
-        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
         
         setTimeRemaining({
+          days: Math.max(0, days),
           hours: Math.max(0, hours),
-          minutes: Math.max(0, minutes)
+          minutes: Math.max(0, minutes),
+          seconds: Math.max(0, seconds)
         });
       } else {
-        setTimeRemaining({ hours: 0, minutes: 0 });
+        setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
     // Calculate immediately
     calculateTimeRemaining();
 
-    // Update every minute
-    const interval = setInterval(calculateTimeRemaining, 60000);
+    // Update every second for real-time countdown
+    const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative overflow-hidden theme-gradient-secondary py-4 md:py-6 rounded-2xl shadow-2xl border-2 border-white/20">
-      {/* Fire effects using theme colors */}
-      <div className="absolute inset-0 theme-gradient-primary opacity-80"></div>
-      
-      {/* Fire base glow */}
-      <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-red-600/40 to-transparent"></div>
-      
-      {/* Real fire flames - proper proportions with theme colors */}
-      <div className="absolute inset-0 opacity-40">
-        
-        {/* Main fire cluster - realistic sizes with theme colors */}
-        <div className="absolute bottom-0 left-8 w-6 h-12 theme-fire-primary rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 4s ease-in-out infinite'}}></div>
-             
-        <div className="absolute bottom-0 left-12 w-4 h-8 theme-fire-secondary rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 3.5s ease-in-out infinite reverse'}}></div>
-        
-        <div className="absolute bottom-0 left-1/2 w-8 h-14 theme-fire-primary rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 5s ease-in-out infinite'}}></div>
-             
-        <div className="absolute bottom-0 left-1/2 ml-6 w-5 h-10 theme-fire-secondary rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 3.8s ease-in-out infinite reverse'}}></div>
-        
-        <div className="absolute bottom-0 right-8 w-7 h-13 theme-fire-primary rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 4.5s ease-in-out infinite'}}></div>
-             
-        <div className="absolute bottom-0 right-14 w-4 h-9 theme-fire-secondary rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 4.2s ease-in-out infinite reverse'}}></div>
-        
-        {/* Small flickering flames */}
-        <div className="absolute bottom-0 left-6 w-3 h-6 theme-fire-pink rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 2.8s ease-in-out infinite'}}></div>
-             
-        <div className="absolute bottom-0 right-6 w-3 h-7 theme-fire-purple rounded-t-full transform origin-bottom" 
-             style={{animation: 'realFlame 3.2s ease-in-out infinite reverse'}}></div>
-      </div>
-      
-      {/* Real flame animation - proper fire movement */}
-      <style jsx>{`
-        @keyframes realFlame {
-          0% { 
-            transform: rotate(0deg) scaleY(1) scaleX(1);
-          }
-          20% { 
-            transform: rotate(2deg) scaleY(0.85) scaleX(1.1);
-          }
-          40% { 
-            transform: rotate(-1deg) scaleY(1.1) scaleX(0.9);
-          }
-          60% { 
-            transform: rotate(3deg) scaleY(0.9) scaleX(1.05);
-          }
-          80% { 
-            transform: rotate(-2deg) scaleY(1.05) scaleX(0.95);
-          }
-          100% { 
-            transform: rotate(0deg) scaleY(1) scaleX(1);
-          }
-        }
-      `}</style>
-      
-      <div className="relative px-4 md:px-6">
-        <div className="flex flex-col md:flex-row items-center justify-center space-y-3 md:space-y-0 md:space-x-6">
-          
-          {/* MEGA SALE moved to logo position */}
-          <div className="text-center order-1 md:order-1">
-            <div className="text-white">
-              <div className="text-xl md:text-3xl font-black tracking-tight animate-bounce">
-                🎉 MEGA SALE 🎉
-              </div>
-            </div>
-          </div>
-
-            {/* Main promotional content with theme text gradients */}
-          <div className="text-center order-2 md:order-2 px-2 max-w-lg">
-            <div className="text-white mb-1">
-              <div className="text-base md:text-xl font-bold">
-                Upto 50% OFF
-              </div>
-            </div>
-            <div className="text-white/90 text-xs md:text-sm font-semibold">
-              ✨ Free Delivery • Priority Access • Exclusive Deals ✨
-            </div>
-          </div>
-
-          {/* Countdown with neon effect - more compact */}
-          <div className="text-center order-3 md:order-3 bg-black/30 backdrop-blur-md rounded-xl p-3 border border-white/20 shadow-xl">
-            <div className="text-yellow-300 text-xs md:text-sm font-bold mb-2 uppercase tracking-widest animate-pulse">
-              ⚡ Hurry! Ends In ⚡
-            </div>
-            <div className="flex items-center space-x-2 justify-center">
-              <div className="text-center bg-gradient-to-b from-white to-gray-100 rounded-lg px-2 py-1 md:px-3 md:py-2 shadow-lg border border-gray-200">
-                <span className="text-red-600 font-black text-lg md:text-2xl tabular-nums drop-shadow-sm">
-                  {String(timeRemaining.hours).padStart(2, '0')}
-                </span>
-                <div className="text-gray-600 text-xs font-bold uppercase">HRS</div>
-              </div>
-              <div className="text-white font-bold text-lg md:text-2xl animate-pulse">:</div>
-              <div className="text-center bg-gradient-to-b from-white to-gray-100 rounded-lg px-2 py-1 md:px-3 md:py-2 shadow-lg border border-gray-200">
-                <span className="text-red-600 font-black text-lg md:text-2xl tabular-nums drop-shadow-sm">
-                  {String(timeRemaining.minutes).padStart(2, '0')}
-                </span>
-                <div className="text-gray-600 text-xs font-bold uppercase">MIN</div>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA Button with theme gradient */}
-          <Link 
-            href="/walmart-plus" 
-            className="relative group order-4 md:order-4"
-          >
-            <div className="absolute -inset-1 theme-gradient-primary rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-            <div className="relative theme-button-gradient-secondary text-white px-4 py-2 md:px-6 md:py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-wider hover:scale-105 transform transition-all duration-300 shadow-xl border-2 border-white/30">
-              💥 Join Now 💥
-            </div>
-          </Link>
-
+    <Link href="#flash-deals-title" className="relative overflow-hidden bg-gradient-to-r from-red-500 to-blue-600 py-6 md:py-4 rounded-xl block group cursor-pointer scroll-smooth">
+      {/* Full background gradient arrow pattern - Ultra subtle */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <div className="flex items-center space-x-1 md:space-x-3 font-bold text-white select-none transform -translate-y-2">
+          <span className="opacity-1 group-hover:opacity-3 transition-opacity duration-500 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-2 group-hover:opacity-4 transition-opacity duration-500 delay-100 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-2 group-hover:opacity-5 transition-opacity duration-500 delay-200 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-3 group-hover:opacity-6 transition-opacity duration-500 delay-300 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-4 group-hover:opacity-8 transition-opacity duration-500 delay-400 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-5 group-hover:opacity-10 transition-opacity duration-500 delay-500 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-6 group-hover:opacity-12 transition-opacity duration-500 delay-600 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-8 group-hover:opacity-15 transition-opacity duration-500 delay-700 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
+          <span className="opacity-10 group-hover:opacity-18 transition-opacity duration-500 delay-800 text-[8rem] md:text-[12rem] lg:text-[16rem] leading-none">{'>'}</span>
         </div>
       </div>
-    </div>
+
+      <div className="relative max-w-7xl mx-auto px-4">
+        {/* Mobile: Stacked Layout | Desktop: Side by side with centered countdown */}
+        <div className="flex flex-col md:flex-row items-center md:justify-center gap-4 md:gap-8 text-center">
+          
+          {/* Sale Info - CENTERED on both mobile and desktop */}
+		  <div className="w-full flex flex-col items-center justify-center md:absolute md:left-4 md:top-1/2 md:transform md:-translate-y-1/2 md:w-auto z-10 order-1">
+			<h1 className="text-white text-xl md:text-2xl font-black drop-shadow-lg text-center">
+			  🎉 MEGA SALE
+			</h1>
+			<p className="text-white text-sm font-semibold drop-shadow-lg text-center">
+			  Up to 70% OFF
+			</p>
+		  </div>
+
+          {/* Countdown - Bottom on mobile, Centered on desktop */}
+          <div className="flex items-center gap-2 md:gap-3 relative z-10 order-2">
+            <div className="text-white text-sm font-black uppercase tracking-widest mr-3 drop-shadow-lg">
+              Ends in:
+            </div>
+            
+            {/* Days */}
+            <div className="text-center">
+              <div className="text-white text-3xl md:text-4xl font-black tabular-nums leading-none drop-shadow-xl">
+                {String(timeRemaining.days).padStart(2, '0')}
+              </div>
+              <div className="text-white text-xs font-bold uppercase tracking-wider drop-shadow-lg">DAYS</div>
+            </div>
+            
+            <div className="text-white font-black text-3xl md:text-4xl mx-1 drop-shadow-xl">:</div>
+            
+            {/* Hours */}
+            <div className="text-center">
+              <div className="text-white text-3xl md:text-4xl font-black tabular-nums leading-none drop-shadow-xl">
+                {String(timeRemaining.hours).padStart(2, '0')}
+              </div>
+              <div className="text-white text-xs font-bold uppercase tracking-wider drop-shadow-lg">HRS</div>
+            </div>
+            
+            <div className="text-white font-black text-3xl md:text-4xl mx-1 drop-shadow-xl">:</div>
+            
+            {/* Minutes */}
+            <div className="text-center">
+              <div className="text-white text-3xl md:text-4xl font-black tabular-nums leading-none drop-shadow-xl">
+                {String(timeRemaining.minutes).padStart(2, '0')}
+              </div>
+              <div className="text-white text-xs font-bold uppercase tracking-wider drop-shadow-lg">MIN</div>
+            </div>
+            
+            <div className="text-white font-black text-3xl md:text-4xl mx-1 drop-shadow-xl">:</div>
+            
+            {/* Seconds */}
+            <div className="text-center animate-pulse">
+              <div className="text-yellow-300 text-3xl md:text-4xl font-black tabular-nums leading-none drop-shadow-xl">
+                {String(timeRemaining.seconds).padStart(2, '0')}
+              </div>
+              <div className="text-yellow-300 text-xs font-bold uppercase tracking-wider drop-shadow-lg">SEC</div>
+            </div>
+          </div>
+
+          {/* Right: Desktop CTA - Animated text and arrow */}
+          <div className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 items-center gap-2 group-hover:gap-3 transition-all duration-300">
+            <span className="text-white font-black text-lg tracking-widest drop-shadow-lg group-hover:tracking-wider transition-all duration-300">JUMP NOW</span>
+            <ArrowRight size={24} className="text-white drop-shadow-lg stroke-[1.5] group-hover:translate-x-1 transition-transform duration-300" />
+          </div>
+
+          {/* Mobile: Bottom center CTA - below countdown */}
+          <div className="md:hidden mt-4 flex justify-center z-10 order-3">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-black text-sm tracking-wider drop-shadow-lg">JUMP NOW</span>
+              <ArrowRight size={20} className="text-white drop-shadow-lg stroke-[1.5]" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 };
 

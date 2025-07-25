@@ -23,8 +23,8 @@ const BannerBlock = ({
   badge
 }: BannerBlockProps) => {
   const getBgColor = () => {
-    // Use theme overlay classes for modern look
-    return 'theme-overlay-dark';
+    // Use theme primary overlay for better brand consistency
+    return 'theme-overlay-primary';
   };
 
   const getTextColor = () => {
@@ -55,9 +55,9 @@ const BannerBlock = ({
         </div>
         
         {/* Shop Now button - slides up from bottom on hover - Theme styled */}
-        <div className="absolute inset-x-0 top-full group-hover:top-0 transition-all duration-300 ease-out theme-overlay-blue text-white h-full">
+        <div className="absolute inset-x-0 top-full group-hover:top-0 transition-all duration-300 ease-out theme-overlay-secondary text-white h-full">
           <div className="px-4 py-3 text-center h-full flex items-center justify-center">
-            <div className="text-lg font-bold hover:text-yellow-300 transition-colors duration-200 truncate w-full max-w-full">
+            <div className="text-lg font-bold hover:text-white/90 transition-colors duration-200 truncate w-full max-w-full">
               SHOP NOW
             </div>
           </div>

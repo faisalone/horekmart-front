@@ -190,7 +190,9 @@ export class PricingEngine {
 			}
 		} else if (hasVariations && pricingAnalysis?.hasAnyDiscounts) {
 			// Price range with potential savings
-			savingsText = `Save up to ${pricingAnalysis.maxSavings.toFixed(2)} BDT`;
+			savingsText = `Save up to ${pricingAnalysis.maxSavings.toFixed(
+				2
+			)} BDT`;
 			showSavingsBadge = true;
 		}
 
@@ -231,11 +233,13 @@ export class PricingEngine {
 	 * Check if the product/variant is available for purchase
 	 */
 	isAvailableForPurchase(): boolean {
-		const stock = this.selectedVariant
-			? this.selectedVariant.quantity
-			: this.product.stock_quantity;
+		if (this.selectedVariant) {
+			// If a variant is selected, only check the variant's stock
+			return this.selectedVariant.quantity > 0;
+		}
 
-		return this.product.in_stock && stock > 0;
+		// No variant selected, check base product stock and in_stock status
+		return this.product.in_stock && this.product.stock_quantity > 0;
 	}
 
 	/**
@@ -244,17 +248,13 @@ export class PricingEngine {
 	 * For products without variations: returns base product stock status
 	 */
 	hasAnyStock(): boolean {
-		if (!this.product.in_stock) {
-			return false;
-		}
-
-		// If there are variants, check if any variant has stock
+		// If there are variants, check if any variant has stock (ignore base product in_stock)
 		if (this.variants.length > 0) {
 			return this.variants.some((variant) => variant.quantity > 0);
 		}
 
-		// No variants, check base product stock
-		return this.product.stock_quantity > 0;
+		// No variants, check base product stock and in_stock status
+		return this.product.in_stock && this.product.stock_quantity > 0;
 	}
 
 	/**

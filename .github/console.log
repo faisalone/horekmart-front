@@ -1,0 +1,33 @@
+🛒 canPurchase calculation: {isInStock: false, hasVariations: false, allVariationsSelected: true, result: false}
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: false, hasVariations: false, allVariationsSelected: true, result: false}
+report-hmr-latency.ts:26 [Fast Refresh] done in NaNms
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: false, selectedVariant: undefined, productInStock: false, productStockQuantity: 0, variants: 0, …}
+useProductPage.ts:115 📦 No variations - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: false, selectedVariant: undefined, productInStock: false, productStockQuantity: 0, variants: 0, …}
+useProductPage.ts:115 📦 No variations - isAvailableForPurchase: false
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: false, hasVariations: false, allVariationsSelected: false, result: false}
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: false, hasVariations: false, allVariationsSelected: false, result: false}
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: undefined, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:109 🔄 No variant selected - hasAnyStock: true
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: undefined, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:109 🔄 No variant selected - hasAnyStock: true
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: true, hasVariations: true, allVariationsSelected: false, result: false}
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: true, hasVariations: true, allVariationsSelected: false, result: false}
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 5, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 5, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: false, hasVariations: true, allVariationsSelected: true, result: false}
+useProductPage.ts:135 🛒 canPurchase calculation: {isInStock: false, hasVariations: true, allVariationsSelected: true, result: false}
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 4, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 4, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 7, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 7, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 9, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false
+useProductPage.ts:90 🔍 Debug isInStock calculation: {hasVariations: true, selectedVariant: 9, productInStock: false, productStockQuantity: 0, variants: 9, …}
+useProductPage.ts:104 ✅ Variant selected - isAvailableForPurchase: false

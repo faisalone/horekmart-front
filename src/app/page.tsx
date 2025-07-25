@@ -19,6 +19,9 @@ import { useProductCheckout } from '@/services/ProductCheckoutService';
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
+  const [mostViewedProducts, setMostViewedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,12 +35,18 @@ export default function HomePage() {
         setLoading(true);
         
         // Fetch featured products and categories
-        const [featuredProducts, categoriesData] = await Promise.all([
+        const [featuredProducts, categoriesData, popularProductsData, latestProductsData, mostViewedProductsData] = await Promise.all([
           publicApi.getFeaturedProducts(),
           publicApi.getCategories(),
+          publicApi.getProducts({ featured: true, per_page: 8 }),
+          publicApi.getProducts({ sort_by: 'created_at', sort_order: 'desc', per_page: 8 }),
+          publicApi.getProducts({ sort_by: 'updated_at', sort_order: 'desc', per_page: 8 }),
         ]);
 
         setProducts(featuredProducts);
+        setPopularProducts(popularProductsData?.data || featuredProducts.slice(0, 8));
+        setLatestProducts(latestProductsData?.data || featuredProducts.slice(8, 16));
+        setMostViewedProducts(mostViewedProductsData?.data || featuredProducts.slice(16, 24));
         // Sort categories by sort_order and take first 9
         const sortedCategories = (categoriesData || [])
           .sort((a: Category, b: Category) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -47,6 +56,9 @@ export default function HomePage() {
         console.error('Error fetching data:', error);
         // Keep loading as false to show the page even if API fails
         setProducts([]);
+        setPopularProducts([]);
+        setLatestProducts([]);
+        setMostViewedProducts([]);
         setCategories([]);
       } finally {
         setLoading(false);
@@ -96,7 +108,7 @@ export default function HomePage() {
       {/* Main Banner Section - Enhanced 3 Row Masonry Layout */}
       <AnimatedElement animation="fadeIn" delay={200}>
         <section className="bg-gradient-to-br from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="max-w-7xl mx-auto px-4">
             
             {/* Enhanced 3 Row Masonry Grid Layout with better mobile experience */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-6">
@@ -169,67 +181,143 @@ export default function HomePage() {
       </section>
       </AnimatedElement>
 
-      {/* Flash Deals Section with new theme colors */}
-      <AnimatedElement animation="slideUp" delay={300}>
-        <section className="theme-gradient-primary text-white py-8">
+      {/* Popular Products Section - Moved below Main Banner */}
+      <AnimatedElement animation="scaleUp" delay={300}>
+        <section className="py-16 bg-theme-subtle-secondary">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <h2 className="text-3xl font-bold">Flash Deals</h2>
-              <div className="bg-white text-theme-primary px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse float-animation">
-                ⚡ Ends in 2h 15m
-              </div>
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                🔥 Trending Now
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Discover what everyone&apos;s talking about - our most popular picks that are flying off the shelves
+              </p>
             </div>
-            <Link href="/deals" className="text-white hover:text-red-200 flex items-center text-lg font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
-              Shop all <ArrowRight className="ml-1 h-5 w-5" />
-            </Link>
+            
+            <ProductGrid
+              products={popularProducts}
+              onAddToCart={handleAddToCart}
+              onAddToWishlist={handleAddToWishlist}
+              className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+              loading={loading}
+            />
+
+            <div className="text-center mt-8">
+              <Link href="/products?featured=true" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+                View All Popular Products <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {loading ? (
-              // Show skeleton loading cards
-              Array.from({ length: 8 }, (_, index) => (
-                <ProductCard key={`skeleton-${index}`} isLoading={true} />
-              ))
-            ) : (
-              // Show actual sale products
-              saleProducts.slice(0, 8).map((product) => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                  onAddToCart={handleAddToCart}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+        </section>
       </AnimatedElement>
 
-      {/* Popular Products Grid with new theme colors */}
-      <AnimatedElement animation="scaleUp" delay={400}>
-        <section className="py-12 bg-gradient-to-br from-gray-50 to-blue-50">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Popular items</h2>
-            <Link href="/products" className="text-theme-secondary hover:text-theme-secondary-dark flex items-center text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition-all">
-              Shop all <ArrowRight className="ml-1 h-5 w-5" />
-            </Link>
+      {/* Flash Deals Section with Enhanced Design */}
+      <AnimatedElement animation="slideUp" delay={400}>
+        <section id="flash-deals" className="theme-gradient-primary text-white py-16 relative overflow-hidden scroll-mt-32">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-20 h-20 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-32 right-20 w-16 h-16 bg-white rounded-full animate-pulse delay-1000"></div>
+            <div className="absolute bottom-20 left-32 w-12 h-12 bg-white rounded-full animate-pulse delay-500"></div>
           </div>
           
-          <ProductGrid
-            products={saleProducts.slice(0, 8)}
-            onAddToCart={handleAddToCart}
-            onAddToWishlist={handleAddToWishlist}
-            className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-            loading={loading}
-          />
-        </div>
-      </section>
+          <div className="max-w-7xl mx-auto px-4 relative">
+            <div className="text-center mb-12 scroll-mt-32" id="flash-deals-title">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">⚡ Flash Deals</h2>
+              <p className="text-xl text-white/90 max-w-2xl mx-auto font-medium">
+                Lightning-fast savings that won&apos;t last long - grab these deals before they disappear!
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {loading ? (
+                Array.from({ length: 8 }, (_, index) => (
+                  <ProductCard key={`skeleton-${index}`} isLoading={true} />
+                ))
+              ) : (
+                saleProducts.slice(0, 8).map((product) => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    onAddToCart={handleAddToCart}
+                    onAddToWishlist={handleAddToWishlist}
+                  />
+                ))
+              )}
+            </div>
+
+            <div className="text-center mt-12">
+              <Link href="/deals" className="inline-flex items-center text-white hover:text-white/80 text-lg font-semibold bg-white/10 hover:bg-white/20 px-8 py-4 rounded-full transition-all hover:scale-105 border-2 border-white/30">
+                Shop All Flash Deals <ArrowRight className="ml-2 h-6 w-6" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </AnimatedElement>
+
+      {/* Latest Products Section */}
+      <AnimatedElement animation="slideLeft" delay={500}>
+        <section className="py-16 bg-theme-subtle-primary">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                ✨ Fresh Arrivals
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Be the first to explore our newest additions - straight from the latest collections
+              </p>
+            </div>
+            
+            <ProductGrid
+              products={latestProducts}
+              onAddToCart={handleAddToCart}
+              onAddToWishlist={handleAddToWishlist}
+              className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+              loading={loading}
+            />
+
+            <div className="text-center mt-8">
+              <Link href="/products?sort=latest" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+                See All New Arrivals <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </AnimatedElement>
+
+      {/* Most Viewed Products Section */}
+      <AnimatedElement animation="slideRight" delay={600}>
+        <section className="py-16 bg-theme-neutral-light">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                👁️ Most Viewed
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                See what&apos;s catching everyone&apos;s attention - the products our customers can&apos;t stop looking at
+              </p>
+            </div>
+            
+            <ProductGrid
+              products={mostViewedProducts}
+              onAddToCart={handleAddToCart}
+              onAddToWishlist={handleAddToWishlist}
+              className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+              loading={loading}
+            />
+
+            <div className="text-center mt-8">
+              <Link href="/products?sort=views" className="inline-flex items-center text-theme-primary hover:text-theme-primary-dark text-lg font-semibold bg-theme-primary/10 hover:bg-theme-primary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+                Explore Most Viewed <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
+          </div>
+        </section>
       </AnimatedElement>
 
       {/* Brand Spotlight with new theme colors */}
-      <AnimatedElement animation="slideLeft" delay={500}>
-        <section className="py-12 bg-gradient-to-br from-red-50 to-blue-50 relative">
+      <AnimatedElement animation="slideLeft" delay={700}>
+        <section className="py-12 bg-theme-subtle-secondary relative">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Shop by brand</h2>
@@ -246,7 +334,7 @@ export default function HomePage() {
                 const slider = document.getElementById('brand-slider');
                 if (slider) slider.scrollBy({ left: -300, behavior: 'smooth' });
               }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-red-100"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-theme-primary/20"
             >
               <ArrowLeft className="h-6 w-6 text-theme-primary" />
             </button>
@@ -257,16 +345,16 @@ export default function HomePage() {
                 const slider = document.getElementById('brand-slider');
                 if (slider) slider.scrollBy({ left: 300, behavior: 'smooth' });
               }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-red-100"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer border border-theme-primary/20"
             >
               <ArrowRight className="h-6 w-6 text-theme-primary" />
             </button>
 
             {/* Left Gradient Mask */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-red-50 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white/50 to-transparent z-10 pointer-events-none"></div>
             
             {/* Right Gradient Mask */}
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-red-50 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white/50 to-transparent z-10 pointer-events-none"></div>
 
             {/* Slider Container */}
             <div 
@@ -292,7 +380,7 @@ export default function HomePage() {
                 <Link
                   key={brand.name}
                   href={`/brands/${brand.name.toLowerCase()}`}
-                  className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-red-100/50"
+                  className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-theme-secondary/20"
                 >
                   {/* Brand Logo */}
                   <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -324,7 +412,7 @@ export default function HomePage() {
       </AnimatedElement>
 
       {/* Newsletter Subscription with new theme colors */}
-      <AnimatedElement animation="slideUp" delay={600}>
+      <AnimatedElement animation="slideUp" delay={800}>
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="relative overflow-hidden bg-theme-secondary py-8 md:py-12 rounded-2xl shadow-2xl border-2 border-white/20">
@@ -332,7 +420,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-theme-secondary opacity-90"></div>
             
             {/* Subtle glow */}
-            <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
+            <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-theme-secondary/10 to-transparent"></div>
             
             {/* Newsletter Content */}
             <div className="relative px-4 md:px-6 text-center">

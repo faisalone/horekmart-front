@@ -204,6 +204,27 @@
   font-weight: bold;
 }
 
+/* Light Theme Background Utilities */
+.bg-theme-primary-light-50 {
+  background: rgba(242, 37, 64, 0.05);
+}
+
+.bg-theme-secondary-light-50 {
+  background: rgba(0, 116, 191, 0.05);
+}
+
+.bg-theme-neutral-light {
+  background: linear-gradient(135deg, #f8f9fa 0%, rgba(0, 116, 191, 0.05) 100%);
+}
+
+.bg-theme-subtle-primary {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(242, 37, 64, 0.03) 100%);
+}
+
+.bg-theme-subtle-secondary {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(0, 116, 191, 0.03) 100%);
+}
+
 /* Remove dark mode for eCommerce site - always use light theme */
 body {
   background: #ffffff;

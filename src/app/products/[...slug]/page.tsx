@@ -38,6 +38,19 @@ import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import RichTextDisplay from '@/components/ui/RichTextDisplay';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+
+interface BreadcrumbItem {
+	label: string;
+	href?: string;
+}
+import { 
+	ProductImageSkeleton, 
+	ProductInfoSkeleton, 
+	ProductDetailsSkeleton, 
+	RelatedProductsSkeleton, 
+	BreadcrumbSkeleton 
+} from '@/components/ProductPageSkeleton';
 
 interface ProductPageProps {
 	params: Promise<{ slug: string[] }>;
@@ -48,13 +61,10 @@ export default function ProductPage({ params }: ProductPageProps) {
 	const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 	const [breadcrumb, setBreadcrumb] = useState<Category[]>([]);
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false); // Start with false to show skeletons immediately
 	const [error, setError] = useState<string | null>(null);
 	const [quantity, setQuantity] = useState(1);
-	const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-	const [selectedVariant, setSelectedVariant] = useState<ApiProductVariant | null>(null);
 	const [variants, setVariants] = useState<ApiProductVariant[]>([]);
-	const [availableVariations, setAvailableVariations] = useState<Record<string, any[]>>({});
 	const [isButtonsSticky, setIsButtonsSticky] = useState(false);
 	const actionButtonsRef = useRef<HTMLDivElement>(null);
 	const variantSelectorRef = useRef<HTMLDivElement>(null);
@@ -181,7 +191,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 	useEffect(() => {
 		const fetchProduct = async () => {
 			try {
-				setLoading(true);
+				// Don't show loading initially - show skeletons instead
 				setError(null);
 				const resolvedParams = await params;
 				const slugParts = resolvedParams.slug;
@@ -225,31 +235,9 @@ export default function ProductPage({ params }: ProductPageProps) {
 					);
 					const variantsData = variantsResponse.data.variants || [];
 					setVariants(variantsData);
-
-					const variations: Record<string, any[]> = {};
-					variantsData.forEach((variant: any) => {
-						Object.entries(variant.combinations).forEach(
-							([variationName, values]: [string, any]) => {
-								if (!variations[variationName]) {
-									variations[variationName] = [];
-								}
-
-								values.forEach((value: any) => {
-									const existingValue = variations[
-										variationName
-									].find((v) => v.id === value.id);
-									if (!existingValue) {
-										variations[variationName].push(value);
-									}
-								});
-							}
-						);
-					});
-					setAvailableVariations(variations);
 				} catch (error) {
 					console.error('Error fetching variants:', error);
 					setVariants([]);
-					setAvailableVariations({});
 				}
 
 				try {
@@ -274,12 +262,40 @@ export default function ProductPage({ params }: ProductPageProps) {
 		fetchProduct();
 	}, [params]);
 
-	if (loading) {
+	if (!product && !error) {
 		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-					<p className="mt-4 text-gray-600">Loading product...</p>
+			<div className="min-h-screen bg-white">
+				<div className="max-w-7xl mx-auto px-4 py-8">
+					{/* Skeleton Breadcrumb */}
+					<BreadcrumbSkeleton />
+
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+						{/* Left Column - Product Info Skeleton (Desktop only) */}
+						<div className="hidden lg:block lg:col-span-1 order-1">
+							<div className="sticky top-24">
+								<ProductInfoSkeleton />
+							</div>
+						</div>
+
+						{/* Right Column - Product Images and Details Skeleton */}
+						<div className="lg:col-span-2 order-2">
+							<ProductImageSkeleton />
+							
+							{/* Mobile Product Info - Shows after images on mobile */}
+							<div className="lg:hidden mt-8">
+								<ProductInfoSkeleton />
+							</div>
+							
+							<div className="mt-8">
+								<ProductDetailsSkeleton />
+							</div>
+						</div>
+					</div>
+
+					{/* Related Products Skeleton */}
+					<div className="mt-16">
+						<RelatedProductsSkeleton />
+					</div>
 				</div>
 			</div>
 		);
@@ -394,114 +410,13 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 	const allImages = getAllImages();
 	const hasMultipleImages = allImages.length > 1;
-	const currentStock = selectedVariant
-		? selectedVariant.quantity
-		: product.stock_quantity;
-	const isInStock = product.in_stock && currentStock > 0;
-	const hasVariations = Object.keys(availableVariations).length > 0;
-
-	const handleVariantSelection = (variationName: string, valueId: string) => {
-		const newSelectedOptions = { ...selectedOptions };
-
-		if (newSelectedOptions[variationName] === valueId) {
-			delete newSelectedOptions[variationName];
-		} else {
-			newSelectedOptions[variationName] = valueId;
-		}
-
-		setSelectedOptions(newSelectedOptions);
-
-		const selectedKeys = Object.keys(newSelectedOptions);
-		const availableKeys = Object.keys(availableVariations);
-
-		let matchingVariant = null;
-		if (selectedKeys.length === availableKeys.length) {
-			matchingVariant = variants.find((variant) => {
-				return selectedKeys.every((variationKey) => {
-					const selectedValueId = newSelectedOptions[variationKey];
-					const variantValues = variant.combinations[variationKey];
-
-					return (
-						variantValues &&
-						variantValues.some(
-							(value: any) => value.id.toString() === selectedValueId
-						)
-					);
-				});
-			});
-		}
-
-		setSelectedVariant(matchingVariant || null);
-	};
-
-	const isVariantOptionAvailable = (
-		variationName: string,
-		valueId: string
-	) => {
-		if (Object.keys(selectedOptions).length === 0) return true;
-
-		const testOptions = {
-			...selectedOptions,
-			[variationName]: valueId,
-		};
-
-		return variants.some((variant) => {
-			return Object.entries(testOptions).every(
-				([variation, selectedValueId]) => {
-					const variantValues = variant.combinations[variation];
-					return (
-						variantValues &&
-						variantValues.some(
-							(value: any) => value.id.toString() === selectedValueId
-						)
-					);
-				}
-			);
-		});
-	};
-
-	const getCurrentPricing = () => {
-		if (selectedVariant) {
-			const variantPrice = parseFloat(selectedVariant.final_price);
-			const variantOfferPrice = selectedVariant.final_offer_price
-				? parseFloat(selectedVariant.final_offer_price)
-				: null;
-
-			let actualOfferPrice = null;
-			let hasDiscount = false;
-
-			if (selectedVariant.offer_price_override) {
-				actualOfferPrice = variantOfferPrice;
-				hasDiscount =
-					actualOfferPrice !== null && actualOfferPrice < variantPrice;
-			} else if (!selectedVariant.price_override) {
-				actualOfferPrice = variantOfferPrice;
-				hasDiscount =
-					actualOfferPrice !== null && actualOfferPrice < variantPrice;
-			}
-
-			return {
-				regularPrice: variantPrice,
-				offerPrice: actualOfferPrice,
-				hasDiscount,
-				finalPrice: actualOfferPrice || variantPrice,
-			};
-		}
-
-		return {
-			regularPrice: price,
-			offerPrice: salePrice,
-			hasDiscount: salePrice && salePrice < price,
-			finalPrice: salePrice || price,
-		};
-	};
-
-	const currentPricing = getCurrentPricing();
 
 	const handleQuantityChange = (change: number) => {
 		if (productPageData) {
 			productPageData.handleQuantityChange(change);
 		} else {
+			// Fallback if productPageData is not available
+			const currentStock = product.stock_quantity;
 			const newQuantity = Math.max(
 				1,
 				Math.min(currentStock, quantity + change)
@@ -602,78 +517,44 @@ export default function ProductPage({ params }: ProductPageProps) {
 		}
 	};
 
+	// Build breadcrumb items
+	const breadcrumbItems: BreadcrumbItem[] = [
+		{ label: 'Products', href: '/products' },
+	];
+
+	// Add category breadcrumb items
+	if (breadcrumb.length > 0) {
+		if (breadcrumb.length > 2) {
+			// Show only the last category if there are more than 2
+			breadcrumbItems.push({
+				label: breadcrumb[breadcrumb.length - 1].name,
+				href: `/products/${breadcrumb.map((c) => c.slug).join('/')}`
+			});
+		} else {
+			// Show all categories if 2 or fewer
+			breadcrumb.forEach((category, index) => {
+				breadcrumbItems.push({
+					label: category.name,
+					href: `/products/${breadcrumb.slice(0, index + 1).map((c) => c.slug).join('/')}`
+				});
+			});
+		}
+	} else if (product.category) {
+		// Fallback to product category if no breadcrumb
+		breadcrumbItems.push({
+			label: product.category.name,
+			href: `/products/${product.category.slug}`
+		});
+	}
+
+	// Add current product (no href since it's the current page)
+	breadcrumbItems.push({ label: product.name });
+
 	return (
 		<div className="min-h-screen bg-white">
 			<div className="max-w-7xl mx-auto px-4 py-8">
 				{/* Breadcrumb */}
-				<nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8 overflow-x-auto">
-					<Link
-						href="/"
-						className="hover:text-gray-700 whitespace-nowrap"
-					>
-						Home
-					</Link>
-					<span>›</span>
-					<Link
-						href="/products"
-						className="hover:text-gray-700 whitespace-nowrap"
-					>
-						Products
-					</Link>
-
-					{breadcrumb.length > 0 ? (
-						<>
-							{breadcrumb.length > 2 ? (
-								<>
-									<span>›</span>
-									<span className="text-gray-400">...</span>
-									<span>›</span>
-									<Link
-										href={`/products/${breadcrumb
-											.slice(0, breadcrumb.length)
-											.map((c) => c.slug)
-											.join('/')}`}
-										className="hover:text-gray-700 whitespace-nowrap"
-									>
-										{breadcrumb[breadcrumb.length - 1].name}
-									</Link>
-								</>
-							) : (
-								breadcrumb.map((category, index) => (
-									<React.Fragment key={category.id}>
-										<span>›</span>
-										<Link
-											href={`/products/${breadcrumb
-												.slice(0, index + 1)
-												.map((c) => c.slug)
-												.join('/')}`}
-											className="hover:text-gray-700 whitespace-nowrap"
-										>
-											{category.name}
-										</Link>
-									</React.Fragment>
-								))
-							)}
-						</>
-					) : (
-						product.category && (
-							<>
-								<span>›</span>
-								<Link
-									href={`/products/${product.category.slug}`}
-									className="hover:text-gray-700 whitespace-nowrap"
-								>
-									{product.category.name}
-								</Link>
-							</>
-						)
-					)}
-
-					<span>›</span>
-					<span className="text-gray-900 truncate max-w-[200px] sm:max-w-none">
-						{product.name}
-					</span>
-				</nav>
+				<Breadcrumb items={breadcrumbItems} className="mb-8" />
 
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					{/* Left Column - Product Images and Details (scrollable) */}
@@ -1295,11 +1176,14 @@ export default function ProductPage({ params }: ProductPageProps) {
 				</div>
 
 				{relatedProducts.length > 0 && (
-					<div ref={relatedProductsRef} className="mt-16">
-						<h3 className="text-2xl font-bold text-gray-900 mb-8">
+					<div ref={relatedProductsRef} className="mt-16 animate-in slide-in-from-bottom-4 duration-700"
+						 style={{ animationDelay: '600ms' }}>
+						<h3 className="text-2xl font-bold text-gray-900 mb-8 transform transition-all duration-500"
+							style={{ animationDelay: '700ms' }}>
 							Related Products
 						</h3>
-						<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+						<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 transform transition-all duration-500"
+							 style={{ animationDelay: '800ms' }}>
 							{relatedProducts.map((relatedProduct) => (
 								<Link
 									key={relatedProduct.id}
