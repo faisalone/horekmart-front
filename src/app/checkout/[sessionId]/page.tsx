@@ -651,7 +651,7 @@ export default function CheckoutPage() {
                 {checkoutItems.map((item) => (
                   <Link 
                     key={item.id} 
-                    href={`/products/${item.categorySlug ? `${item.categorySlug}/` : ''}${item.productSlug}`}
+                    href={item.categorySlug ? `/products/${item.categorySlug}/${item.productSlug}` : `/products/${item.productSlug}`}
                     className="block transition-transform hover:scale-[1.02]"
                   >
                     <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">

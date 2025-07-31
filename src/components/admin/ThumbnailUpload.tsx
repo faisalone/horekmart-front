@@ -4,12 +4,11 @@ import Image from 'next/image';
 import { Upload, X, Loader2, Camera } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/useToast';
+import { toast } from 'sonner';
 
 interface ThumbnailUploadProps {
   thumbnail?: string | File;
   onThumbnailChange: (thumbnail: File | null) => void;
-  onDeleteExistingThumbnail?: (productId: string | number) => Promise<void>;
   maxSize?: number; // in MB
   className?: string;
   disabled?: boolean;
@@ -20,7 +19,6 @@ interface ThumbnailUploadProps {
 export function ThumbnailUpload({ 
   thumbnail, 
   onThumbnailChange, 
-  onDeleteExistingThumbnail,
   maxSize = 2,
   className,
   disabled = false,
@@ -29,7 +27,7 @@ export function ThumbnailUpload({
 }: ThumbnailUploadProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { showError, showWarning } = useToast();
+  // const { showError, showWarning } = useToast();
   
   // Manage preview URL state for File thumbnails
   const [previewUrl, setPreviewUrl] = useState<string | null>(
@@ -57,47 +55,85 @@ export function ThumbnailUpload({
   
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (disabled || uploading) return;
-
-    // Handle rejected files with user feedback
+    
+    // Handle rejected files and show validation errors
     if (rejectedFiles.length > 0) {
       rejectedFiles.forEach(({ file, errors }) => {
         errors.forEach((error: any) => {
-          if (error.code === 'file-too-large') {
-            showError(`Thumbnail "${file.name}" is too large. Maximum size is ${maxSize}MB.`);
-          } else if (error.code === 'file-invalid-type') {
-            showError(`Thumbnail "${file.name}" is not a supported image format.`);
-          } else {
-            showError(`Thumbnail "${file.name}" was rejected: ${error.message}`);
+          switch (error.code) {
+            case 'file-too-large':
+              toast.error(`Thumbnail "${file.name}" is too large`, {
+                description: `Maximum file size is ${maxSize}MB`
+              });
+              break;
+            case 'file-invalid-type':
+              toast.error(`File "${file.name}" is not a valid image`, {
+                description: 'Please upload JPEG, PNG, or WebP files only'
+              });
+              break;
+            case 'too-many-files':
+              toast.error('Only one thumbnail allowed');
+              break;
+            default:
+              toast.error(`Thumbnail "${file.name}" was rejected`, {
+                description: error.message || 'Unknown error'
+              });
           }
         });
       });
     }
     
-    // Only accept image files
-    const imageFiles = acceptedFiles.filter(file => {
-      if (!file.type.startsWith('image/')) {
-        showWarning(`File ${file.name} is not an image and will be ignored.`);
-        return false;
-      }
-      return true;
-    });
-    
-    const file = imageFiles[0];
+    // Accept the first valid file
+    const file = acceptedFiles[0];
     
     if (file) {
+      // Additional client-side validation
+      if (file.size > maxSize * 1024 * 1024) {
+        toast.error('Thumbnail file too large', {
+          description: `Maximum size is ${maxSize}MB`
+        });
+        return;
+      }
+      
+      if (file.size === 0) {
+        toast.error('Invalid thumbnail file', {
+          description: 'File appears to be empty or corrupted'
+        });
+        return;
+      }
+      
       onThumbnailChange(file);
+      toast.success('Thumbnail updated successfully');
     }
-  }, [onThumbnailChange, disabled, uploading, maxSize, showError, showWarning]);
+  }, [onThumbnailChange, disabled, uploading, maxSize]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif', '.bmp']
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
     },
     maxFiles: 1,
     maxSize: maxSize * 1024 * 1024,
     disabled: disabled || uploading,
-    noClick: true // We'll handle clicks manually
+    noClick: true, // We'll handle clicks manually
+    validator: (file) => {
+      // Additional validation to ensure file integrity
+      if (file.size === 0) {
+        return {
+          code: 'file-invalid',
+          message: 'File is empty or corrupt'
+        };
+      }
+      if (!file.type.startsWith('image/')) {
+        return {
+          code: 'file-invalid-type',
+          message: 'File is not a valid image'
+        };
+      }
+      return null;
+    }
   });
 
   const handleFileInputClick = () => {
@@ -118,21 +154,9 @@ export function ThumbnailUpload({
   const removeThumbnail = async () => {
     if (disabled || uploading) return;
     
-    // If it's an existing thumbnail (string URL) and we have a delete function
-    if (typeof thumbnail === 'string' && thumbnail && onDeleteExistingThumbnail && productId) {
-      try {
-        setIsDeleting(true);
-        await onDeleteExistingThumbnail(productId);
-        onThumbnailChange(null);
-      } catch (error) {
-        console.error('Error deleting thumbnail:', error);
-      } finally {
-        setIsDeleting(false);
-      }
-    } else {
-      // For new uploads, just remove from local state
-      onThumbnailChange(null);
-    }
+    // With the new system, just clear the thumbnail locally
+    // The backend handles deletion when no thumbnail is sent
+    onThumbnailChange(null);
   };
 
   const thumbnailUrl = previewUrl;

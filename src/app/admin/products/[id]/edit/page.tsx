@@ -3,14 +3,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
-import Head from 'next/head';
 import { adminApi } from '@/lib/admin-api';
 import { Product } from '@/types/admin';
 import ProductForm from '@/components/admin/ProductForm';
-import { getProductMetaImageUrl } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface UploadedImage {
-  id?: number;
+  id?: number | string; // Allow both number and string for UUIDs
   file?: File;
   url?: string; // For existing images from server
   preview: string; // For blob URLs or existing URLs
@@ -35,7 +34,13 @@ export default function EditProductPage() {
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: (productData: Partial<Product>) => adminApi.updateProduct(productId, productData),
+    mutationFn: ({ productData, images, thumbnail, orderedImages, removeThumbnail }: { 
+      productData: Partial<Product>, 
+      images?: File[], 
+      thumbnail?: File,
+      orderedImages?: Array<string>,
+      removeThumbnail?: boolean
+    }) => adminApi.updateProduct(productId, productData, images, thumbnail, orderedImages, removeThumbnail),
     onSuccess: () => {
       // Invalidate all admin-products queries (with any filters)
       queryClient.invalidateQueries({ 
@@ -43,10 +48,51 @@ export default function EditProductPage() {
         type: 'all'
       });
       queryClient.invalidateQueries({ queryKey: ['admin-product', productId] });
+      toast.success('Product updated successfully!', {
+        description: 'All changes have been saved to your catalog.'
+      });
       router.push('/admin/products');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating product:', error);
+      
+      // Handle validation errors from backend (422)
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        const errorMessages = Object.values(validationErrors).flat() as string[];
+        
+        // Show a single consolidated error message
+        if (errorMessages.length > 1) {
+          toast.error('Please fix the following errors:', {
+            description: errorMessages.join(' • ')
+          });
+        } else {
+          toast.error(errorMessages[0]);
+        }
+      } 
+      // Handle server errors (500) with specific message
+      else if (error.response?.status === 500) {
+        if (error.response?.data?.message) {
+          toast.error(error.response.data.message, {
+            description: 'Server error occurred. Please try again.'
+          });
+        } else {
+          toast.error('Server error occurred', {
+            description: 'Please check your data and try again.'
+          });
+        }
+      }
+      // Handle other backend errors
+      else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } 
+      // Handle network/unknown errors
+      else {
+        toast.error('Failed to update product', {
+          description: 'Please check your connection and try again.'
+        });
+      }
+      
       setIsLoading(false);
     },
   });
@@ -59,47 +105,43 @@ export default function EditProductPage() {
     setIsLoading(true);
     
     try {
-      // First update the product using mutation
-      await updateProductMutation.mutateAsync(productData);
+      // Prepare ordered images array (UUIDs for existing, empty strings for new)
+      const orderedImages: Array<string> = [];
+      const newImageFiles: File[] = [];
       
-      // Then upload thumbnail if provided and it's a File
-      if (thumbnail && thumbnail instanceof File) {
-        try {
-          await adminApi.uploadProductThumbnail(productId, thumbnail);
-        } catch (error: any) {
-          console.error('Error uploading thumbnail:', error);
-          // Show user-friendly error message but don't stop the process
-          // You could add a toast notification here if needed
+      // Process images in their current order following exact instructions
+      images.forEach((image, index) => {
+        if (image.isExisting && image.url && image.id && !image.id.toString().startsWith('temp-')) {
+          // Existing image - use the actual UUID from the image object (not temporary ID)
+          orderedImages.push(image.id.toString());
+        } else if (image.file && image.file instanceof File) {
+          // New image - use empty string and add file to new files array
+          orderedImages.push('');
+          newImageFiles.push(image.file);
+        } else {
+          // Handle edge case where image doesn't fit either category
+          console.warn('Image at index', index, 'does not have required properties:', image);
         }
-      }
+      });
       
-      // Then upload images if provided
-      const newImageFiles = images.filter(img => !img.isExisting && img.file && img.file instanceof File);
-      if (newImageFiles.length > 0) {
-        try {
-          // Extract the files and their sort orders
-          const imageFiles = newImageFiles.map(img => img.file!);
-          const sortOrders = newImageFiles.map(img => img.sort_order || 0);
-          
-          console.log('Uploading images with sort orders:', sortOrders);
-          
-          // Pass both files and sort orders to the API
-          await adminApi.uploadProductImages(productId, imageFiles, sortOrders);
-        } catch (error: any) {
-          console.error('Error uploading images:', error);
-          // Show user-friendly error message but don't stop the process
-          // You could add a toast notification here if needed
-        }
-      }
-      
-      // The mutation's onSuccess will handle cache invalidation and redirect
+      // Prepare thumbnail file - only send if it's a new File upload
+      // If thumbnail is still a string (existing), don't send it to preserve existing
+      // If thumbnail is null/undefined but product had one, mark for deletion
+      const thumbnailFile = thumbnail instanceof File ? thumbnail : undefined;
+      const shouldRemoveThumbnail = product?.thumb && !thumbnail;
+
+      // Submit with the new approach following exact instructions
+      await updateProductMutation.mutateAsync({
+        productData,
+        images: newImageFiles.length > 0 ? newImageFiles : undefined,
+        thumbnail: thumbnailFile,
+        orderedImages: orderedImages.length > 0 ? orderedImages : undefined,
+        removeThumbnail: shouldRemoveThumbnail || false
+      });
       
     } catch (error: any) {
+      // Error handling is done in mutation onError, just reset loading state
       console.error('Error updating product:', error);
-      // Show user-friendly error message
-      const errorMessage = error.message || 'Failed to update product. Please try again.';
-      // You could add a toast notification here
-      alert(errorMessage); // Temporary - replace with toast when available
     } finally {
       setIsLoading(false);
     }
@@ -126,27 +168,12 @@ export default function EditProductPage() {
   }
 
   return (
-    <>
-      {/* Meta tags for admin product edit page */}
-      <Head>
-        <title>Edit {product.name} | Admin Dashboard</title>
-        <meta name="description" content={`Edit product details for ${product.name} in the admin dashboard.`} />
-        <meta property="og:title" content={`Edit ${product.name} | Admin Dashboard`} />
-        <meta property="og:description" content={`Edit product details for ${product.name} in the admin dashboard.`} />
-        <meta property="og:image" content={getProductMetaImageUrl(product)} />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`Edit ${product.name} | Admin Dashboard`} />
-        <meta name="twitter:description" content={`Edit product details for ${product.name} in the admin dashboard.`} />
-        <meta name="twitter:image" content={getProductMetaImageUrl(product)} />
-      </Head>
-      <ProductForm
-        mode="edit"
-        product={product}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isLoading={isLoading || updateProductMutation.isPending}
-      />
-    </>
+    <ProductForm
+      mode="edit"
+      product={product}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      isLoading={isLoading || updateProductMutation.isPending}
+    />
   );
 }

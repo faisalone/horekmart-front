@@ -148,41 +148,145 @@ class AdminApiClient {
 
 	async getProduct(id: string | number): Promise<Product> {
 		try {
-			const response = await this.client.get<Product>(
+			const response = await this.client.get<{ data: Product }>(
 				`/admin/products/${id}`
 			);
 
-			if (!response.data) {
+			if (!response.data || !response.data.data) {
 				throw new Error(`Product with ID ${id} not found`);
 			}
 
-			// The API returns the product directly, not wrapped in a data object
-			return response.data;
+			// The API returns the product wrapped in a data object
+			return response.data.data;
 		} catch (error) {
 			console.error(`Error fetching product ${id}:`, error);
 			throw error;
 		}
 	}
 
-	async createProduct(product: Partial<Product>): Promise<Product> {
-		const response = await this.client.post<Product>(
-			'/admin/products',
-			product
-		);
-		return response.data;
+	async createProduct(
+		product: Partial<Product>,
+		images?: File[],
+		thumbnail?: File
+	): Promise<Product> {
+		// Use FormData if files are included
+		if (images?.length || thumbnail) {
+			const formData = new FormData();
+
+			// Add all product data fields with proper type conversion
+			Object.entries(product).forEach(([key, value]) => {
+				if (value !== undefined && value !== null) {
+					// Handle boolean values properly for FormData
+					if (typeof value === 'boolean') {
+						formData.append(key, value ? '1' : '0');
+					} else {
+						formData.append(key, value.toString());
+					}
+				}
+			});
+
+			// Add thumbnail if provided
+			if (thumbnail) {
+				formData.append('thumb', thumbnail);
+			}
+
+			// Add images if provided
+			if (images?.length) {
+				images.forEach((image) => {
+					formData.append('images[]', image);
+				});
+			}
+
+			const response = await this.client.post<{ data: Product }>(
+				'/admin/products',
+				formData,
+				{
+					headers: {
+						'Content-Type': 'multipart/form-data',
+					},
+				}
+			);
+			return response.data.data;
+		} else {
+			// Regular JSON creation for product data only
+			const response = await this.client.post<{ data: Product }>(
+				'/admin/products',
+				product
+			);
+			return response.data.data;
+		}
 	}
 
 	async updateProduct(
 		id: string | number,
-		product: Partial<Product>
+		product: Partial<Product>,
+		images?: File[],
+		thumbnail?: File,
+		orderedImages?: Array<string>, // Array of UUIDs or empty strings
+		removeThumbnail?: boolean
 	): Promise<Product> {
-		const response = await this.client.put<Product>(
-			`/admin/products/${id}`,
-			product
-		);
-		return response.data;
-	}
+		// Use FormData if files are included or if we have ordered images or thumbnail operations
+		if (
+			images?.length ||
+			thumbnail ||
+			orderedImages?.length ||
+			removeThumbnail
+		) {
+			const formData = new FormData();
 
+			// Add all product data fields with proper type conversion
+			Object.entries(product).forEach(([key, value]) => {
+				if (value !== undefined && value !== null) {
+					// Handle boolean values properly for FormData
+					if (typeof value === 'boolean') {
+						formData.append(key, value ? '1' : '0');
+					} else {
+						formData.append(key, value.toString());
+					}
+				}
+			});
+
+			// Add thumbnail if provided
+			if (thumbnail) {
+				formData.append('thumb', thumbnail);
+			}
+
+			// Add flag to remove thumbnail if needed
+			if (removeThumbnail) {
+				formData.append('remove_thumb', '1');
+			}
+
+			// Add ordered images as JSON string (UUIDs and empty strings)
+			if (orderedImages?.length) {
+				formData.append('images', JSON.stringify(orderedImages));
+			}
+
+			// Add new image files under 'new_files[]'
+			if (images?.length) {
+				images.forEach((image, index) => {
+					formData.append(`new_files[${index}]`, image);
+				});
+			}
+
+			const response = await this.client.post(
+				`/admin/products/${id}?_method=PUT`,
+				formData,
+				{
+					headers: {
+						'Content-Type': 'multipart/form-data',
+					},
+				}
+			);
+			return response.data;
+		} else {
+			// Regular JSON update for product data only
+			const response = await this.client.put<{ data: Product }>(
+				`/admin/products/${id}`,
+				product
+			);
+			return response.data.data;
+		}
+	}
 	async deleteProduct(id: string | number): Promise<void> {
 		await this.client.delete(`/admin/products/${id}`);
 	}
@@ -191,113 +295,8 @@ class AdminApiClient {
 		await this.client.post('/admin/products/bulk', action);
 	}
 
-	// Product image endpoints
-	async uploadProductImages(
-		productId: string | number,
-		images: File[],
-		sortOrders?: number[]
-	): Promise<any> {
-		const formData = new FormData();
-		images.forEach((image, index) => {
-			formData.append(`images[${index}]`, image);
-			// If sort_order is provided, include it in the request
-			if (sortOrders && sortOrders[index] !== undefined) {
-				formData.append(
-					`sort_orders[${index}]`,
-					sortOrders[index].toString()
-				);
-			}
-		});
-
-		try {
-			const response = await this.client.post(
-				`/admin/products/${productId}/images`,
-				formData,
-				{
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
-				}
-			);
-			return response.data;
-		} catch (error: any) {
-			// Handle and re-throw with more specific error information
-			if (error.response?.data?.message) {
-				throw new Error(error.response.data.message);
-			} else if (error.response?.data?.errors) {
-				// Handle validation errors
-				const errorMessages = Object.values(
-					error.response.data.errors
-				).flat();
-				throw new Error(errorMessages.join(', '));
-			}
-			throw error;
-		}
-	}
-
-	async uploadProductThumbnail(
-		productId: string | number,
-		thumbnail: File
-	): Promise<any> {
-		const formData = new FormData();
-		formData.append('thumbnail', thumbnail);
-
-		try {
-			const response = await this.client.post(
-				`/admin/products/${productId}/thumbnail`,
-				formData,
-				{
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
-				}
-			);
-			return response.data;
-		} catch (error: any) {
-			// Handle and re-throw with more specific error information
-			if (error.response?.data?.message) {
-				throw new Error(error.response.data.message);
-			} else if (error.response?.data?.errors) {
-				// Handle validation errors
-				const errorMessages = Object.values(
-					error.response.data.errors
-				).flat();
-				throw new Error(errorMessages.join(', '));
-			}
-			throw error;
-		}
-	}
-
-	async deleteProductThumbnail(productId: string | number): Promise<void> {
-		try {
-			await this.client.delete(`/admin/products/${productId}/thumbnail`);
-		} catch (error: any) {
-			if (error.response?.data?.message) {
-				throw new Error(error.response.data.message);
-			}
-			throw error;
-		}
-	}
-
-	async deleteProductImage(
-		productId: string | number,
-		imageId: string | number
-	): Promise<void> {
-		await this.client.delete(
-			`/admin/products/${productId}/images/${imageId}`
-		);
-	}
-
-	async reorderProductImages(
-		productId: string | number,
-		imageIds: number[]
-	): Promise<any> {
-		const response = await this.client.patch(
-			`/admin/products/${productId}/images/reorder`,
-			{ image_ids: imageIds }
-		);
-		return response.data;
-	}
+	// Note: Image management is now handled through the main updateProduct method
+	// Old separate image endpoints are no longer used per new backend logic
 
 	// Vendors endpoints
 	async getVendors(

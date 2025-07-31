@@ -157,10 +157,23 @@ export default function ProductsPage() {
   };
 
   const handleAddToWishlist = (product: Product) => {
+    // Handle new image format
+    let productImage: string | undefined;
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      const firstImage = product.images[0] as any;
+      if (typeof firstImage === 'object' && firstImage.url) {
+        productImage = firstImage.url;
+      } else if (typeof firstImage === 'object' && firstImage.file_url) {
+        productImage = firstImage.file_url;
+      } else if (typeof firstImage === 'string') {
+        productImage = firstImage;
+      }
+    }
+
     const wishlistItem = {
       productId: product.id.toString(),
       productName: product.name,
-      productImage: product.images?.[0]?.file_url || product.image || product.thumbnail || undefined,
+      productImage: productImage || product.image || product.thumbnail || undefined,
       productSlug: product.slug,
       categorySlug: product.category?.slug,
       price: parseFloat(product.price),

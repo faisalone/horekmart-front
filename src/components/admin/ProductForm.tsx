@@ -12,8 +12,9 @@ import FormHeader from '@/components/admin/FormHeader';
 import { ThumbnailUpload } from '@/components/admin/ThumbnailUpload';
 import { ImageUpload, UploadedImage as ImageUploadType } from '@/components/admin/ImageUpload';
 import ProductVariantManager from '@/components/admin/ProductVariantManager';
-import { useToast } from '@/hooks/useToast';
+import { toast } from 'sonner';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { Switch } from '@/components/ui/Switch';
 import {
   Eye,
   EyeOff,
@@ -34,14 +35,14 @@ interface ProductFormData {
   description: string;
   short_description: string;
   sku: string;
-  price: number;
-  sale_price?: number;
-  stock_quantity: number;
-  status: 'published' | 'draft' | 'inactive';
+  price: number | string;
+  sale_price?: number | string;
+  stock_quantity: number | string;
+  status: 'published' | 'draft' | 'archived';
   is_featured: boolean;
   category_id: number;
   vendor_id: number;
-  weight?: number;
+  weight?: number | string;
   weight_unit?: 'kg' | 'g';
   dimensions?: string;
   meta_title?: string;
@@ -54,7 +55,7 @@ interface ProductFormData {
 }
 
 interface UploadedImage {
-  id?: number;
+  id?: number | string; // Allow both number and string for UUIDs
   file?: File;
   url?: string; // For existing images from server
   preview: string; // For blob URLs or existing URLs
@@ -69,9 +70,9 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     description: '',
     short_description: '',
     sku: '',
-    price: 0,
+    price: '',
     sale_price: undefined,
-    stock_quantity: 0,
+    stock_quantity: '',
     status: 'draft',
     is_featured: false,
     category_id: 0,
@@ -100,12 +101,24 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
   ];
 
   const [images, setImages] = useState<UploadedImage[]>([]);
-  const [thumbnail, setThumbnail] = useState<File | string | undefined>(undefined);
+  const [thumbnail, setThumbnail] = useState<File | string | null | undefined>(undefined);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Get the toast notification functionality
-  const { showToast, showError, showSuccess, showWarning } = useToast();
+  // const { showToast, showError, showSuccess, showWarning } = useToast();
+
+  // Error display component
+  const ErrorMessage = ({ field }: { field: string }) => {
+    if (!errors[field]) return null;
+    return (
+      <div className="text-red-400 text-sm mt-1 flex items-center">
+        <span className="text-red-400 mr-1">⚠</span>
+        {errors[field]}
+      </div>
+    );
+  };
 
   // Fetch categories and vendors for dropdowns
   const { data: categoriesData } = useQuery({
@@ -129,14 +142,14 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         description: product.description || '',
         short_description: product.short_description || '',
         sku: product.sku || '',
-        price: product.price ? parseFloat(product.price.toString()) : 0,
+        price: product.price ? parseFloat(product.price.toString()) : '',
         sale_price: product.sale_price ? parseFloat(product.sale_price.toString()) : undefined,
-        stock_quantity: product.stock_quantity || 0,
+        stock_quantity: product.stock_quantity || '',
         status: product.status || 'draft',
         is_featured: product.is_featured || false,
         category_id: product.category?.id || 0,
         vendor_id: product.vendor?.id || 0,
-        weight: product.weight,
+        weight: product.weight || undefined,
         weight_unit: product.weight_unit || 'kg',
         dimensions: product.dimensions || '',
         meta_title: product.meta_title || '',
@@ -148,13 +161,13 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         focus_keyword: (product as any).focus_keyword || '',
       });
 
-      // Set existing images
+      // Set existing images using new images format with UUID and URL
       if (product.images && product.images.length > 0) {
-        const existingImages: UploadedImage[] = product.images.map((img, index) => ({
-          id: typeof img.id === 'string' ? parseInt(img.id) : img.id,
-          url: img.file_url,
-          preview: img.file_url, // For existing images, preview is same as URL
-          alt_text: img.alt_text || '',
+        const existingImages: UploadedImage[] = product.images.map((img: any, index) => ({
+          id: img.id, // Use actual UUID as id
+          url: img.url,
+          preview: img.url,
+          alt_text: '',
           sort_order: index,
           isExisting: true
         }));
@@ -162,8 +175,8 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
       }
 
       // Set existing thumbnail
-      if ((product as any).thumbnail) {
-        setThumbnail((product as any).thumbnail);
+      if (product.thumb) {
+        setThumbnail(product.thumb);
       }
 
       // Set existing variants
@@ -175,114 +188,178 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
 
   const handleInputChange = useCallback((field: keyof ProductFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  }, []);
-
-  const handleDeleteExistingImage = async (imageId: number, productId: string | number) => {
-    try {
-      await adminApi.deleteProductImage(productId, imageId);
-      // Image will be removed from state by the component
-    } catch (error) {
-      console.error('Error deleting image:', error);
-      throw error; // Re-throw so component can handle the error
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
+  }, [errors]);
 
-  const handleDeleteExistingThumbnail = async (productId: string | number) => {
-    try {
-      await adminApi.deleteProductThumbnail(productId);
-      // Clear the local thumbnail state
-      setThumbnail(undefined);
-    } catch (error) {
-      console.error('Error deleting thumbnail:', error);
-      throw error;
+  // Clear errors when user starts typing
+  const clearError = useCallback((field: keyof ProductFormData) => {
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
+  }, [errors]);
 
-  // Auto-generate SKU - always exactly 10 digits with product name
-  const generateProductSKU = useCallback(() => {
-    if (!formData.name.trim()) return '';
-    
-    // Extract meaningful characters from product name
-    // Example: "iPhone 15 Pro" -> "I1P"
-    const nameCode = formData.name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .join('')
-      .replace(/[^A-Z0-9]/g, '') // Only keep letters and numbers
-      .substring(0, 4); // Max 4 characters from name for better representation
-    
-    // If editing existing product, use product ID
-    if (product?.id) {
-      const productIdStr = product.id.toString();
-      const hmPrefix = 'HM';
-      
-      // Format: HM{nameCode}XXX{productId} - exactly 10 chars
-      const usedLength = hmPrefix.length + nameCode.length + productIdStr.length;
-      const paddingLength = Math.max(0, 10 - usedLength);
-      const padding = 'X'.repeat(paddingLength);
-      
-      const sku = `${hmPrefix}${nameCode}${padding}${productIdStr}`;
-      
-      // Ensure exactly 10 characters
-      return sku.length > 10 ? sku.substring(0, 10) : sku.padEnd(10, 'X');
+  // Validation function
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Name validation - required, max 255 chars
+    if (!formData.name.trim()) {
+      newErrors.name = 'Product name is required';
+    } else if (formData.name.length > 255) {
+      newErrors.name = 'Product name must not exceed 255 characters';
     }
-    
-    // For new products, generate a temporary SKU with timestamp and name
-    const timestamp = Date.now().toString().slice(-2); // Last 2 digits
-    const hmPrefix = 'HM';
-    
-    // Format: HM{nameCode}XX{timestamp}
-    const usedLength = hmPrefix.length + nameCode.length + timestamp.length;
-    const paddingLength = Math.max(0, 10 - usedLength);
-    const padding = 'X'.repeat(paddingLength);
-    
-    const sku = `${hmPrefix}${nameCode}${padding}${timestamp}`;
-    
-    // Ensure exactly 10 characters
-    return sku.length > 10 ? sku.substring(0, 10) : sku.padEnd(10, 'X');
-  }, [formData.name, product]);
 
-  // Auto-generate SKU when product name changes (only if SKU is empty or matches previous auto-generated pattern)
-  useEffect(() => {
-    if (formData.name.trim() && (!formData.sku.trim() || formData.sku.startsWith('HM'))) {
-      const generatedSKU = generateProductSKU();
-      if (generatedSKU && generatedSKU !== formData.sku) {
-        handleInputChange('sku', generatedSKU);
+    // Description validation - required
+    if (!formData.description.trim()) {
+      newErrors.description = 'Product description is required';
+    }
+
+    // SKU validation - required for edit, optional for create
+    if (mode === 'edit' && !formData.sku.trim()) {
+      newErrors.sku = 'SKU is required when editing products';
+    }
+
+    // Price validation - required, numeric, min 0
+    if (!formData.price || formData.price === '' || Number(formData.price) <= 0) {
+      newErrors.price = 'Regular price is required and must be greater than 0';
+    }
+
+    // Sale price validation - if provided, must be numeric and less than regular price
+    if (formData.sale_price && formData.sale_price !== '') {
+      const salePrice = Number(formData.sale_price);
+      const regularPrice = Number(formData.price);
+      if (salePrice < 0) {
+        newErrors.sale_price = 'Sale price must be 0 or greater';
+      } else if (salePrice >= regularPrice) {
+        newErrors.sale_price = 'Sale price must be less than regular price';
       }
     }
-  }, [formData.name, formData.sku, generateProductSKU, handleInputChange]);
+
+    // Stock quantity validation - nullable but if provided must be integer >= 0
+    if (formData.stock_quantity !== '' && formData.stock_quantity !== undefined) {
+      const stockQty = Number(formData.stock_quantity);
+      if (!Number.isInteger(stockQty) || stockQty < 0) {
+        newErrors.stock_quantity = 'Stock quantity must be a whole number 0 or greater';
+      }
+    }
+
+    // Weight validation - if provided must be numeric >= 0
+    if (formData.weight && formData.weight !== '') {
+      const weight = Number(formData.weight);
+      if (weight < 0) {
+        newErrors.weight = 'Weight must be 0 or greater';
+      }
+    }
+
+    // Category validation - required, must exist
+    if (!formData.category_id || formData.category_id === 0) {
+      newErrors.category_id = 'Category is required';
+    }
+
+    // Vendor validation - required, must exist  
+    if (!formData.vendor_id || formData.vendor_id === 0) {
+      newErrors.vendor_id = 'Vendor is required';
+    }
+
+    // Image validation - require at least one image for new products
+    if (mode === 'create' && images.length === 0) {
+      newErrors.images = 'At least one product image is required';
+    }
+
+    // Check for invalid image files (size/type validation)
+    const invalidImages = images.filter(img => {
+      if (!img.file) return false; // Skip existing images
+      
+      // Check file size (5MB = 5120KB)
+      if (img.file.size > 5 * 1024 * 1024) {
+        return true;
+      }
+      
+      // Check file type (only jpeg, png, webp allowed)
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(img.file.type)) {
+        return true;
+      }
+      
+      return false;
+    });
+
+    if (invalidImages.length > 0) {
+      newErrors.images = 'Some images are invalid. Only JPEG, PNG, WebP files under 5MB are allowed';
+    }
+
+    // Thumbnail validation - if provided, check size and type
+    if (thumbnail instanceof File) {
+      // Check file size (2MB = 2048KB)
+      if (thumbnail.size > 2 * 1024 * 1024) {
+        newErrors.thumbnail = 'Thumbnail must be under 2MB';
+      }
+      
+      // Check file type (only jpeg, png, webp allowed)
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(thumbnail.type)) {
+        newErrors.thumbnail = 'Thumbnail must be JPEG, PNG, or WebP format';
+      }
+    }
+
+    // URL validation for canonical_url
+    if (formData.canonical_url && formData.canonical_url.trim()) {
+      try {
+        new URL(formData.canonical_url);
+      } catch {
+        newErrors.canonical_url = 'Canonical URL must be a valid URL';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate form before submitting
+    if (!validateForm()) {
+      const errorCount = Object.keys(errors).length;
+      const errorFields = Object.keys(errors).join(', ');
+      
+      if (errorCount === 1) {
+        toast.error('Please fix the validation error before submitting', {
+          description: `Issue with: ${errorFields}`
+        });
+      } else {
+        toast.error(`Please fix ${errorCount} validation errors before submitting`, {
+          description: `Issues with: ${errorFields}`
+        });
+      }
+      return;
+    }
+    
     try {
-      // Validate images
-      const requiredImageCount = 1; // At least one image required
-      const maxImageCount = 10;     // Maximum 10 images allowed
-      
-      if (images.length < requiredImageCount) {
-        showError('Please upload at least one product image.');
-        return;
-      }
-      
-      if (images.length > maxImageCount) {
-        showError(`Too many images. Maximum ${maxImageCount} images allowed.`);
-        return;
-      }
-      
       // Submit the basic product data along with images and thumbnail
       const productData: Partial<Product> = {
         ...formData,
-        price: formData.price.toString(),
-        sale_price: formData.sale_price?.toString() || null,
+        price: Number(formData.price).toString(),
+        sale_price: formData.sale_price ? Number(formData.sale_price).toString() : null,
+        stock_quantity: Number(formData.stock_quantity),
+        weight: formData.weight ? Number(formData.weight) : undefined,
       };
+      
+      // For new products, don't send empty SKU - let backend generate it
+      if (mode === 'create' && !formData.sku.trim()) {
+        delete productData.sku;
+      }
       
       // Pass the data, images, and thumbnail to the parent component
       onSubmit(productData, images, thumbnail instanceof File ? thumbnail : undefined);
       
     } catch (error) {
       console.error('Error submitting product:', error);
-      showError('Failed to submit product. Please check your inputs and try again.');
+      toast.error('Failed to submit product. Please check your inputs and try again.');
     }
   };
 
@@ -306,7 +383,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         {/* Left Column - Main Content */}
         <div className="xl:col-span-2 space-y-6">
           {/* Basic Information */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-gray-800 border-gray-700 mt-6">
             <CardHeader>
               <CardTitle className="text-white">Basic Information</CardTitle>
               <CardDescription className="text-gray-400">
@@ -314,35 +391,19 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Product Name *
-                  </label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="Enter product name"
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    SKU *
-                  </label>
-                  <Input
-                    value={formData.sku}
-                    onChange={(e) => {
-                      const value = e.target.value.toUpperCase().substring(0, 10);
-                      handleInputChange('sku', value);
-                    }}
-                    placeholder="Auto-generated or enter manually"
-                    required
-                    maxLength={10}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 font-mono"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Product Name *
+                </label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter product name"
+                  className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${
+                    errors.name ? 'border-red-500 focus:border-red-500' : ''
+                  }`}
+                />
+                <ErrorMessage field="name" />
               </div>
 
               <div>
@@ -355,6 +416,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                   placeholder="Enter detailed product description with formatting..."
                   disabled={isLoading}
                 />
+                <ErrorMessage field="description" />
               </div>
 
               <div>
@@ -386,12 +448,12 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
               <ImageUpload
                 images={images}
                 onImagesChange={setImages}
-                onDeleteExistingImage={handleDeleteExistingImage}
                 productId={product?.id}
                 maxFiles={10}
                 maxSize={5}
                 disabled={isLoading}
               />
+              <ErrorMessage field="images" />
             </CardContent>
           </Card>
         </div>
@@ -437,11 +499,11 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                 </div>
                 <ThumbnailUpload
                   thumbnail={thumbnail || undefined}
-                  onThumbnailChange={(newThumbnail) => setThumbnail(newThumbnail || undefined)}
-                  onDeleteExistingThumbnail={handleDeleteExistingThumbnail}
+                  onThumbnailChange={(newThumbnail) => setThumbnail(newThumbnail)}
                   productId={product?.id}
                   disabled={isLoading}
                 />
+                <ErrorMessage field="thumbnail" />
               </div>
               
               <div>
@@ -628,6 +690,21 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
+                    SKU {mode === 'edit' ? '*' : '(Optional - Auto-generated if empty)'}
+                  </label>
+                  <Input
+                    value={formData.sku}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().substring(0, 12);
+                      handleInputChange('sku', value);
+                    }}
+                    placeholder={mode === 'create' ? "Leave empty for auto-generation" : "Enter SKU manually"}
+                    maxLength={12}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Regular Price *
                   </label>
                   <Input
@@ -635,11 +712,13 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                     step="0.01"
                     min="0"
                     value={formData.price}
-                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('price', e.target.value)}
                     placeholder="0.00"
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${
+                      errors.price ? 'border-red-500 focus:border-red-500' : ''
+                    }`}
                   />
+                  <ErrorMessage field="price" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -650,24 +729,29 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                     step="0.01"
                     min="0"
                     value={formData.sale_price || ''}
-                    onChange={(e) => handleInputChange('sale_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                    onChange={(e) => handleInputChange('sale_price', e.target.value || undefined)}
                     placeholder="0.00"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${
+                      errors.sale_price ? 'border-red-500 focus:border-red-500' : ''
+                    }`}
                   />
+                  <ErrorMessage field="sale_price" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Stock Quantity *
+                    Stock Quantity
                   </label>
                   <Input
                     type="number"
                     min="0"
                     value={formData.stock_quantity}
-                    onChange={(e) => handleInputChange('stock_quantity', parseInt(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
                     placeholder="0"
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                    className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${
+                      errors.stock_quantity ? 'border-red-500 focus:border-red-500' : ''
+                    }`}
                   />
+                  <ErrorMessage field="stock_quantity" />
                 </div>
               </CardContent>
             </Card>
@@ -686,34 +770,32 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                     Category *
                   </label>
                   <CustomSelect
-                    value={formData.category_id.toString()}
+                    value={formData.category_id > 0 ? formData.category_id.toString() : ''}
                     onValueChange={(value) => handleInputChange('category_id', typeof value === 'string' ? parseInt(value) || 0 : value || 0)}
                     placeholder="Select a category"
-                    options={[
-                      { value: '0', label: 'Select Category' },
-                      ...categories.map(category => ({
-                        value: category.id.toString(),
-                        label: category.name
-                      }))
-                    ]}
+                    className={errors.category_id ? 'border-red-500' : ''}
+                    options={categories.map(category => ({
+                      value: category.id.toString(),
+                      label: category.name
+                    }))}
                   />
+                  <ErrorMessage field="category_id" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Vendor *
                   </label>
                   <CustomSelect
-                    value={formData.vendor_id.toString()}
+                    value={formData.vendor_id > 0 ? formData.vendor_id.toString() : ''}
                     onValueChange={(value) => handleInputChange('vendor_id', typeof value === 'string' ? parseInt(value) || 0 : value || 0)}
                     placeholder="Select a vendor"
-                    options={[
-                      { value: '0', label: 'Select Vendor' },
-                      ...vendors.map(vendor => ({
-                        value: vendor.id.toString(),
-                        label: vendor.business_name || vendor.name
-                      }))
-                    ]}
+                    className={errors.vendor_id ? 'border-red-500' : ''}
+                    options={vendors.map(vendor => ({
+                      value: vendor.id.toString(),
+                      label: vendor.business_name || vendor.name
+                    }))}
                   />
+                  <ErrorMessage field="vendor_id" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -726,20 +808,18 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                     options={[
                       { value: 'draft', label: 'Draft' },
                       { value: 'published', label: 'Published' },
-                      { value: 'inactive', label: 'Inactive' }
+                      { value: 'archived', label: 'Archived' }
                     ]}
                   />
                 </div>
                 <div className="flex items-center">
-                  <label className="flex items-center space-x-2 text-gray-300">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_featured}
-                      onChange={(e) => handleInputChange('is_featured', e.target.checked)}
-                      className="rounded bg-gray-700 border-gray-600"
-                    />
-                    <span>Featured Product</span>
-                  </label>
+                  <Switch
+                    checked={formData.is_featured}
+                    onCheckedChange={(checked) => handleInputChange('is_featured', checked)}
+                    label="Featured Product"
+                    description="Mark this product as featured to highlight it on your store"
+                    size="md"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -763,7 +843,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                     step="0.01"
                     min="0"
                     value={formData.weight || ''}
-                    onChange={(e) => handleInputChange('weight', e.target.value ? parseFloat(e.target.value) : undefined)}
+                    onChange={(e) => handleInputChange('weight', e.target.value || undefined)}
                     placeholder="0.50"
                     className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                   />

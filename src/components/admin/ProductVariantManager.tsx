@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomSelect } from '@/components/ui/select-custom';
-import { useToast } from '@/hooks/useToast';
+import { toast } from 'sonner';
 import {
   Plus,
   Trash2,
@@ -53,7 +53,7 @@ export default function ProductVariantManager({
   });
   const [selectedVariations, setSelectedVariations] = useState<{ [variationId: number]: number }>({});
 
-  const { showToast, showError, showSuccess } = useToast();
+  // const { showToast, showError, showSuccess } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch variations and their values
@@ -89,12 +89,12 @@ export default function ProductVariantManager({
     onSuccess: (newVariant) => {
       onVariantsChange([...variants, newVariant]);
       resetForm();
-      showSuccess('Product variant created successfully');
+      toast.success('Product variant created successfully');
       // Invalidate and refetch variants
       queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to create variant');
+      toast.error(error.message || 'Failed to create variant');
     },
   });
 
@@ -107,12 +107,12 @@ export default function ProductVariantManager({
       onVariantsChange(updatedVariants);
       setEditingVariantId(null);
       resetForm();
-      showSuccess('Product variant updated successfully');
+      toast.success('Product variant updated successfully');
       // Invalidate and refetch variants
       queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to update variant');
+      toast.error(error.message || 'Failed to update variant');
     },
   });
 
@@ -122,12 +122,12 @@ export default function ProductVariantManager({
     onSuccess: (_, deletedId) => {
       const updatedVariants = variants.filter(v => v.id !== deletedId);
       onVariantsChange(updatedVariants);
-      showSuccess('Product variant deleted successfully');
+      toast.success('Product variant deleted successfully');
       // Invalidate and refetch variants
       queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to delete variant');
+      toast.error(error.message || 'Failed to delete variant');
     },
   });
 
@@ -174,7 +174,7 @@ export default function ProductVariantManager({
 
   const handleSubmit = () => {
     if (!productId) {
-      showError('Product must be saved before adding variants');
+      toast.error('Product must be saved before adding variants');
       return;
     }
 
@@ -184,12 +184,12 @@ export default function ProductVariantManager({
     );
 
     if (filteredVariationValues.length === 0) {
-      showError('Please select at least one variation');
+      toast.error('Please select at least one variation');
       return;
     }
 
     if (!variantForm.sku.trim()) {
-      showError('Please provide a SKU for the variant');
+      toast.error('Please provide a SKU for the variant');
       return;
     }
 
@@ -237,9 +237,17 @@ export default function ProductVariantManager({
   };
 
   const formatVariantDisplay = (variant: ProductVariant) => {
+    if (!variant || !variant.variation_values || !Array.isArray(variant.variation_values)) {
+      return 'No variations';
+    }
+    
     return variant.variation_values
-      .map(value => `${value.variation?.name}: ${value.name}`)
-      .join(', ');
+      .map(value => {
+        if (!value || !value.variation || !value.name) return '';
+        return `${value.variation.name}: ${value.name}`;
+      })
+      .filter(Boolean)
+      .join(', ') || 'No variations';
   };
 
   const generateSKU = useCallback(() => {

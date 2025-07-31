@@ -118,10 +118,21 @@ export default function ProductsPage() {
       header: 'Image',
       cell: ({ row }) => {
         const product = row.original;
-        // Always use first image from images collection for display
-        const imageUrl = product.images?.[0]?.file_url || 
-                        product.image || 
-                        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNTAgMTAwQzE2NC4zIDEwMCAxNzYgMTExLjcgMTc2IDEyNkMxNzYgMTQwLjMgMTY0LjMgMTUyIDE1MCAxNTJDMTM1LjcgMTUyIDEyNCAxNDAuMyAxMjQgMTI2QzEyNCAxMTEuNyAxMzUuNyAxMDAgMTUwIDEwMFoiIGZpbGw9IiM5Q0E0QUYiLz4KPHBhdGggZD0iTTEwMCAxODBIMjAwQzIwNS41IDE4MCAyMTAgMTg0LjUgMjEwIDE5MFYyMDBDMjEwIDIwNS41IDIwNS41IDIxMCAyMDAgMjEwSDEwMEM5NC41IDIxMCA5MCAyMDUuNSA5MCAyMDBWMTkwQzkwIDE4NC41IDk0LjUgMTgwIDEwMCAxODBaIiBmaWxsPSIjOUNBNEFGIi8+Cjwvc3ZnPgo=';
+        // Always use first image from images collection for display  
+        let imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNTAgMTAwQzE2NC4zIDEwMCAxNzYgMTExLjcgMTc2IDEyNkMxNzYgMTQwLjMgMTY0LjMgMTUyIDE1MCAxNTJDMTM1LjcgMTUyIDEyNCAxNDAuMyAxMjQgMTI2QzEyNCAxMTEuNyAxMzUuNyAxMDAgMTUwIDEwMFoiIGZpbGw9IiM5Q0E0QUYiLz4KPHBhdGggZD0iTTEwMCAxODBIMjAwQzIwNS41IDE4MCAyMTAgMTg0LjUgMjEwIDE5MFYyMDBDMjEwIDIwNS41IDIwNS41IDIxMCAyMDAgMjEwSDEwMEM5NC41IDIxMCA5MCAyMDUuNSA5MCAyMDBWMTkwQzkwIDE4NC41IDk0LjUgMTgwIDEwMCAxODBaIiBmaWxsPSIjOUNBNEFGIi8+Cjwvc3ZnPgo=';
+        
+        if (product.images && product.images.length > 0) {
+          const firstImage = product.images[0] as any;
+          if (typeof firstImage === 'object' && firstImage.url) {
+            imageUrl = firstImage.url;
+          } else if (typeof firstImage === 'object' && firstImage.file_url) {
+            imageUrl = firstImage.file_url;
+          } else if (typeof firstImage === 'string') {
+            imageUrl = firstImage;
+          }
+        } else if (product.image) {
+          imageUrl = product.image;
+        }
         
         return (
           <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
@@ -500,17 +511,33 @@ export default function ProductsPage() {
                 <div className="flex items-center space-x-3">
                   {/* Product Image */}
                   <div className="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {product.images?.[0]?.file_url || product.image ? (
-                      <Image
-                        src={product.images?.[0]?.file_url || product.image || ''}
-                        alt={product.name || 'Product'}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <Package className="w-8 h-8 text-gray-400" />
-                    )}
+                    {(() => {
+                      let imgSrc = '';
+                      if (product.images && product.images.length > 0) {
+                        const firstImage = product.images[0] as any;
+                        if (typeof firstImage === 'object' && firstImage.url) {
+                          imgSrc = firstImage.url;
+                        } else if (typeof firstImage === 'object' && firstImage.file_url) {
+                          imgSrc = firstImage.file_url;
+                        } else if (typeof firstImage === 'string') {
+                          imgSrc = firstImage;
+                        }
+                      } else if (product.image) {
+                        imgSrc = product.image;
+                      }
+                      
+                      return imgSrc ? (
+                        <Image
+                          src={imgSrc}
+                          alt={product.name || 'Product'}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <Package className="w-8 h-8 text-gray-400" />
+                      );
+                    })()}
                   </div>
                   
                   {/* Product Info */}

@@ -59,16 +59,16 @@ export default function CategoryPage({ }: CategoryPageProps) {
 					return;
 				}
 
-				// Fetch products for this category
-				const allProducts = await publicApi.getFeaturedProducts();
-				const categoryProducts = allProducts.filter(
-					(product: Product) => product.category?.slug === slug
-				);
+				// Fetch products for this category using the API endpoint
+				const productsResponse = await publicApi.getProducts({
+					category: slug,
+					per_page: 50 // Get more products for category pages
+				});
 
 				// Set all data at once to avoid gaps
 				setCategory(currentCategory);
-				setProducts(categoryProducts);
-				setFilteredProducts(categoryProducts);
+				setProducts(productsResponse.data);
+				setFilteredProducts(productsResponse.data);
 			} catch (error) {
 				console.error('Error fetching category data:', error);
 				setProducts([]);
@@ -116,10 +116,33 @@ export default function CategoryPage({ }: CategoryPageProps) {
 	};
 
 	const handleAddToWishlist = (product: Product) => {
+		// Handle both old and new image formats
+		let productImage: string | undefined;
+		if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+			const firstImage = product.images[0] as any;
+			if (typeof firstImage === 'string') {
+				// Legacy format: array of URLs
+				productImage = firstImage;
+			} else if (firstImage && typeof firstImage === 'object') {
+				if (firstImage.url) {
+					// New API format: array of {id, url} objects
+					productImage = firstImage.url;
+				} else if (firstImage.file_url) {
+					// Old format: array of ProductImage objects
+					productImage = firstImage.file_url;
+				}
+			}
+		}
+		
+		// Fallback to other image fields
+		if (!productImage) {
+			productImage = product.thumb || product.image || product.thumbnail || undefined;
+		}
+
 		const wishlistItem = {
 			productId: product.id.toString(),
 			productName: product.name,
-			productImage: product.images?.[0]?.file_url || product.image || product.thumbnail || undefined,
+			productImage,
 			productSlug: product.slug,
 			categorySlug: product.category?.slug,
 			price: parseFloat(product.price),

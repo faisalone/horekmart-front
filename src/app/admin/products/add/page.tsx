@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
 import { adminApi } from '@/lib/admin-api';
 import { Product } from '@/types/admin';
 import ProductForm from '@/components/admin/ProductForm';
+import { toast } from 'sonner';
 
 interface UploadedImage {
-  id?: number;
+  id?: number | string; // Allow both number and string for UUIDs
   file?: File;
   url?: string; // For existing images from server
   preview: string; // For blob URLs or existing URLs
@@ -24,16 +24,61 @@ export default function AddProductPage() {
   const queryClient = useQueryClient();
 
   const createProductMutation = useMutation({
-    mutationFn: (product: Partial<Product>) => adminApi.createProduct(product),
+    mutationFn: ({ product, images, thumbnail }: { 
+      product: Partial<Product>, 
+      images?: File[], 
+      thumbnail?: File 
+    }) => adminApi.createProduct(product, images, thumbnail),
     onSuccess: () => {
       queryClient.invalidateQueries({ 
         queryKey: ['admin-products'],
         type: 'all'
       });
+      toast.success('Product created successfully!', {
+        description: 'The product has been added to your catalog.'
+      });
       router.push('/admin/products');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating product:', error);
+      
+      // Handle validation errors from backend (422)
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        const errorMessages = Object.values(validationErrors).flat() as string[];
+        
+        // Show a single consolidated error message
+        if (errorMessages.length > 1) {
+          toast.error('Please fix the following errors:', {
+            description: errorMessages.join(' • ')
+          });
+        } else {
+          toast.error(errorMessages[0]);
+        }
+      } 
+      // Handle server errors (500) with specific message
+      else if (error.response?.status === 500) {
+        if (error.response?.data?.message) {
+          toast.error(error.response.data.message, {
+            description: 'Server error occurred. Please try again.'
+          });
+        } else {
+          toast.error('Server error occurred', {
+            description: 'Please check your data and try again.'
+          });
+        }
+      }
+      // Handle other backend errors
+      else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } 
+      // Handle network/unknown errors
+      else {
+        toast.error('Failed to create product', {
+          description: 'Please check your connection and try again.'
+        });
+      }
+      
       setIsLoading(false);
     },
   });
@@ -46,53 +91,24 @@ export default function AddProductPage() {
     setIsLoading(true);
     
     try {
-      // First create the product
-      const createdProduct = await adminApi.createProduct(productData);
-      const productId = createdProduct.id;
+      // Extract image files from the images array (only new uploads)
+      const imageFiles = images
+        .filter(img => !img.isExisting && img.file && img.file instanceof File)
+        .map(img => img.file!);
       
-      // Then upload thumbnail if provided and it's a File
-      if (thumbnail && thumbnail instanceof File) {
-        try {
-          await adminApi.uploadProductThumbnail(productId, thumbnail);
-        } catch (error: any) {
-          console.error('Error uploading thumbnail:', error);
-          // Show user-friendly error message but don't stop the process
-          // You could add a toast notification here if needed
-        }
-      }
+      // Use thumbnail only if it's a File
+      const thumbnailFile = thumbnail instanceof File ? thumbnail : undefined;
       
-      // Then upload images if provided
-      const newImageFiles = images.filter(img => !img.isExisting && img.file && img.file instanceof File);
-      if (newImageFiles.length > 0) {
-        try {
-          // Extract the files and their sort orders
-          const imageFiles = newImageFiles.map(img => img.file!);
-          const sortOrders = newImageFiles.map(img => img.sort_order || 0);
-          
-          console.log('Uploading images with sort orders:', sortOrders);
-          
-          // Pass both files and sort orders to the API
-          await adminApi.uploadProductImages(productId, imageFiles, sortOrders);
-        } catch (error: any) {
-          console.error('Error uploading images:', error);
-          // Show user-friendly error message but don't stop the process
-          // You could add a toast notification here if needed
-        }
-      }
-      
-      // Success - the mutation's onSuccess will handle cache invalidation and redirect
-      queryClient.invalidateQueries({ 
-        queryKey: ['admin-products'],
-        type: 'all'
+      // Create product with images and thumbnail in one API call
+      await createProductMutation.mutateAsync({
+        product: productData,
+        images: imageFiles.length > 0 ? imageFiles : undefined,
+        thumbnail: thumbnailFile
       });
-      router.push('/admin/products');
       
     } catch (error: any) {
+      // Error handling is done in mutation onError, just reset loading state
       console.error('Error creating product:', error);
-      // Show user-friendly error message
-      const errorMessage = error.message || 'Failed to create product. Please try again.';
-      // You could add a toast notification here
-      alert(errorMessage); // Temporary - replace with toast when available
     } finally {
       setIsLoading(false);
     }
@@ -104,17 +120,6 @@ export default function AddProductPage() {
 
   return (
     <>
-      {/* Meta tags for admin add product page */}
-      <Head>
-        <title>Add New Product | Admin Dashboard</title>
-        <meta name="description" content="Add a new product to your store through the admin dashboard." />
-        <meta property="og:title" content="Add New Product | Admin Dashboard" />
-        <meta property="og:description" content="Add a new product to your store through the admin dashboard." />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Add New Product | Admin Dashboard" />
-        <meta name="twitter:description" content="Add a new product to your store through the admin dashboard." />
-      </Head>
       <ProductForm
         mode="create"
         onSubmit={handleSubmit}

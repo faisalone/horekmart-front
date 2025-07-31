@@ -38,13 +38,20 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
     
     // Add only product images from gallery (exclude thumbnail)
     if (product.images && product.images.length > 0) {
-      product.images.forEach((img, index) => {
-        images.push({
-          url: img.file_url,
-          alt: img.alt_text || `${product.name} - Image ${index + 1}`,
-          type: 'gallery',
-          id: img.id
-        });
+      product.images.forEach((img: any, index) => {
+        const imageUrl = typeof img === 'object' && img.url ? img.url : 
+                        (typeof img === 'object' && img.file_url ? img.file_url : 
+                        (typeof img === 'string' ? img : ''));
+        const imageId = typeof img === 'object' && img.id ? img.id : index;
+        
+        if (imageUrl) {
+          images.push({
+            url: imageUrl,
+            alt: (typeof img === 'object' && img.alt_text) ? img.alt_text : `${product.name} - Image ${index + 1}`,
+            type: 'gallery',
+            id: imageId
+          });
+        }
       });
     }
     
@@ -65,9 +72,9 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
   const getThumbnail = (): {url: string, alt: string, type: string, id: string | number} | null => {
     if (!product) return null;
     
-    if (product.thumbnail && product.thumbnail.trim() !== '') {
+    if (product.thumb && product.thumb.trim() !== '') {
       return {
-        url: product.thumbnail,
+        url: product.thumb,
         alt: `${product.name} - Thumbnail (Meta Image)`,
         type: 'thumbnail',
         id: 'thumbnail'

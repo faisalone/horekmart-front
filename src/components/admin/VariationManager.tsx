@@ -7,7 +7,7 @@ import { Variation, VariationValue } from '@/types/admin';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/useToast';
+import { toast } from 'sonner';
 import {
   Plus,
   Trash2,
@@ -31,7 +31,7 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
   const [variationForm, setVariationForm] = useState({ name: '', slug: '' });
   const [valueForm, setValueForm] = useState({ name: '', slug: '', variation_id: 0 });
 
-  const { showToast, showError, showSuccess } = useToast();
+  // const { showToast, showError, showSuccess } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch variations and their values
@@ -52,10 +52,10 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variations'] });
       resetVariationForm();
-      showSuccess('Variation created successfully');
+      toast.success('Variation created successfully');
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to create variation');
+      toast.error(error.message || 'Failed to create variation');
     },
   });
 
@@ -65,10 +65,10 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variations'] });
       resetVariationForm();
-      showSuccess('Variation updated successfully');
+      toast.success('Variation updated successfully');
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to update variation');
+      toast.error(error.message || 'Failed to update variation');
     },
   });
 
@@ -77,10 +77,10 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variations'] });
       queryClient.invalidateQueries({ queryKey: ['variation-values'] });
-      showSuccess('Variation deleted successfully');
+      toast.success('Variation deleted successfully');
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to delete variation');
+      toast.error(error.message || 'Failed to delete variation');
     },
   });
 
@@ -91,10 +91,10 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variation-values'] });
       resetValueForm();
-      showSuccess('Variation value created successfully');
+      toast.success('Variation value created successfully');
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to create variation value');
+      toast.error(error.message || 'Failed to create variation value');
     },
   });
 
@@ -104,10 +104,10 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variation-values'] });
       resetValueForm();
-      showSuccess('Variation value updated successfully');
+      toast.success('Variation value updated successfully');
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to update variation value');
+      toast.error(error.message || 'Failed to update variation value');
     },
   });
 
@@ -115,10 +115,10 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     mutationFn: (id: number) => adminApi.deleteVariationValue(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variation-values'] });
-      showSuccess('Variation value deleted successfully');
+      toast.success('Variation value deleted successfully');
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to delete variation value');
+      toast.error(error.message || 'Failed to delete variation value');
     },
   });
 

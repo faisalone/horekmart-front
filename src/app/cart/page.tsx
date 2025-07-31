@@ -123,7 +123,7 @@ function CartContent() {
                       <div className="space-y-2">
                         <h3 className="font-semibold text-gray-900 text-sm leading-tight">
                           <Link 
-                            href={`/products/${item.categorySlug ? `${item.categorySlug}/` : ''}${item.productSlug}`}
+                            href={item.categorySlug ? `/products/${item.categorySlug}/${item.productSlug}` : `/products/${item.productSlug}`}
                             className="hover:text-blue-600 transition-colors"
                           >
                             {item.productName}

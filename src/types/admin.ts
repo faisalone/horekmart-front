@@ -64,10 +64,10 @@ export interface Product {
 	stock_quantity: number;
 	in_stock: boolean;
 	image?: string | null;
-	thumbnail?: string | null; // Added thumbnail field
-	images?: ProductImage[];
+	thumb?: string | null; // Thumbnail field (matches backend API)
+	images?: Array<{ id: string; url: string } | ProductImage | string>; // Support all formats for compatibility
 	variants?: ProductVariant[];
-	status: 'published' | 'draft' | 'inactive'; // Updated to match API
+	status: 'published' | 'draft' | 'archived'; // Updated to match API
 	category_id: number; // Changed from string to number
 	vendor_id: number; // Changed from string to number
 	is_featured: boolean; // Changed from 'featured' to 'is_featured'

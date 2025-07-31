@@ -91,16 +91,10 @@ class ProductCheckoutService {
 		product: Product;
 		variants: ApiProductVariant[];
 	}> {
-		const [product, variantsResponse] = await Promise.all([
-			publicApi.getProduct(productId),
-			publicApi
-				.getProductVariants(productId)
-				.catch(() => ({ success: false, data: { variants: [] } })),
-		]);
+		const product = await publicApi.getProduct(productId);
 
-		const variants = variantsResponse.success
-			? variantsResponse.data.variants
-			: [];
+		// Variants are now included in the product response
+		const variants = product.variants || [];
 
 		return { product, variants };
 	}
@@ -205,8 +199,22 @@ class ProductCheckoutService {
 			variantId: variantId,
 			quantity,
 			productName: product.name,
-			productImage:
-				product.images?.[0]?.file_url || product.image || undefined,
+			productImage: (() => {
+				if (product.images && product.images.length > 0) {
+					const firstImage = product.images[0] as any;
+					if (typeof firstImage === 'object' && firstImage.url) {
+						return firstImage.url;
+					} else if (
+						typeof firstImage === 'object' &&
+						firstImage.file_url
+					) {
+						return firstImage.file_url;
+					} else if (typeof firstImage === 'string') {
+						return firstImage;
+					}
+				}
+				return product.image || undefined;
+			})(),
 			productSlug: product.slug,
 			categorySlug: product.category?.slug,
 			price: pricing.price,

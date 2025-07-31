@@ -39,6 +39,7 @@ import { formatCurrency } from '@/lib/currency';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import RichTextDisplay from '@/components/ui/RichTextDisplay';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { getProductUrl } from '@/lib/utils';
 
 interface BreadcrumbItem {
 	label: string;
@@ -98,15 +99,48 @@ export default function ProductPage({ params }: ProductPageProps) {
 		const images: Array<{ url: string; alt: string; type: string }> = [];
 
 		if (product && product.images && product.images.length > 0) {
-			product.images.forEach((img: ProductImage, index: number) => {
-				images.push({
-					url: img.file_url,
-					alt: img.alt_text || `${product.name} - Image ${index + 1}`,
-					type: 'gallery',
-				});
+			product.images.forEach((image: any, index: number) => {
+				if (typeof image === 'string') {
+					// Legacy format: images is array of URL strings
+					images.push({
+						url: image,
+						alt: `${product.name} - Image ${index + 1}`,
+						type: 'gallery',
+					});
+				} else if (image && typeof image === 'object') {
+					if (image.url) {
+						// New API format: images is array of {id, url} objects
+						images.push({
+							url: image.url,
+							alt: `${product.name} - Image ${index + 1}`,
+							type: 'gallery',
+						});
+					} else if (image.file_url) {
+						// Old format: images is array of ProductImage objects
+						images.push({
+							url: image.file_url,
+							alt: image.alt_text || `${product.name} - Image ${index + 1}`,
+							type: 'gallery',
+						});
+					}
+				}
 			});
 		}
 
+		// Add thumbnail if it exists and is not already in images (API uses 'thumb' field)
+		if (
+			product &&
+			product.thumb &&
+			!images.some((img) => img.url === product.thumb)
+		) {
+			images.unshift({
+				url: product.thumb,
+				alt: `${product.name} - Main Image`,
+				type: 'thumbnail',
+			});
+		}
+
+		// Fallback to thumbnail if no other images
 		if (
 			product &&
 			product.thumbnail &&
@@ -191,52 +225,39 @@ export default function ProductPage({ params }: ProductPageProps) {
 	useEffect(() => {
 		const fetchProduct = async () => {
 			try {
-				// Don't show loading initially - show skeletons instead
+				setLoading(true);
 				setError(null);
 				const resolvedParams = await params;
 				const slugParts = resolvedParams.slug;
 
+				// Always use the last part as the product slug
+				const productSlug = slugParts[slugParts.length - 1];
+				
 				let productData: Product;
-				let breadcrumbData: Category[] = [];
 
-				if (slugParts.length === 1) {
-					try {
-						productData = await publicApi.getProduct(slugParts[0]);
-					} catch (error) {
-						console.error('Error fetching product by ID:', error);
-						setError('Product not found');
-						return;
-					}
-				} else {
-					const productSlug = slugParts[slugParts.length - 1];
-					const categoryPath = slugParts.slice(0, -1).join('/');
-
-					try {
-						const response = await publicApi.getProductByPath(
-							categoryPath,
-							productSlug
-						);
-						productData = response.product;
-						breadcrumbData = response.breadcrumb;
-					} catch (error) {
-						console.error('Error fetching product by path:', error);
-						setError('Product not found');
-						return;
-					}
+				try {
+					productData = await publicApi.getProduct(productSlug);
+				} catch (error) {
+					console.error('Error fetching product:', error);
+					setError('Product not found');
+					return;
 				}
 
 				setProduct(productData);
+				
+				// Build breadcrumb from product's category hierarchy
+				let breadcrumbData: Category[] = [];
+				if (productData.category) {
+					// Simple breadcrumb - just show the direct category
+					breadcrumbData = [productData.category];
+				}
 				setBreadcrumb(breadcrumbData);
 				setSelectedImageIndex(0);
 
-				try {
-					const variantsResponse = await publicApi.getProductVariants(
-						productData.id.toString()
-					);
-					const variantsData = variantsResponse.data.variants || [];
-					setVariants(variantsData);
-				} catch (error) {
-					console.error('Error fetching variants:', error);
+				// Variants are now included in the product response
+				if (productData.variants) {
+					setVariants(productData.variants);
+				} else {
 					setVariants([]);
 				}
 
@@ -262,7 +283,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 		fetchProduct();
 	}, [params]);
 
-	if (!product && !error) {
+	if (loading || (!product && !error)) {
 		return (
 			<div className="min-h-screen bg-white">
 				<div className="max-w-7xl mx-auto px-4 py-8">
@@ -301,7 +322,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 		);
 	}
 
-	if (error || !product) {
+	if (error) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
@@ -322,6 +343,36 @@ export default function ProductPage({ params }: ProductPageProps) {
 							<ArrowLeft className="w-4 h-4 mr-2" />
 							Go Back
 						</Button>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	// Null check before accessing product properties
+	if (!product) {
+		return (
+			<div className="min-h-screen bg-white">
+				<div className="max-w-7xl mx-auto px-4 py-8">
+					<BreadcrumbSkeleton />
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+						<div className="hidden lg:block lg:col-span-1 order-1">
+							<div className="sticky top-24">
+								<ProductInfoSkeleton />
+							</div>
+						</div>
+						<div className="lg:col-span-2 order-2">
+							<ProductImageSkeleton />
+							<div className="lg:hidden mt-8">
+								<ProductInfoSkeleton />
+							</div>
+							<div className="mt-8">
+								<ProductDetailsSkeleton />
+							</div>
+						</div>
+					</div>
+					<div className="mt-16">
+						<RelatedProductsSkeleton />
 					</div>
 				</div>
 			</div>
@@ -352,6 +403,8 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 		if (variants && variants.length > 0) {
 			variants.forEach((variant) => {
+				if (!variant || !variant.final_price) return; // Safety check
+				
 				const variantPrice = parseFloat(variant.final_price);
 				let variantOffer = null;
 				let hasDiscount = false;
@@ -383,6 +436,9 @@ export default function ProductPage({ params }: ProductPageProps) {
 		const finalPrices = allPrices.map((p) =>
 			p.offer !== null ? p.offer : p.regular
 		);
+		
+		if (finalPrices.length === 0) return null; // Safety check
+		
 		const minPrice = Math.min(...finalPrices);
 		const maxPrice = Math.max(...finalPrices);
 
@@ -449,10 +505,14 @@ export default function ProductPage({ params }: ProductPageProps) {
 	const handleAddToWishlist = () => {
 		if (!product) return;
 
+		// Get the first image from the product using our getAllImages helper
+		const allImages = getAllImages();
+		const firstImageUrl = allImages.length > 0 ? allImages[0].url : undefined;
+
 		const wishlistItem = {
 			productId: product.id.toString(),
 			productName: product.name,
-			productImage: product.images?.[0]?.file_url || product.image || undefined,
+			productImage: firstImageUrl,
 			productSlug: product.slug,
 			categorySlug: product.category?.slug,
 			price: parseFloat(product.price),
@@ -523,27 +583,21 @@ export default function ProductPage({ params }: ProductPageProps) {
 	];
 
 	// Add category breadcrumb items
-	if (breadcrumb.length > 0) {
-		if (breadcrumb.length > 2) {
-			// Show only the last category if there are more than 2
-			breadcrumbItems.push({
-				label: breadcrumb[breadcrumb.length - 1].name,
-				href: `/products/${breadcrumb.map((c) => c.slug).join('/')}`
-			});
-		} else {
-			// Show all categories if 2 or fewer
-			breadcrumb.forEach((category, index) => {
+	if (breadcrumb && breadcrumb.length > 0) {
+		// Show the direct category
+		breadcrumb.forEach((category) => {
+			if (category && category.name && category.slug) {
 				breadcrumbItems.push({
 					label: category.name,
-					href: `/products/${breadcrumb.slice(0, index + 1).map((c) => c.slug).join('/')}`
+					href: `/${category.slug}` // Category page URL
 				});
-			});
-		}
-	} else if (product.category) {
+			}
+		});
+	} else if (product.category && product.category.name && product.category.slug) {
 		// Fallback to product category if no breadcrumb
 		breadcrumbItems.push({
 			label: product.category.name,
-			href: `/products/${product.category.slug}`
+			href: `/${product.category.slug}` // Category page URL
 		});
 	}
 
@@ -830,21 +884,21 @@ export default function ProductPage({ params }: ProductPageProps) {
 											<div className="text-gray-700 text-base lg:text-lg leading-relaxed">
 												{showFullDescription ? (
 													<RichTextDisplay 
-														content={product.description} 
+														content={product.description || ''} 
 														textColor="gray"
 													/>
 												) : (
 													<RichTextDisplay 
 														content={
-															product.description.length > 300
+															(product.description && product.description.length > 300)
 																? `${product.description.substring(0, 300)}...`
-																: product.description
+																: product.description || ''
 														}
 														textColor="gray"
 													/>
 												)}
 											</div>
-											{product.description.length > 300 && (
+											{(product.description && product.description.length > 300) && (
 												<button
 													onClick={() =>
 														setShowFullDescription(!showFullDescription)
@@ -1187,7 +1241,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 							{relatedProducts.map((relatedProduct) => (
 								<Link
 									key={relatedProduct.id}
-									href={`/products/${relatedProduct.category?.slug || 'uncategorized'}/${relatedProduct.slug}`}
+									href={getProductUrl(relatedProduct)}
 									className="group"
 								>
 									<div className="bg-white rounded-lg border hover:shadow-lg transition-shadow">

@@ -26,7 +26,9 @@ export interface Product {
 	in_stock: boolean;
 	image?: string | null;
 	thumbnail?: string | null;
-	images?: ProductImage[];
+	thumb?: string | null; // API uses this field for main image
+	images?: Array<{ id: string; url: string } | ProductImage | string>; // Support all formats for compatibility
+	variants?: any[]; // API variants will be included in product response
 	status: string;
 	category_id: number;
 	vendor_id: number;
