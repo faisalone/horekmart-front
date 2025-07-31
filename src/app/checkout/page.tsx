@@ -11,7 +11,7 @@ function CheckoutRedirectContent() {
   const [isLoading, setIsLoading] = useState(true);
   
   const mode = searchParams.get('mode');
-  const productId = searchParams.get('product_id');
+  const productSlug = searchParams.get('product_slug');
   const variantId = searchParams.get('variant_id');
   const quantity = searchParams.get('quantity');
 
@@ -22,10 +22,10 @@ function CheckoutRedirectContent() {
       try {
         hasProcessed.current = true;
         
-        if (mode === 'buy_now' && productId && quantity) {
+        if (mode === 'buy_now' && productSlug && quantity) {
           // Handle Order Now flow
           const sessionId = await productCheckoutService.buyNow(
-            productId,
+            productSlug,
             parseInt(quantity),
             variantId || undefined
           );
@@ -45,7 +45,7 @@ function CheckoutRedirectContent() {
     };
 
     handleCheckout();
-  }, [mode, productId, quantity, variantId, router]);
+  }, [mode, productSlug, quantity, variantId, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

@@ -492,7 +492,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 		try {
 			await addToCartService(
-				product.id.toString(),
+				product.slug,
 				productPageData.quantity,
 				productPageData.selectedVariant?.id?.toString(),
 				(item) => addToCart(item)
@@ -534,7 +534,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 		try {
 			const checkoutUrl = await buyNow(
-				product.id.toString(),
+				product.slug,
 				productPageData.quantity,
 				productPageData.selectedVariant?.id?.toString()
 			);

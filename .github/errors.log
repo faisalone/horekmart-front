@@ -1,11 +1,9 @@
-Error: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
-    at createConsoleError (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_8f19e6fb._.js:882:71)
-    at handleConsoleError (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_8f19e6fb._.js:1058:54)
-    at console.error (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_8f19e6fb._.js:1223:57)
-    at getRootForUpdatedFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4741:143)
-    at enqueueConcurrentHookUpdate (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4724:16)
-    at dispatchSetStateInternal (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:7189:22)
-    at dispatchSetState (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:7161:9)
-    at http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_8f19e6fb._.js:11898:25
-
-	
+AxiosError: Request failed with status code 404
+    at settle (http://localhost:3000/_next/static/chunks/node_modules_b84b6139._.js:8249:16)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_next/static/chunks/node_modules_b84b6139._.js:8753:174)
+    at Axios.request (http://localhost:3000/_next/static/chunks/node_modules_b84b6139._.js:9478:49)
+    at async PublicApiClient.getProduct (http://localhost:3000/_next/static/chunks/src_71d08f83._.js:235:26)
+    at async ProductCheckoutService.getProductWithVariants (http://localhost:3000/_next/static/chunks/src_71d08f83._.js:1638:25)
+    at async ProductCheckoutService.createCheckoutItem (http://localhost:3000/_next/static/chunks/src_71d08f83._.js:1691:39)
+    at async ProductCheckoutService.addToCart (http://localhost:3000/_next/static/chunks/src_71d08f83._.js:1734:30)
+    at async handleAddToCart (http://localhost:3000/_next/static/chunks/src_71d08f83._.js:3239:13)

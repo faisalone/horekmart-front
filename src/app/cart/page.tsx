@@ -35,7 +35,7 @@ function CartContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-theme-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading cart...</p>
         </div>
       </div>
@@ -62,7 +62,7 @@ function CartContent() {
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
             <p className="text-gray-600 mb-6">Add some products to get started!</p>
-            <Link href="/products" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors inline-flex items-center justify-center">
+            <Link href="/products" className="bg-theme-secondary hover:bg-theme-secondary-dark text-white px-6 py-3 rounded-md font-medium transition-colors inline-flex items-center justify-center">
               Browse Products
             </Link>
           </div>
@@ -142,7 +142,7 @@ function CartContent() {
                               {Object.entries(item.variantOptions).map(([key, value]) => (
                                 <span 
                                   key={key}
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800"
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-theme-secondary text-white"
                                 >
                                   <span className="font-medium">{key}:</span>&nbsp;{String(value)}
                                 </span>
@@ -309,7 +309,7 @@ function CartContent() {
                     console.error('Error preparing checkout:', error);
                   }
                 }}
-                className="w-full bg-blue-600 hover:bg-blue-700 mt-6"
+                className="w-full bg-theme-primary hover:bg-theme-primary-dark text-white transition-colors mt-6"
               >
                 Proceed to Checkout
               </Button>
@@ -331,7 +331,7 @@ export default function CartPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-theme-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading cart...</p>
         </div>
       </div>

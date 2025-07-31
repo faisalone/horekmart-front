@@ -109,7 +109,7 @@ export default function CategoryPage({ }: CategoryPageProps) {
 
 	const handleAddToCart = async (product: Product) => {
 		try {
-			await addToCartService(product.id.toString(), 1);
+			await addToCartService(product.slug, 1);
 		} catch (error) {
 			console.error('Failed to add product to cart:', error);
 		}

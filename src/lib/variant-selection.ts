@@ -5,10 +5,14 @@ export interface VariationOption {
 	name: string;
 	slug: string;
 	variation_id: number;
+	created_at?: string;
+	updated_at?: string;
 	variation: {
 		id: number;
 		name: string;
 		slug: string;
+		created_at?: string;
+		updated_at?: string;
 	};
 }
 
@@ -85,14 +89,12 @@ export class VariantSelectionEngine {
 			this.variants.find((variant) => {
 				return selectedKeys.every((variationKey) => {
 					const selectedValueId = options[variationKey];
-					const variantValues = variant.combinations[variationKey];
 
-					return (
-						variantValues &&
-						variantValues.some(
-							(value: any) =>
-								value.id.toString() === selectedValueId
-						)
+					// Check if this variant has the selected value for this variation
+					return variant.variation_values?.some(
+						(value) =>
+							value.variation.name === variationKey &&
+							value.id.toString() === selectedValueId
 					);
 				});
 			}) || null
@@ -118,13 +120,11 @@ export class VariantSelectionEngine {
 		return this.variants.some((variant) => {
 			return Object.entries(testOptions).every(
 				([variation, selectedValueId]) => {
-					const variantValues = variant.combinations[variation];
-					return (
-						variantValues &&
-						variantValues.some(
-							(value: any) =>
-								value.id.toString() === selectedValueId
-						)
+					// Check if this variant has the selected value for this variation
+					return variant.variation_values?.some(
+						(value) =>
+							value.variation.name === variation &&
+							value.id.toString() === selectedValueId
 					);
 				}
 			);
@@ -220,22 +220,38 @@ export const extractAvailableVariations = (
 	const variations: AvailableVariations = {};
 
 	variants.forEach((variant) => {
-		Object.entries(variant.combinations).forEach(
-			([variationName, values]) => {
+		// Use variation_values array to build available variations
+		if (
+			variant.variation_values &&
+			Array.isArray(variant.variation_values)
+		) {
+			variant.variation_values.forEach((value) => {
+				if (!value.variation) return; // Skip if variation is not loaded
+
+				const variationName = value.variation.name;
+
 				if (!variations[variationName]) {
 					variations[variationName] = [];
 				}
 
-				values.forEach((value: any) => {
-					const existingValue = variations[variationName].find(
-						(v) => v.id === value.id
-					);
-					if (!existingValue) {
-						variations[variationName].push(value);
-					}
-				});
-			}
-		);
+				// Check if this value is already in the list
+				const existingValue = variations[variationName].find(
+					(v) => v.id === value.id
+				);
+
+				if (!existingValue) {
+					variations[variationName].push({
+						id: value.id,
+						variation_id: value.variation_id,
+						name: value.name,
+						slug: value.slug,
+						created_at: value.created_at,
+						updated_at: value.updated_at,
+						variation: value.variation,
+					});
+				}
+			});
+		}
 	});
 
 	return variations;

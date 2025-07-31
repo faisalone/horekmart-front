@@ -294,7 +294,7 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
                           'px-2 py-1 text-sm rounded-md capitalize',
                           product.status === 'published' ? 'bg-green-900/30 text-green-400' :
                           product.status === 'draft' ? 'bg-yellow-900/30 text-yellow-400' :
-                          product.status === 'inactive' ? 'bg-red-900/30 text-red-400' :
+                          product.status === 'archived' ? 'bg-red-900/30 text-red-400' :
                           'bg-gray-700 text-gray-300'
                         )}>
                           {product.status}

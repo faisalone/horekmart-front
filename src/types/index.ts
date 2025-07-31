@@ -63,28 +63,22 @@ export interface ApiProductVariant {
 	final_price: string;
 	final_offer_price?: string | null;
 	quantity: number;
-	combinations: Record<
-		string,
-		Array<{
+	combinations?: Record<string, string>; // Simple format: {Size: "Large", Color: "Red"}
+	variation_values?: Array<{
+		id: number;
+		variation_id: number;
+		name: string;
+		slug: string;
+		created_at: string;
+		updated_at: string;
+		variation: {
 			id: number;
-			variation_id: number;
 			name: string;
 			slug: string;
 			created_at: string;
 			updated_at: string;
-			pivot: {
-				product_variant_id: number;
-				variation_value_id: number;
-			};
-			variation: {
-				id: number;
-				name: string;
-				slug: string;
-				created_at: string;
-				updated_at: string;
-			};
-		}>
-	>;
+		};
+	}>;
 	created_at: string;
 	updated_at: string;
 }

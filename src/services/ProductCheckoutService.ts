@@ -33,7 +33,7 @@ export interface CheckoutItem {
 
 export interface CheckoutConfig {
 	mode: 'cart' | 'buy_now';
-	productId?: string;
+	productSlug?: string;
 	variantId?: string;
 	quantity?: number;
 }
@@ -87,11 +87,11 @@ class ProductCheckoutService {
 	}
 
 	// ==================== PRODUCT OPERATIONS ====================
-	async getProductWithVariants(productId: string): Promise<{
+	async getProductWithVariants(productSlug: string): Promise<{
 		product: Product;
 		variants: ApiProductVariant[];
 	}> {
-		const product = await publicApi.getProduct(productId);
+		const product = await publicApi.getProduct(productSlug);
 
 		// Variants are now included in the product response
 		const variants = product.variants || [];
@@ -103,11 +103,21 @@ class ProductCheckoutService {
 	getVariantInfo(variant: ApiProductVariant): ProductVariantInfo {
 		// Extract variant combinations
 		const combinations: Record<string, string> = {};
+
+		// Handle simple combinations format (preferred)
 		if (variant.combinations) {
-			Object.entries(variant.combinations).forEach(([key, values]) => {
-				if (Array.isArray(values) && values.length > 0) {
-					combinations[key] = values[0].name;
-				}
+			// combinations is already Record<string, string>
+			Object.assign(combinations, variant.combinations);
+		}
+
+		// Fallback: Handle variation_values format if combinations is not available
+		if (
+			Object.keys(combinations).length === 0 &&
+			variant.variation_values
+		) {
+			variant.variation_values.forEach((variationValue) => {
+				combinations[variationValue.variation.name] =
+					variationValue.name;
 			});
 		}
 
@@ -171,13 +181,13 @@ class ProductCheckoutService {
 
 	// ==================== CHECKOUT ITEM CREATION ====================
 	async createCheckoutItem(
-		productId: string,
+		productSlug: string,
 		quantity: number,
 		variantId?: string,
 		isDirectBuy: boolean = false
 	): Promise<CheckoutItem> {
 		const { product, variants } = await this.getProductWithVariants(
-			productId
+			productSlug
 		);
 
 		// Find variant if specified
@@ -232,18 +242,22 @@ class ProductCheckoutService {
 			addedAt: new Date(),
 		};
 
+		console.log('Created checkout item:', checkoutItem);
+		console.log('Variant info:', variantInfo);
+		console.log('Variant options:', checkoutItem.variantOptions);
+
 		return checkoutItem;
 	}
 
 	// ==================== CART OPERATIONS ====================
 	async addToCart(
-		productId: string,
+		productSlug: string,
 		quantity: number,
 		variantId?: string,
 		addToCartCallback?: (item: CheckoutItem) => void
 	): Promise<void> {
 		const checkoutItem = await this.createCheckoutItem(
-			productId,
+			productSlug,
 			quantity,
 			variantId,
 			false
@@ -256,12 +270,12 @@ class ProductCheckoutService {
 
 	// ==================== BUY NOW OPERATIONS ====================
 	async buyNow(
-		productId: string,
+		productSlug: string,
 		quantity: number,
 		variantId?: string
 	): Promise<string> {
 		const checkoutItem = await this.createCheckoutItem(
-			productId,
+			productSlug,
 			quantity,
 			variantId,
 			true
@@ -281,7 +295,7 @@ class ProductCheckoutService {
 		if (config.mode === 'buy_now') {
 			const params = new URLSearchParams();
 			params.set('mode', 'buy_now');
-			params.set('product_id', config.productId!);
+			params.set('product_slug', config.productSlug!);
 			params.set('quantity', config.quantity!.toString());
 
 			if (config.variantId) {
@@ -311,13 +325,13 @@ export const useProductCheckout = () => {
 	const service = productCheckoutService;
 
 	const addToCart = async (
-		productId: string,
+		productSlug: string,
 		quantity: number,
 		variantId?: string,
 		addToCartCallback?: (item: CheckoutItem) => void
 	) => {
 		return service.addToCart(
-			productId,
+			productSlug,
 			quantity,
 			variantId,
 			addToCartCallback
@@ -325,11 +339,15 @@ export const useProductCheckout = () => {
 	};
 
 	const buyNow = async (
-		productId: string,
+		productSlug: string,
 		quantity: number,
 		variantId?: string
 	) => {
-		const sessionId = await service.buyNow(productId, quantity, variantId);
+		const sessionId = await service.buyNow(
+			productSlug,
+			quantity,
+			variantId
+		);
 		return `/checkout/${sessionId}`;
 	};
 

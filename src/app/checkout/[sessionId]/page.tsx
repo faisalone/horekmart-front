@@ -777,7 +777,7 @@ export default function CheckoutPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={isProcessing || !formData.agreeTerms}
-                className="w-full py-4 mt-6 bg-[var(--theme-red)] hover:bg-[var(--theme-red-dark)] disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-colors"
+                className="w-full py-4 mt-6 bg-theme-primary hover:bg-theme-primary-dark disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-colors"
               >
                 {isProcessing ? (
                   <>
