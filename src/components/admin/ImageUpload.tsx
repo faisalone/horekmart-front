@@ -76,7 +76,7 @@ export function ImageUpload({
         });
       }
     };
-  }, []); // Only run on mount/unmount, not on every images change
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Separate effect to track blob URLs for removed images only
   const previousImagesRef = useRef<UploadedImage[]>([]);
