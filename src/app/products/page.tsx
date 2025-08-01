@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Filter } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import SortingHeader from '@/components/SortingHeader';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';

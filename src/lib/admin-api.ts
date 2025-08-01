@@ -345,6 +345,17 @@ class AdminApiClient {
 		return response.data.data;
 	}
 
+	async updateVendor(
+		id: string | number,
+		vendorData: Partial<Vendor>
+	): Promise<Vendor> {
+		const response = await this.client.put<ApiResponse<Vendor>>(
+			`/admin/vendors/${id}`,
+			vendorData
+		);
+		return response.data.data;
+	}
+
 	async bulkVendorAction(action: BulkAction): Promise<void> {
 		await this.client.post('/admin/vendors/bulk', action);
 	}

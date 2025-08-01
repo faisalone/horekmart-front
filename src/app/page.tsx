@@ -7,7 +7,7 @@ import { ArrowRight, ArrowLeft, ShoppingCart } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import PromoBanner from '@/components/PromoBanner';
 import ProductCard from '@/components/ProductCard';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { publicApi } from '@/lib/public-api';
 import { Product, Category } from '@/types';
 import BannerBlock from '@/components/BannerBlock';

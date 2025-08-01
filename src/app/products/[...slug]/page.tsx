@@ -21,7 +21,7 @@ import {
 	Share2,
 	ChevronUp,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { publicApi } from '@/lib/public-api';
 import { Product, Category, ProductImage, ApiProductVariant } from '@/types';
 import { useProductPage, useCartOperations } from '@/hooks/useProductPage';

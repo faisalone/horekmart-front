@@ -3,8 +3,28 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { CustomSelect } from '@/components/ui/select-custom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { Search, Filter, X, ChevronDown, RotateCcw, Sparkles, TrendingUp, ChevronUp, Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FilterManager, FilterState } from '@/utils/filterUtils';
@@ -127,12 +147,67 @@ function Filters<T extends Record<string, any>>({
                 {field.label}
               </label>
             )}
-            <CustomSelect
-              value={value}
-              onValueChange={(newValue) => handleFieldChange(field.key, String(newValue))}
-              placeholder={field.placeholder || 'Select...'}
-              options={field.options || []}
-            />
+            {/* Fields that need search functionality (many options) vs simple dropdown (few options) */}
+            {field.key === 'category_id' || field.key === 'vendor_id' ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-gray-600"
+                  >
+                    {value
+                      ? field.options?.find((option) => option.value === value)?.label
+                      : field.placeholder || 'Select...'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 bg-gray-800 border-gray-700">
+                  <Command className="bg-gray-800">
+                    <CommandInput 
+                      placeholder={`Search ${field.label?.toLowerCase()}...`} 
+                      className="bg-gray-800 border-gray-700 text-gray-200"
+                    />
+                    <CommandEmpty className="text-gray-400">No {field.label?.toLowerCase()} found.</CommandEmpty>
+                    <CommandGroup className="max-h-60 overflow-auto dropdown-scroll">
+                      {field.options?.map((option) => (
+                        <CommandItem
+                          key={option.value}
+                          value={option.label}
+                          onSelect={() => handleFieldChange(field.key, option.value)}
+                          className="text-gray-200 hover:bg-gray-700"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              value === option.value ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {option.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <Select value={value} onValueChange={(newValue) => handleFieldChange(field.key, newValue)}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-200 focus:border-blue-500">
+                  <SelectValue placeholder={field.placeholder || 'Select...'} />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  {field.options?.map((option) => (
+                    <SelectItem
+                      key={option.value}
+                      value={String(option.value)}
+                      className="text-gray-200 focus:bg-gray-700"
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         );
 
@@ -145,8 +220,8 @@ function Filters<T extends Record<string, any>>({
                 {field.label}
               </label>
             )}
-            <CustomSelect
-              value={FilterManager.getSortValue(filters as FilterState)}
+            <Select 
+              value={FilterManager.getSortValue(filters as FilterState)} 
               onValueChange={(newValue) => {
                 if (!newValue) {
                   // Clear sort values using FilterManager
@@ -163,9 +238,22 @@ function Filters<T extends Record<string, any>>({
                   onFiltersChange(updatedFilters);
                 }
               }}
-              placeholder={field.placeholder || 'Sort by...'}
-              options={field.options || []}
-            />
+            >
+              <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-200 focus:border-blue-500">
+                <SelectValue placeholder={field.placeholder || 'Sort by...'} />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                {field.options?.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={String(option.value)}
+                    className="text-gray-200 focus:bg-gray-700"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
 
@@ -341,7 +429,7 @@ function Filters<T extends Record<string, any>>({
                     <span className="text-xs text-gray-400 font-medium whitespace-nowrap px-2">Advanced Filters</span>
                     <div className="w-full border-t border-gray-700/50"></div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-visible">
+                  <div className="flex flex-wrap gap-3 overflow-visible">
                     {config.fields
                       .filter(f => f.type !== 'search' && f.type !== 'toggle')
                       .map(field => renderField(field))

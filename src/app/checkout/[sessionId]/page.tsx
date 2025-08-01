@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, CreditCard, MapPin, Phone, Mail, Lock, CheckCircle, Edit3, X, Loader2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 import { toast } from 'react-hot-toast';

@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
 interface FormHeaderProps {

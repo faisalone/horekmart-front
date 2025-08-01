@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { Product } from '@/types/admin';
 import Badge from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { getProductImageUrl, getProductMetaImageUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 import RichTextDisplay from '@/components/ui/RichTextDisplay';

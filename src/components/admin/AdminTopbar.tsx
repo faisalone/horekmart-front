@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import {
   Bell,
   Menu,

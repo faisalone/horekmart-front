@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Minus, Plus, X, ArrowLeft, ShoppingBag, Trash2, ChevronDown } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/currency';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 
