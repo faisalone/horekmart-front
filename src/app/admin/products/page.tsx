@@ -211,7 +211,7 @@ export default function ProductsPage() {
           <span className={cn(
             'px-2 py-1 text-sm rounded-md capitalize',
             status === 'published' ? 'bg-green-900/30 text-green-400' :
-            status === 'inactive' ? 'bg-red-900/30 text-red-400' :
+            status === 'archived' ? 'bg-red-900/30 text-red-400' :
             'bg-gray-700 text-gray-300'
           )}>
             {status}
@@ -459,7 +459,7 @@ export default function ProductsPage() {
                     <span className={cn(
                       'px-2 py-1 text-xs rounded-md capitalize',
                       product.status === 'published' ? 'bg-green-900/30 text-green-400' :
-                      product.status === 'inactive' ? 'bg-red-900/30 text-red-400' :
+                      product.status === 'archived' ? 'bg-red-900/30 text-red-400' :
                       'bg-gray-600 text-gray-300'
                     )}>
                       {product.status}

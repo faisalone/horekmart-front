@@ -136,7 +136,7 @@ export default function VendorDetailPage() {
       <div className="p-6">
         <div className="text-center py-8">
           <h3 className="text-lg font-semibold mb-2 text-white">Vendor Not Found</h3>
-          <p className="text-gray-400 mb-4">The vendor you're looking for doesn't exist.</p>
+          <p className="text-gray-400 mb-4">The vendor you&apos;re looking for doesn&apos;t exist.</p>
           <Button onClick={() => router.push('/admin/vendors')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Vendors
