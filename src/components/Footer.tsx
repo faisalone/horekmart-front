@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, ArrowUp, Shield, CreditCard, Truck, Award, Globe, ChevronRight, Twitter, X as LucideX } from 'lucide-react';
-import { RiTwitterXFill } from "react-icons/ri";
+import { Mail, Phone, MapPin, ArrowUp, Shield, Truck, Award, Globe, ChevronRight } from 'lucide-react';
+import { FaSquareXTwitter } from "react-icons/fa6";
+import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
 
 
 const Footer = () => {
@@ -166,25 +167,25 @@ const Footer = () => {
               <div className="flex justify-center space-x-4">
                 {[
                   {
-                    Icon: Facebook,
+                    Icon: FaFacebook,
                     name: 'Facebook',
                     color: 'hover:bg-blue-600',
                     url: 'https://facebook.com/horekmart'
                   },
                   {
-                    Icon: Instagram,
+                    Icon: FaInstagram,
                     name: 'Instagram',
                     color: 'hover:bg-pink-600',
                     url: 'https://instagram.com/horekmart.shop'
                   },
                   {
-                    Icon: RiTwitterXFill,
+                    Icon: FaSquareXTwitter,
                     name: 'X',
                     color: 'hover:bg-gray-600',
                     url: 'https://x.com/horekmart'
                   },
                   {
-                    Icon: Youtube,
+                    Icon: FaYoutube,
                     name: 'YouTube',
                     color: 'hover:bg-red-600',
                     url: 'https://youtube.com/@horekmartshop'
