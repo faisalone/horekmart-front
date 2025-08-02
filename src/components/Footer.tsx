@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, ArrowUp, Shield, CreditCard, Truck, Award, Globe, ChevronRight, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, ArrowUp, Shield, CreditCard, Truck, Award, Globe, ChevronRight, Twitter, X as LucideX } from 'lucide-react';
+import { RiTwitterXFill } from "react-icons/ri";
+
 
 const Footer = () => {
   return (
@@ -58,9 +60,13 @@ const Footer = () => {
                 height={60} 
                 className="mb-4 h-40 w-auto"
               />
-              <p className="text-gray-300 text-lg leading-relaxed mb-6">
+              <p className="text-gray-300 text-lg leading-relaxed mb-4">
                 Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
               </p>
+              <div className="flex items-center text-gray-400 text-sm">
+                <MapPin className="h-4 w-4 mr-2" />
+                <span>Horekmart HQ, Alam Market, Koimari Road, Jaldhaka, Nilphamari, Bangladesh</span>
+              </div>
             </div>
             
             {/* Professional Trust Indicators */}
@@ -139,18 +145,18 @@ const Footer = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Phone className="h-8 w-8 mx-auto mb-3 text-blue-400" />
-                <p className="text-white font-medium text-lg">1-800-HOREKMART</p>
+                <p className="text-white font-medium text-lg">+880 1763 223035</p>
                 <p className="text-sm text-gray-400 mt-1">24/7 Customer Support</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Mail className="h-8 w-8 mx-auto mb-3 text-green-400" />
-                <p className="text-white font-medium text-lg">support@horekmart.com</p>
+                <p className="text-white font-medium text-lg">business@horekmart.com</p>
                 <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Truck className="h-8 w-8 mx-auto mb-3 text-purple-400" />
-                <p className="text-white font-medium text-lg">Free Shipping</p>
-                <p className="text-sm text-gray-400 mt-1">On orders over $50</p>
+                <p className="text-white font-medium text-lg">Fast Shipping</p>
+                <p className="text-sm text-gray-400 mt-1">Express delivery nationwide</p>
               </div>
             </div>
             
@@ -159,12 +165,39 @@ const Footer = () => {
               <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-6">Follow Us</h4>
               <div className="flex justify-center space-x-4">
                 {[
-                  { Icon: Facebook, name: 'Facebook', color: 'hover:bg-blue-600' },
-                  { Icon: Instagram, name: 'Instagram', color: 'hover:bg-pink-600' },
-                  { Icon: Twitter, name: 'X (Twitter)', color: 'hover:bg-gray-600' },
-                  { Icon: Youtube, name: 'YouTube', color: 'hover:bg-red-600' }
+                  {
+                    Icon: Facebook,
+                    name: 'Facebook',
+                    color: 'hover:bg-blue-600',
+                    url: 'https://facebook.com/horekmart'
+                  },
+                  {
+                    Icon: Instagram,
+                    name: 'Instagram',
+                    color: 'hover:bg-pink-600',
+                    url: 'https://instagram.com/horekmart.shop'
+                  },
+                  {
+                    Icon: RiTwitterXFill,
+                    name: 'X',
+                    color: 'hover:bg-gray-600',
+                    url: 'https://x.com/horekmart'
+                  },
+                  {
+                    Icon: Youtube,
+                    name: 'YouTube',
+                    color: 'hover:bg-red-600',
+                    url: 'https://youtube.com/@horekmartshop'
+                  }
                 ].map((social, index) => (
-                  <a key={index} href="#" className={`w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center transition-colors duration-200 ${social.color}`}>
+                  <a
+                    key={index}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.name}
+                    className={`w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center transition-colors duration-200 ${social.color}`}
+                  >
                     <social.Icon className="h-6 w-6 text-gray-300" />
                   </a>
                 ))}
