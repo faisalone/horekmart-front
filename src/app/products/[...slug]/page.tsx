@@ -909,27 +909,6 @@ export default function ProductPage({ params }: ProductPageProps) {
 												</button>
 											)}
 										</div>
-										<div className="bg-white lg:bg-gray-50 rounded-xl p-4 lg:p-6 border border-gray-200">
-											<h4 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 flex items-center">
-												<div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
-												Key Features
-											</h4>
-											<div className="space-y-3">
-												{[
-													'High-quality materials and construction',
-													'Durable and long-lasting design',
-													'Easy to use and maintain',
-													'Excellent value for money',
-												].map((feature, index) => (
-													<div key={index} className="flex items-start">
-														<div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2.5 mr-3 flex-shrink-0"></div>
-														<span className="text-gray-700 text-sm lg:text-base">
-															{feature}
-														</span>
-													</div>
-												))}
-											</div>
-										</div>
 									</div>
 								</div>
 							</ProductDetailSection>

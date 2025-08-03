@@ -64,29 +64,6 @@ const Footer = () => {
               <p className="text-gray-300 text-lg leading-relaxed mb-4">
                 Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
               </p>
-              <div className="flex items-center text-gray-400 text-sm">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span>Horekmart HQ, Alam Market, Koimari Road, Jaldhaka, Nilphamari, Bangladesh</span>
-              </div>
-            </div>
-            
-            {/* Professional Trust Indicators */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="text-center p-4 bg-gray-800 rounded-lg">
-                <Award className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-                <p className="text-sm font-semibold text-gray-200">Top Rated</p>
-                <p className="text-xs text-gray-400">5-Star Service</p>
-              </div>
-              <div className="text-center p-4 bg-gray-800 rounded-lg">
-                <Shield className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                <p className="text-sm font-semibold text-gray-200">Secure</p>
-                <p className="text-xs text-gray-400">100% Protected</p>
-              </div>
-              <div className="text-center p-4 bg-gray-800 rounded-lg">
-                <Globe className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                <p className="text-sm font-semibold text-gray-200">Global</p>
-                <p className="text-xs text-gray-400">Worldwide Shipping</p>
-              </div>
             </div>
           </div>
 
@@ -118,21 +95,42 @@ const Footer = () => {
             <div>
               <h3 className="text-lg font-semibold mb-6">Customer Service</h3>
               <ul className="space-y-3">
-                {[
-                  'Help Center',
-                  'Track Your Order',
-                  'Returns & Exchanges',
-                  'Shipping Info',
-                  'Size Guide',
-                  'Contact Us'
-                ].map((item, index) => (
-                  <li key={index}>
-                    <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
-                      <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      {item}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    Track Your Order
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help/refund-return-policy" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    Returns & Exchanges
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    Shipping Info
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    Size Guide
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    Contact Us
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -143,7 +141,7 @@ const Footer = () => {
           {/* Bottom Row - Contact & Support Horizontally */}
           <div>
             <h3 className="text-lg font-semibold mb-6 text-center">Contact & Support</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Phone className="h-8 w-8 mx-auto mb-3 text-blue-400" />
                 <p className="text-white font-medium text-lg">+880 1763 223035</p>
@@ -155,9 +153,16 @@ const Footer = () => {
                 <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
-                <Truck className="h-8 w-8 mx-auto mb-3 text-purple-400" />
-                <p className="text-white font-medium text-lg">Fast Shipping</p>
-                <p className="text-sm text-gray-400 mt-1">Express delivery nationwide</p>
+                <MapPin className="h-8 w-8 mx-auto mb-3 text-orange-400" />
+                <a 
+                  href="https://share.google/vibec3TwvH1D9binK"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white font-medium text-lg hover:text-orange-400 transition-colors duration-200"
+                >
+                  Our Location
+                </a>
+                <p className="text-sm text-gray-400 mt-1">Horekmart HQ, Alam Market, Koimari Road, Jaldhaka, Nilphamari</p>
               </div>
             </div>
             
@@ -213,18 +218,25 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-400 mb-4 md:mb-0">
-              <span>© 2024 HOREKMART. All rights reserved.</span>
+              <span>© {new Date().getFullYear()} Horekmart. All rights reserved.</span>
               <span className="hidden md:inline">•</span>
               <span className="text-gray-500">Built with excellence</span>
             </div>
             
             <div className="flex items-center space-x-6">
               <div className="flex space-x-6 text-sm">
-                {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link, index) => (
-                  <Link key={index} href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
-                    {link}
-                  </Link>
-                ))}
+                <Link href="/help/privacy-policy" className="text-gray-400 hover:text-white transition-colors duration-200">
+                  Privacy Policy
+                </Link>
+                <Link href="/help/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors duration-200">
+                  Terms & Conditions
+                </Link>
+                <Link href="/help/refund-return-policy" className="text-gray-400 hover:text-white transition-colors duration-200">
+                  Return Policy
+                </Link>
+                <Link href="/help/cookie-policy" className="text-gray-400 hover:text-white transition-colors duration-200">
+                  Cookie Policy
+                </Link>
               </div>
               
               {/* Professional Back to Top */}

@@ -19,9 +19,6 @@ import { useProductCheckout } from '@/services/ProductCheckoutService';
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
-  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
-  const [mostViewedProducts, setMostViewedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,19 +31,17 @@ export default function HomePage() {
       try {
         setLoading(true);
         
-        // Fetch featured products and categories
-        const [featuredProducts, categoriesData, popularProductsData, latestProductsData, mostViewedProductsData] = await Promise.all([
-          publicApi.getFeaturedProducts(),
+        // Fetch products and categories - simplified to just get a large set of products
+        const [productsResponse, categoriesData] = await Promise.all([
+          publicApi.getProducts({ per_page: 50 }), // Get more products to have variety
           publicApi.getCategories(),
-          publicApi.getProducts({ featured: true, per_page: 8 }),
-          publicApi.getProducts({ sort_by: 'created_at', sort_order: 'desc', per_page: 8 }),
-          publicApi.getProducts({ sort_by: 'updated_at', sort_order: 'desc', per_page: 8 }),
         ]);
 
-        setProducts(featuredProducts);
-        setPopularProducts(popularProductsData?.data || featuredProducts.slice(0, 8));
-        setLatestProducts(latestProductsData?.data || featuredProducts.slice(8, 16));
-        setMostViewedProducts(mostViewedProductsData?.data || featuredProducts.slice(16, 24));
+        // Use the data array from the API response
+        const allProducts = productsResponse?.data || [];
+        
+        setProducts(allProducts);
+        
         // Sort categories by sort_order and take first 9
         const sortedCategories = (categoriesData || [])
           .sort((a: Category, b: Category) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -56,9 +51,6 @@ export default function HomePage() {
         console.error('Error fetching data:', error);
         // Keep loading as false to show the page even if API fails
         setProducts([]);
-        setPopularProducts([]);
-        setLatestProducts([]);
-        setMostViewedProducts([]);
         setCategories([]);
       } finally {
         setLoading(false);
@@ -68,8 +60,12 @@ export default function HomePage() {
     fetchData();
   }, []);
   
-  const featuredProducts = products.slice(0, 8);
-  const saleProducts = products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price));
+  // Compute different product sections from the main products array
+  const featuredProducts = products.filter(p => p.is_featured).slice(0, 8);
+  const popularProducts = products.slice(0, 8); // First 8 products
+  const latestProducts = products.slice(8, 16); // Next 8 products  
+  const mostViewedProducts = products.slice(16, 24); // Next 8 products
+  const saleProducts = products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price)).slice(0, 8);
 
   const handleAddToCart = async (product: Product) => {
     try {
