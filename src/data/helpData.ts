@@ -1,4 +1,11 @@
-import { LucideIcon, Shield, FileText, RotateCcw, Cookie } from 'lucide-react';
+import {
+	LucideIcon,
+	Shield,
+	FileText,
+	RotateCcw,
+	Cookie,
+	Trash2,
+} from 'lucide-react';
 
 // Search-focused interfaces
 export interface HelpArticle {
@@ -193,6 +200,26 @@ export const helpDatabase: HelpCategory[] = [
 				keywords: ['password', 'reset', 'forgot', 'login', 'access'],
 				url: '/help/password-reset',
 				lastUpdated: 'July 17, 2025',
+			},
+			{
+				id: 'data-deletion',
+				title: 'Delete Your Data',
+				description: 'How to request deletion of your personal data',
+				category: 'Account & Payments',
+				categoryIcon: 'CreditCard',
+				content:
+					'Learn how to request deletion of your personal data from our systems.',
+				keywords: [
+					'data',
+					'deletion',
+					'privacy',
+					'remove',
+					'delete',
+					'personal information',
+					'GDPR',
+				],
+				url: '/help/data-deletion',
+				lastUpdated: 'August 4, 2025',
 			},
 		],
 	},
@@ -848,6 +875,219 @@ export const helpPagesData: Record<string, HelpPageData> = {
 							phone: '+880 1763 223035',
 							address:
 								'Horekmart HQ, Alam Market, Koimari Road, Jaldhaka, Nilphamari, Bangladesh',
+						},
+					},
+				],
+			},
+		],
+	},
+
+	'data-deletion': {
+		id: 'data-deletion',
+		title: 'Delete Your Data',
+		subtitle:
+			'Learn how to request deletion of your personal data from our systems in compliance with privacy regulations.',
+		icon: Trash2,
+		iconColor: 'text-red-600',
+		bgColor: 'bg-red-100',
+		lastUpdated: 'August 4, 2025',
+		sections: [
+			{
+				id: 'overview',
+				title: 'Data Deletion Overview',
+				icon: Trash2,
+				iconColor: 'text-red-600',
+				content: [
+					{
+						type: 'paragraph',
+						content:
+							'You have the right to request deletion of your personal data from our systems. This page explains how to make such a request and what to expect during the process.',
+					},
+					{
+						type: 'highlight',
+						content:
+							'Data deletion requests are processed in accordance with applicable privacy laws including GDPR, CCPA, and other regional privacy regulations.',
+						className: 'bg-blue-50 text-blue-800',
+					},
+				],
+			},
+			{
+				id: 'what-data-we-delete',
+				title: 'What Data We Can Delete',
+				content: [
+					{
+						type: 'grid',
+						content: [
+							{
+								title: 'Personal Information',
+								description:
+									'Data that directly identifies you',
+								items: [
+									'Name, email address, phone number',
+									'Shipping and billing addresses',
+									'Account credentials and preferences',
+									'Profile information and settings',
+								],
+							},
+							{
+								title: 'Activity Data',
+								description:
+									'Your interactions with our platform',
+								items: [
+									'Order history and purchase records',
+									'Browsing behavior and preferences',
+									'Customer support interactions',
+									"Reviews and ratings you've submitted",
+								],
+							},
+							{
+								title: 'Technical Data',
+								description: 'Device and usage information',
+								items: [
+									'IP addresses and device identifiers',
+									'Cookies and tracking data',
+									'Session logs and analytics data',
+									'Error reports and crash logs',
+								],
+							},
+						],
+					},
+				],
+			},
+			{
+				id: 'how-to-request',
+				title: 'How to Request Data Deletion',
+				content: [
+					{
+						type: 'steps',
+						content: [
+							{
+								step: 1,
+								title: 'Log into Your Account',
+								description:
+									'Sign in to your Horekmart account using your email and password.',
+							},
+							{
+								step: 2,
+								title: 'Go to Account Settings',
+								description:
+									'Navigate to your account settings and look for the "Privacy & Data" section.',
+							},
+							{
+								step: 3,
+								title: 'Submit Deletion Request',
+								description:
+									'Click on "Request Data Deletion" and follow the on-screen instructions.',
+							},
+							{
+								step: 4,
+								title: 'Verify Your Identity',
+								description:
+									'For security purposes, you may need to verify your identity via email or SMS.',
+							},
+							{
+								step: 5,
+								title: 'Confirmation',
+								description:
+									"You'll receive a confirmation email with your request details and tracking number.",
+							},
+						],
+					},
+				],
+			},
+			{
+				id: 'what-to-expect',
+				title: 'What to Expect',
+				content: [
+					{
+						type: 'grid',
+						content: [
+							{
+								title: 'Processing Time',
+								description: '',
+								items: [
+									'Most requests processed within 30 days',
+									'Complex requests may take up to 60 days',
+									"You'll receive status updates via email",
+									'Expedited processing available in some cases',
+								],
+							},
+							{
+								title: 'Data Retention Requirements',
+								description: '',
+								items: [
+									'Financial records kept for tax purposes (7 years)',
+									'Legal compliance data retained as required',
+									'Anonymous analytics may be preserved',
+									'Security logs kept for fraud prevention',
+								],
+							},
+						],
+					},
+				],
+			},
+			{
+				id: 'important-considerations',
+				title: 'Important Considerations',
+				content: [
+					{
+						type: 'warning',
+						content:
+							'Account Closure: Requesting data deletion will permanently close your account. This action cannot be undone.',
+						className:
+							'bg-yellow-50 text-yellow-800 border-yellow-200',
+					},
+					{
+						type: 'list',
+						content: [
+							'Order History: All past orders and receipts will be permanently deleted',
+							'Stored Payment Methods: All saved cards and payment information will be removed',
+							'Preferences: All saved preferences, wishlists, and recommendations will be lost',
+							'Customer Support: Previous support tickets and chat history will be deleted',
+							'Reviews: Your product reviews and ratings will be anonymized or removed',
+						],
+					},
+				],
+			},
+			{
+				id: 'exceptions',
+				title: 'When We Cannot Delete Data',
+				content: [
+					{
+						type: 'paragraph',
+						content:
+							'There are certain situations where we may not be able to delete all of your data immediately:',
+					},
+					{
+						type: 'list',
+						content: [
+							'Legal Obligations: Data required by law to be retained (tax records, fraud prevention)',
+							'Active Disputes: Information needed for ongoing legal proceedings or disputes',
+							'Security Purposes: Data necessary for system security and fraud prevention',
+							'Anonymous Data: Information that has been anonymized and cannot be linked to you',
+							'Third-Party Services: Data managed by external payment processors or shipping partners',
+						],
+					},
+				],
+			},
+			{
+				id: 'contact',
+				title: 'Need Help?',
+				content: [
+					{
+						type: 'paragraph',
+						content:
+							'If you have questions about data deletion or need assistance with your request, our privacy team is here to help.',
+					},
+					{
+						type: 'contact',
+						content: {
+							email: 'privacy@horekmart.com',
+							phone: '+880 1763 223035',
+							address:
+								'Horekmart HQ, Alam Market, Koimari Road, Jaldhaka, Nilphamari, Bangladesh',
+							businessHours:
+								'Monday - Friday: 9:00 AM - 6:00 PM (Bangladesh Time)',
 						},
 					},
 				],

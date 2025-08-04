@@ -47,6 +47,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ pageData }) => {
       'terms-and-conditions': 6,
       'cookie-policy': 6,
       'legal-information': 6,
+      'data-deletion': 1, // Add to Account & Payments section
       'shipping-policy': 7,
       'price-matching': 7,
       'accessibility': 7
@@ -114,6 +115,74 @@ const HelpPage: React.FC<HelpPageProps> = ({ pageData }) => {
         return (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
             <p className="text-yellow-800">{content.content as string}</p>
+          </div>
+        );
+
+      case 'steps':
+        return (
+          <div className="space-y-6 mb-6">
+            {(content.content as StepItem[]).map((step, index) => (
+              <div key={index} className="flex items-start">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold mr-4">
+                  {step.step}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">{step.title}</h4>
+                  <p className="text-gray-700">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case 'contact':
+        const contactInfo = content.content as ContactInfo;
+        return (
+          <div className="bg-gray-50 rounded-lg p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <Mail className="h-8 w-8 mx-auto mb-3 text-blue-600" />
+                <div className="font-semibold text-gray-900">Email</div>
+                <div className="text-gray-600">{contactInfo.email}</div>
+              </div>
+              <div className="text-center">
+                <Phone className="h-8 w-8 mx-auto mb-3 text-green-600" />
+                <div className="font-semibold text-gray-900">Phone</div>
+                <div className="text-gray-600">{contactInfo.phone}</div>
+              </div>
+              <div className="text-center">
+                <MapPin className="h-8 w-8 mx-auto mb-3 text-orange-600" />
+                <div className="font-semibold text-gray-900">Address</div>
+                <div className="text-gray-600">{contactInfo.address}</div>
+              </div>
+            </div>
+            {contactInfo.businessHours && (
+              <div className="mt-4 text-center text-sm text-gray-500">
+                {contactInfo.businessHours}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'grid':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {(content.content as GridItem[]).map((item, index) => (
+              <div key={index} className="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 className="font-semibold text-gray-900 mb-3">{item.title}</h4>
+                {item.description && (
+                  <p className="text-gray-600 text-sm mb-4">{item.description}</p>
+                )}
+                <ul className="space-y-2">
+                  {item.items.map((listItem, listIndex) => (
+                    <li key={listIndex} className="flex items-start text-sm">
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <span className="text-gray-700">{listItem}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         );
 
