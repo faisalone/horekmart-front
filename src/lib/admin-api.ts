@@ -5,6 +5,9 @@ import {
 	AdminUser,
 	AuthTokens,
 	LoginCredentials,
+	UserCheckResult,
+	OtpResult,
+	AuthMethodSelection,
 	Vendor,
 	Product,
 	Order,
@@ -110,6 +113,65 @@ class AdminApiClient {
 		const tokens = response.data;
 		this.setToken(tokens.access_token);
 		return tokens;
+	}
+
+	// Multi-step authentication methods
+	async checkIdentifier(identifier: string): Promise<UserCheckResult> {
+		const response = await this.client.post<{ data: UserCheckResult }>(
+			'/admin/auth/check-identifier',
+			{ identifier }
+		);
+		return response.data.data;
+	}
+
+	async sendOtp(
+		identifier: string,
+		type: 'email' | 'phone'
+	): Promise<OtpResult> {
+		const response = await this.client.post<OtpResult>(
+			'/admin/auth/send-otp',
+			{ identifier, type }
+		);
+		return response.data;
+	}
+
+	async verifyOtpAndLogin(
+		identifier: string,
+		type: 'email' | 'phone',
+		otpCode: string,
+		name?: string
+	): Promise<AuthTokens> {
+		const response = await this.client.post<{ data: AuthTokens }>(
+			'/admin/auth/verify-otp',
+			{ identifier, type, otp_code: otpCode, name }
+		);
+		const tokens = response.data.data;
+		this.setToken(tokens.access_token);
+		return tokens;
+	}
+
+	async loginWithPassword(
+		identifier: string,
+		type: 'email' | 'phone',
+		password: string
+	): Promise<AuthTokens> {
+		const response = await this.client.post<{ data: AuthTokens }>(
+			'/admin/auth/login-password',
+			{ identifier, type, password }
+		);
+		const tokens = response.data.data;
+		this.setToken(tokens.access_token);
+		return tokens;
+	}
+
+	async setPassword(
+		password: string,
+		passwordConfirmation: string
+	): Promise<void> {
+		await this.client.post('/admin/auth/set-password', {
+			password,
+			password_confirmation: passwordConfirmation,
+		});
 	}
 
 	// Dashboard endpoints

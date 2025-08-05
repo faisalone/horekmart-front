@@ -26,11 +26,15 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     setIsSidebarOpen(false);
   };
 
+  // Define authentication pages that don't require login
+  const authPages = ['/admin/login', '/admin/register', '/admin/verify', '/admin/forgot'];
+  const isAuthPage = authPages.includes(pathname);
+
   useEffect(() => {
-    if (!loading && !isAuthenticated && pathname !== '/admin/login') {
+    if (!loading && !isAuthenticated && !isAuthPage) {
       router.push('/admin/login');
     }
-  }, [isAuthenticated, loading, pathname, router]);
+  }, [isAuthenticated, loading, pathname, router, isAuthPage]);
 
   // Close sidebar on route change
   useEffect(() => {
@@ -46,8 +50,8 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     );
   }
 
-  // Show login page without layout
-  if (pathname === '/admin/login') {
+  // Show authentication pages without layout
+  if (isAuthPage) {
     return <>{children}</>;
   }
 

@@ -4,8 +4,11 @@ export interface AdminUser {
 	id: string;
 	email: string;
 	name: string;
+	phone?: string;
 	role: 'super_admin' | 'admin' | 'moderator';
 	avatar?: string;
+	has_password: boolean;
+	preferred_auth_method: 'email' | 'phone';
 	created_at: string;
 	updated_at: string;
 }
@@ -14,12 +17,50 @@ export interface AuthTokens {
 	access_token: string;
 	token_type: 'Bearer';
 	user?: AdminUser;
+	requires_password_setup?: boolean;
 }
 
 export interface LoginCredentials {
 	email: string;
 	password: string;
 	remember_me?: boolean;
+}
+
+// Multi-step auth types
+export interface AuthStep {
+	step:
+		| 'identifier'
+		| 'auth-method'
+		| 'otp'
+		| 'password'
+		| 'set-password'
+		| 'complete';
+	data?: any;
+}
+
+export interface UserCheckResult {
+	exists: boolean;
+	type: 'email' | 'phone';
+	identifier: string;
+	user_id?: string;
+	name?: string;
+	auth_methods: ('otp' | 'password')[];
+	preferred_method?: 'email' | 'phone';
+	requires_password_setup: boolean;
+	has_password?: boolean;
+	requires_name: boolean;
+}
+
+export interface OtpResult {
+	success: boolean;
+	message: string;
+	expires_at?: string;
+}
+
+export interface AuthMethodSelection {
+	method: 'otp' | 'password';
+	identifier: string;
+	type: 'email' | 'phone';
 }
 
 export interface Vendor {
