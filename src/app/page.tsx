@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ShoppingCart, Settings } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import PromoBanner from '@/components/PromoBanner';
 import ProductCard from '@/components/ProductCard';
@@ -466,6 +466,15 @@ export default function HomePage() {
         </div>
       </section>
       </AnimatedElement>
+
+      {/* Floating Dashboard Access Button */}
+      <Link
+        href="/dashboard"
+        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+        title="Access Dashboard"
+      >
+        <Settings className="w-6 h-6" />
+      </Link>
     </div>
   );
 }

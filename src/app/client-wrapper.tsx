@@ -15,8 +15,20 @@ interface ClientWrapperProps {
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const pathname = usePathname();
   
-  // Check if the current path is an admin route
-  const isAdminRoute = pathname?.startsWith('/admin');
+  // Define routes that should not have the main layout (Navbar + Footer)
+  const routesWithoutMainLayout = [
+    '/admin',     // Admin routes
+    '/dashboard', // Dashboard routes
+    '/login',     // Authentication pages
+    '/register',
+    '/verify',
+    '/forgot'
+  ];
+  
+  // Check if the current path should exclude the main layout
+  const shouldExcludeMainLayout = routesWithoutMainLayout.some(route => 
+    pathname?.startsWith(route)
+  );
 
   return (
     <CartProvider>
@@ -29,17 +41,17 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
             expand={false}
             duration={4000}
           />
-          {/* For admin routes, render children without the frontend layout */}
-          {isAdminRoute ? (
+          {/* Routes without main layout render children directly */}
+          {shouldExcludeMainLayout ? (
             <>{children}</>
           ) : (
-              /* For all other routes, render with the frontend layout */
-              <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-            )}
+            /* All other routes render with the main frontend layout */
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          )}
         </AdminAuthProvider>
       </WishlistProvider>
     </CartProvider>

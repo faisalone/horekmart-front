@@ -1,4 +1,4 @@
-import { FilterConfig } from '@/components/admin/Filters';
+import { FilterConfig } from '@/components/dashboard/Filters';
 
 // Products page filter configuration
 export const productsFilterConfig: FilterConfig = {

@@ -40,7 +40,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
     if (isAuthenticated) {
       window.location.href = '/admin';
     } else {
-      window.location.href = '/admin/login';
+      window.location.href = '/login';
     }
   };
 

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { AdminUser, LoginCredentials, UserCheckResult, AuthMethodSelection } from '@/types/admin';
+import { AdminUser, LoginCredentials, UserCheckResult, AuthMethodSelection, OtpResult } from '@/types/admin';
 import { adminApi } from '@/lib/admin-api';
 
 interface AdminAuthContextType {
@@ -11,6 +11,14 @@ interface AdminAuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   loginWithOtp: (identifier: string, type: 'email' | 'phone', otpCode: string, name?: string) => Promise<void>;
   loginWithPassword: (identifier: string, type: 'email' | 'phone', password: string) => Promise<void>;
+  lookup: (identifier: string) => Promise<UserCheckResult>;
+  loginWithPasswordNew: (identifier: string, type: 'email' | 'phone', password: string) => Promise<void>;
+  loginWithOtpNew: (identifier: string, type: 'email' | 'phone', otp: string) => Promise<void>;
+  resendOtp: (identifier: string, type: 'email' | 'phone') => Promise<OtpResult>;
+  forgotPassword: (identifier: string) => Promise<{ type: string; identifier: string; expires_at?: string }>;
+  resetPassword: (identifier: string, type: 'email' | 'phone', otp: string, password: string, passwordConfirmation: string) => Promise<void>;
+  register: (name: string, identifier: string, password: string) => Promise<{ type: string; identifier: string; expires_at?: string }>;
+  verifyRegistration: (identifier: string, type: 'email' | 'phone', otp: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   checkIdentifier: (identifier: string) => Promise<UserCheckResult>;
@@ -99,6 +107,72 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     }
   };
 
+  // New improved methods
+  const lookup = async (identifier: string): Promise<UserCheckResult> => {
+    return await adminApi.lookup(identifier);
+  };
+
+  const loginWithPasswordNew = async (identifier: string, type: 'email' | 'phone', password: string) => {
+    try {
+      setLoading(true);
+      const tokens = await adminApi.loginWithPasswordNew(identifier, type, password);
+      const profile = await adminApi.getProfile();
+      setUser(profile);
+      router.push('/admin');
+    } catch (error) {
+      console.error('Password login failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithOtpNew = async (identifier: string, type: 'email' | 'phone', otp: string) => {
+    try {
+      setLoading(true);
+      const tokens = await adminApi.loginWithOtpNew(identifier, type, otp);
+      const profile = await adminApi.getProfile();
+      setUser(profile);
+      router.push('/admin');
+    } catch (error) {
+      console.error('OTP login failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendOtp = async (identifier: string, type: 'email' | 'phone') => {
+    return await adminApi.resendOtp(identifier, type);
+  };
+
+  const forgotPassword = async (identifier: string) => {
+    return await adminApi.forgotPassword(identifier);
+  };
+
+  const resetPassword = async (identifier: string, type: 'email' | 'phone', otp: string, password: string, passwordConfirmation: string) => {
+    await adminApi.resetPassword(identifier, type, otp, password, passwordConfirmation);
+  };
+
+  const register = async (name: string, identifier: string, password: string) => {
+    return await adminApi.register(name, identifier, password);
+  };
+
+  const verifyRegistration = async (identifier: string, type: 'email' | 'phone', otp: string) => {
+    try {
+      setLoading(true);
+      const tokens = await adminApi.verifyRegistration(identifier, type, otp);
+      const profile = await adminApi.getProfile();
+      setUser(profile);
+      router.push('/admin');
+    } catch (error) {
+      console.error('Registration verification failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const checkIdentifier = async (identifier: string): Promise<UserCheckResult> => {
     return await adminApi.checkIdentifier(identifier);
   };
@@ -121,7 +195,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
-      router.push('/admin/login');
+      router.push('/login');
     }
   };
 
@@ -133,6 +207,14 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         login,
         loginWithOtp,
         loginWithPassword,
+        lookup,
+        loginWithPasswordNew,
+        loginWithOtpNew,
+        resendOtp,
+        forgotPassword,
+        resetPassword,
+        register,
+        verifyRegistration,
         logout,
         isAuthenticated,
         checkIdentifier,

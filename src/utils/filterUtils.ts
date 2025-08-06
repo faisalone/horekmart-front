@@ -1,4 +1,4 @@
-import { FilterField, FilterConfig } from '@/components/admin/Filters';
+import { FilterField, FilterConfig } from '@/components/dashboard/Filters';
 
 export interface FilterState {
 	search?: string;

@@ -43,12 +43,13 @@ export interface UserCheckResult {
 	type: 'email' | 'phone';
 	identifier: string;
 	user_id?: string;
-	name?: string;
 	auth_methods: ('otp' | 'password')[];
+	auth_method?: 'otp' | 'password';
 	preferred_method?: 'email' | 'phone';
 	requires_password_setup: boolean;
-	has_password?: boolean;
 	requires_name: boolean;
+	otp_sent?: boolean;
+	expires_at?: string;
 }
 
 export interface OtpResult {

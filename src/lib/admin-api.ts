@@ -56,7 +56,7 @@ class AdminApiClient {
 			(error: AxiosError) => {
 				if (error.response?.status === 401) {
 					this.clearToken();
-					window.location.href = '/admin/login';
+					window.location.href = '/login';
 				}
 				return Promise.reject(error);
 			}
@@ -109,7 +109,9 @@ class AdminApiClient {
 	}
 
 	async refreshToken(): Promise<AuthTokens> {
-		const response = await this.client.post<AuthTokens>('/admin/refresh');
+		const response = await this.client.post<AuthTokens>(
+			'/admin/refresh'
+		);
 		const tokens = response.data;
 		this.setToken(tokens.access_token);
 		return tokens;
@@ -122,6 +124,104 @@ class AdminApiClient {
 			{ identifier }
 		);
 		return response.data.data;
+	}
+
+	// New improved authentication methods
+	async lookup(identifier: string): Promise<UserCheckResult> {
+		const response = await this.client.post<{ data: UserCheckResult }>(
+			'/admin/auth/lookup',
+			{ identifier }
+		);
+		return response.data.data;
+	}
+
+	async loginWithPasswordNew(
+		identifier: string,
+		type: 'email' | 'phone',
+		password: string
+	): Promise<AuthTokens> {
+		const response = await this.client.post<{ data: AuthTokens }>(
+			'/admin/auth/login-password',
+			{ identifier, type, password }
+		);
+		const tokens = response.data.data;
+		this.setToken(tokens.access_token);
+		return tokens;
+	}
+
+	async loginWithOtpNew(
+		identifier: string,
+		type: 'email' | 'phone',
+		otp: string
+	): Promise<AuthTokens> {
+		const response = await this.client.post<{ data: AuthTokens }>(
+			'/admin/auth/login-otp',
+			{ identifier, type, otp }
+		);
+		const tokens = response.data.data;
+		this.setToken(tokens.access_token);
+		return tokens;
+	}
+
+	async resendOtp(
+		identifier: string,
+		type: 'email' | 'phone'
+	): Promise<OtpResult> {
+		const response = await this.client.post<{ data: OtpResult }>(
+			'/admin/auth/resend-otp',
+			{ identifier, type }
+		);
+		return response.data.data;
+	}
+
+	async forgotPassword(
+		identifier: string
+	): Promise<{ type: string; identifier: string; expires_at?: string }> {
+		const response = await this.client.post<{
+			data: { type: string; identifier: string; expires_at?: string };
+		}>('/admin/auth/forgot-password', { identifier });
+		return response.data.data;
+	}
+
+	async resetPassword(
+		identifier: string,
+		type: 'email' | 'phone',
+		otp: string,
+		password: string,
+		passwordConfirmation: string
+	): Promise<void> {
+		await this.client.post('/admin/auth/reset-password', {
+			identifier,
+			type,
+			otp,
+			password,
+			password_confirmation: passwordConfirmation,
+		});
+	}
+
+	async register(
+		name: string,
+		identifier: string,
+		password: string
+	): Promise<{ type: string; identifier: string; expires_at?: string }> {
+		const response = await this.client.post<{
+			data: { type: string; identifier: string; expires_at?: string };
+		}>('/admin/auth/register', { name, identifier, password });
+		return response.data.data;
+	}
+
+	async verifyRegistration(
+		identifier: string,
+		type: 'email' | 'phone',
+		otp: string
+	): Promise<AuthTokens> {
+		const response = await this.client.post<{ data: AuthTokens }>(
+			'/admin/auth/verify-registration',
+			{ identifier, type, otp }
+		);
+		const tokens = response.data.data;
+		this.setToken(tokens.access_token);
+		return tokens;
 	}
 
 	async sendOtp(
@@ -177,7 +277,7 @@ class AdminApiClient {
 	// Dashboard endpoints
 	async getDashboardStats(): Promise<DashboardStats> {
 		const response = await this.client.get<DashboardStats>(
-			'/admin/dashboard/stats'
+			'/admin/admin/stats'
 		);
 		return response.data;
 	}
@@ -186,7 +286,7 @@ class AdminApiClient {
 		period: '7d' | '30d' | '90d' | '1y' = '30d'
 	): Promise<SalesData[]> {
 		const response = await this.client.get<SalesData[]>(
-			`/admin/dashboard/sales?period=${period}`
+			`/admin/admin/sales?period=${period}`
 		);
 		return response.data;
 	}
@@ -518,7 +618,9 @@ class AdminApiClient {
 			}
 		});
 
-		const response = await this.client.get(`/admin/categories?${params}`);
+		const response = await this.client.get(
+			`/admin/categories?${params}`
+		);
 
 		// Transform Laravel pagination format to our expected format
 		return {
