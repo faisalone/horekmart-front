@@ -406,8 +406,24 @@ export interface SocialMediaCaption {
 
 export interface SocialMediaPostResult {
 	success: boolean;
-	message: string;
+	message?: string;
 	post_id?: string;
+	post_url?: string;
 	platform: string;
 	scheduled_at?: string;
+	error?: string;
+}
+
+export interface SocialMediaPostResponse {
+	success: boolean;
+	message: string;
+	execution_time: string;
+	results: Record<string, SocialMediaPostResult> | SocialMediaPostResult[];
+	product_id?: number | string;
+	summary?: {
+		total_platforms: number;
+		successful_posts: number;
+		failed_posts: number;
+		platforms_attempted: string[];
+	};
 }

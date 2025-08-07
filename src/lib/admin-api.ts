@@ -21,6 +21,9 @@ import {
 	Variation,
 	VariationValue,
 	ProductVariant,
+	SocialMediaPost,
+	SocialMediaPostResponse,
+	SocialMediaTokenStatus,
 } from '@/types/admin';
 
 class AdminApiClient {
@@ -882,32 +885,8 @@ class AdminApiClient {
 	}
 
 	async postToSocialMedia(
-		posts: Array<{
-			platform: string;
-			caption: string;
-			images: string[];
-			scheduled_at?: string;
-		}>
-	): Promise<{
-		success: boolean;
-		product_id: number | string;
-		execution_time: string;
-		message: string;
-		results: Array<{
-			platform: string;
-			success: boolean;
-			message: string;
-			post_id?: string;
-			post_url?: string;
-			error?: string;
-		}>;
-		summary: {
-			total_platforms: number;
-			successful_posts: number;
-			failed_posts: number;
-			platforms_attempted: string[];
-		};
-	}> {
+		posts: SocialMediaPost[]
+	): Promise<SocialMediaPostResponse> {
 		const platforms = posts.map((p) => p.platform);
 		const firstPost = posts[0];
 
@@ -920,22 +899,18 @@ class AdminApiClient {
 				published: false,
 			}),
 		});
-		return response.data.data; // Extract from nested data object
+
+		// Handle different response formats
+		if (response.data.data) {
+			return response.data.data; // Extract from nested data object
+		} else {
+			return response.data; // Direct response format
+		}
 	}
 
-	async getSocialMediaTokens(): Promise<{
-		facebook?: { status: string; expires_at?: string };
-		instagram?: { status: string; expires_at?: string };
-		twitter?: { status: string; expires_at?: string };
-		linkedin?: { status: string; expires_at?: string };
-	}> {
+	async getSocialMediaTokens(): Promise<SocialMediaTokenStatus> {
 		const response = await this.client.get<{
-			data: {
-				facebook?: { status: string; expires_at?: string };
-				instagram?: { status: string; expires_at?: string };
-				twitter?: { status: string; expires_at?: string };
-				linkedin?: { status: string; expires_at?: string };
-			};
+			data: SocialMediaTokenStatus;
 		}>('/admin/social/tokens');
 		return response.data.data;
 	}

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { FaFacebook, FaInstagram } from 'react-icons/fa';
 import { adminApi } from '@/lib/admin-api';
-import type { Product } from '@/types/admin';
+import type { Product, SocialMediaPostResponse, SocialMediaPostResult } from '@/types/admin';
 
 interface SocialMediaPostModalProps {
   open: boolean;
@@ -36,29 +36,6 @@ interface SocialMediaPost {
   caption: string;
   images: string[];
   scheduled_at?: string;
-}
-
-interface PostResult {
-  platform: string;
-  success: boolean;
-  message: string;
-  post_id?: string;
-  post_url?: string;
-  error?: string;
-}
-
-interface PostResponse {
-  success: boolean;
-  product_id: number | string; // Can be number or 'generic'
-  execution_time: string;
-  message: string;
-  results: PostResult[];
-  summary: {
-    total_platforms: number;
-    successful_posts: number;
-    failed_posts: number;
-    platforms_attempted: string[];
-  };
 }
 
 const PLATFORMS = [
@@ -85,7 +62,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
   const [generatedCaptions, setGeneratedCaptions] = useState<string[]>([]);
   const [currentCaptionIndex, setCurrentCaptionIndex] = useState(0);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
-  const [postResult, setPostResult] = useState<PostResponse | null>(null);
+  const [postResult, setPostResult] = useState<SocialMediaPostResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
 
   // Reset form
@@ -225,8 +202,38 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
 
       return adminApi.postToSocialMedia(posts); // Remove product.id
     },
-    onSuccess: (data: PostResponse) => {
-      setPostResult(data);
+    onSuccess: (data: any) => {
+      // Transform the API response to match our expected format
+      let transformedData: SocialMediaPostResponse;
+      
+      if (data.results && typeof data.results === 'object' && !Array.isArray(data.results)) {
+        // Handle object format: { instagram: {...}, facebook: {...} }
+        const resultsArray = Object.entries(data.results).map(([platform, result]: [string, any]) => ({
+          ...result,
+          platform: platform
+        }));
+        
+        const successfulPosts = resultsArray.filter((r: SocialMediaPostResult) => r.success).length;
+        const failedPosts = resultsArray.filter((r: SocialMediaPostResult) => !r.success).length;
+        
+        transformedData = {
+          success: data.success,
+          message: data.message,
+          execution_time: data.execution_time,
+          results: resultsArray,
+          summary: {
+            total_platforms: resultsArray.length,
+            successful_posts: successfulPosts,
+            failed_posts: failedPosts,
+            platforms_attempted: resultsArray.map((r: SocialMediaPostResult) => r.platform)
+          }
+        };
+      } else {
+        // Handle array format (existing format)
+        transformedData = data as SocialMediaPostResponse;
+      }
+      
+      setPostResult(transformedData);
       setShowResults(true);
     },
     onError: (error) => {
@@ -250,7 +257,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
   };
 
   // Generate share URL based on platform and result data
-  const getShareUrl = (result: PostResult) => {
+  const getShareUrl = (result: SocialMediaPostResult) => {
     // First, try to use post_url if available from backend
     if (result.post_url) {
       return result.post_url;
@@ -348,6 +355,14 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
 
   // Show results view after successful posting
   if (showResults && postResult) {
+    // Ensure results is always an array
+    const resultsArray = Array.isArray(postResult.results) ? postResult.results : [];
+    const summary = postResult.summary || {
+      total_platforms: resultsArray.length,
+      successful_posts: resultsArray.filter((r: SocialMediaPostResult) => r.success).length,
+      failed_posts: resultsArray.filter((r: SocialMediaPostResult) => !r.success).length,
+      platforms_attempted: resultsArray.map((r: SocialMediaPostResult) => r.platform)
+    };
     return (
       <div 
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/30 backdrop-blur-sm"
@@ -379,10 +394,10 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-white">Summary</h3>
                 <div className="flex items-center space-x-2">
-                  {postResult.summary.successful_posts > 0 && (
+                  {summary.successful_posts > 0 && (
                     <CheckCircle className="w-5 h-5 text-green-500" />
                   )}
-                  {postResult.summary.failed_posts > 0 && (
+                  {summary.failed_posts > 0 && (
                     <XCircle className="w-5 h-5 text-red-500" />
                   )}
                 </div>
@@ -390,7 +405,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-400">Total Platforms:</span>
-                  <span className="text-white ml-2">{postResult.summary.total_platforms}</span>
+                  <span className="text-white ml-2">{summary.total_platforms}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Execution Time:</span>
@@ -398,11 +413,11 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
                 </div>
                 <div>
                   <span className="text-green-400">Successful:</span>
-                  <span className="text-white ml-2">{postResult.summary.successful_posts}</span>
+                  <span className="text-white ml-2">{summary.successful_posts}</span>
                 </div>
                 <div>
                   <span className="text-red-400">Failed:</span>
-                  <span className="text-white ml-2">{postResult.summary.failed_posts}</span>
+                  <span className="text-white ml-2">{summary.failed_posts}</span>
                 </div>
               </div>
             </div>
@@ -411,7 +426,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
             <div>
               <h3 className="text-lg font-medium text-white mb-4">Platform Results</h3>
               <div className="space-y-3">
-                {postResult.results.map((result, index) => {
+                {resultsArray.map((result: SocialMediaPostResult, index: number) => {
                   const platform = PLATFORMS.find(p => p.name.toLowerCase() === result.platform.toLowerCase());
                   const Icon = platform?.icon || FaFacebook;
                   
