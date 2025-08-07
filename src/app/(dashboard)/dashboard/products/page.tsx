@@ -34,15 +34,19 @@ import {
   Trash2,
   Eye,
   Package,
+  Share,
 } from 'lucide-react';
 import { cn, getProductImageUrl } from '@/lib/utils';
 import { ProductViewModal } from '@/components/dashboard/ProductViewModal';
+import { SocialMediaPostModal } from '@/components/dashboard/SocialMediaPostModal';
 
 const columnHelper = createColumnHelper<Product>();
 
 export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isSocialMediaModalOpen, setIsSocialMediaModalOpen] = useState(false);
+  const [socialMediaProduct, setSocialMediaProduct] = useState<Product | null>(null);
   const [filters, setFilters] = useState<TableFilter>({
     search: '',
     status: '',
@@ -105,6 +109,11 @@ export default function ProductsPage() {
   const handleViewProduct = (product: Product) => {
     setSelectedProduct(product);
     setIsViewModalOpen(true);
+  };
+
+  const handleSocialMediaPost = (product: Product) => {
+    setSocialMediaProduct(product);
+    setIsSocialMediaModalOpen(true);
   };
 
   const handleDeleteProduct = (productId: number) => {
@@ -237,6 +246,15 @@ export default function ProductsPage() {
           <Button 
             variant="ghost" 
             size="sm"
+            onClick={() => handleSocialMediaPost(row.original)}
+            className="text-green-400 hover:text-green-300 hover:bg-gray-700"
+            title="Share on Social Media"
+          >
+            <Share className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => handleEditProduct(row.original.id)}
             className="text-gray-300 hover:text-white hover:bg-gray-700"
             title="Edit Product"
@@ -255,7 +273,7 @@ export default function ProductsPage() {
           </Button>
         </div>
       ),
-      size: 120,
+      size: 150,
     }),
   ];
 
@@ -488,6 +506,15 @@ export default function ProductsPage() {
                     <Button 
                       variant="ghost" 
                       size="sm"
+                      onClick={() => handleSocialMediaPost(product)}
+                      className="text-green-400 hover:text-green-300 hover:bg-gray-600 p-2"
+                      title="Share on Social Media"
+                    >
+                      <Share className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
                       onClick={() => handleEditProduct(product.id)}
                       className="text-gray-300 hover:text-white hover:bg-gray-600 p-2"
                       title="Edit Product"
@@ -628,6 +655,13 @@ export default function ProductsPage() {
         product={selectedProduct}
         open={isViewModalOpen}
         onOpenChange={setIsViewModalOpen}
+      />
+
+      {/* Social Media Post Modal */}
+      <SocialMediaPostModal
+        product={socialMediaProduct}
+        open={isSocialMediaModalOpen}
+        onOpenChange={setIsSocialMediaModalOpen}
       />
     </div>
   );

@@ -109,9 +109,7 @@ class AdminApiClient {
 	}
 
 	async refreshToken(): Promise<AuthTokens> {
-		const response = await this.client.post<AuthTokens>(
-			'/admin/refresh'
-		);
+		const response = await this.client.post<AuthTokens>('/admin/refresh');
 		const tokens = response.data;
 		this.setToken(tokens.access_token);
 		return tokens;
@@ -618,9 +616,7 @@ class AdminApiClient {
 			}
 		});
 
-		const response = await this.client.get(
-			`/admin/categories?${params}`
-		);
+		const response = await this.client.get(`/admin/categories?${params}`);
 
 		// Transform Laravel pagination format to our expected format
 		return {
@@ -871,6 +867,77 @@ class AdminApiClient {
 
 	async deleteProductVariant(id: number): Promise<void> {
 		await this.client.delete(`/admin/product-variants/${id}`);
+	}
+
+	// Social Media Methods
+	async generateSocialMediaCaption(
+		productId: number,
+		platform: string
+	): Promise<{ caption: string }> {
+		const response = await this.client.post<{ data: { caption: string } }>(
+			'/admin/social/generate-caption',
+			{ product_id: productId, platform }
+		);
+		return response.data.data;
+	}
+
+	async postToSocialMedia(
+		posts: Array<{
+			platform: string;
+			caption: string;
+			images: string[];
+			scheduled_at?: string;
+		}>
+	): Promise<{
+		success: boolean;
+		product_id: number | string;
+		execution_time: string;
+		message: string;
+		results: Array<{
+			platform: string;
+			success: boolean;
+			message: string;
+			post_id?: string;
+			post_url?: string;
+			error?: string;
+		}>;
+		summary: {
+			total_platforms: number;
+			successful_posts: number;
+			failed_posts: number;
+			platforms_attempted: string[];
+		};
+	}> {
+		const platforms = posts.map((p) => p.platform);
+		const firstPost = posts[0];
+
+		const response = await this.client.post(`/social/post`, {
+			platforms,
+			caption: firstPost?.caption || '',
+			images: firstPost?.images || [], // Add selected images to payload
+			...(firstPost?.scheduled_at && {
+				scheduled_for: firstPost.scheduled_at,
+				published: false,
+			}),
+		});
+		return response.data.data; // Extract from nested data object
+	}
+
+	async getSocialMediaTokens(): Promise<{
+		facebook?: { status: string; expires_at?: string };
+		instagram?: { status: string; expires_at?: string };
+		twitter?: { status: string; expires_at?: string };
+		linkedin?: { status: string; expires_at?: string };
+	}> {
+		const response = await this.client.get<{
+			data: {
+				facebook?: { status: string; expires_at?: string };
+				instagram?: { status: string; expires_at?: string };
+				twitter?: { status: string; expires_at?: string };
+				linkedin?: { status: string; expires_at?: string };
+			};
+		}>('/admin/social/tokens');
+		return response.data.data;
 	}
 }
 

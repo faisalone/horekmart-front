@@ -466,15 +466,6 @@ export default function HomePage() {
         </div>
       </section>
       </AnimatedElement>
-
-      {/* Floating Dashboard Access Button */}
-      <Link
-        href="/dashboard"
-        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-        title="Access Dashboard"
-      >
-        <Settings className="w-6 h-6" />
-      </Link>
     </div>
   );
 }

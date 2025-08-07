@@ -382,3 +382,32 @@ export interface ValidationError {
 	field: string;
 	message: string;
 }
+
+// Social Media Types
+export interface SocialMediaPost {
+	platform: 'facebook' | 'instagram' | 'twitter' | 'linkedin';
+	caption: string;
+	images: string[];
+	scheduled_at?: string;
+}
+
+export interface SocialMediaTokenStatus {
+	facebook?: { status: string; expires_at?: string };
+	instagram?: { status: string; expires_at?: string };
+	twitter?: { status: string; expires_at?: string };
+	linkedin?: { status: string; expires_at?: string };
+}
+
+export interface SocialMediaCaption {
+	caption: string;
+	platform: string;
+	hashtags?: string[];
+}
+
+export interface SocialMediaPostResult {
+	success: boolean;
+	message: string;
+	post_id?: string;
+	platform: string;
+	scheduled_at?: string;
+}
