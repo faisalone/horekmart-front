@@ -1,3 +1,4 @@
+import { checkoutService } from '@/services/CheckoutService';
 import { publicApi } from '@/lib/public-api';
 import { Product, ApiProductVariant } from '@/types';
 
@@ -274,20 +275,37 @@ class ProductCheckoutService {
 		quantity: number,
 		variantId?: string
 	): Promise<string> {
-		const checkoutItem = await this.createCheckoutItem(
-			productSlug,
-			quantity,
-			variantId,
-			true
-		);
-		const sessionId = this.createCheckoutSession([checkoutItem], true);
-		return sessionId;
+		try {
+			// Use the new backend checkout service
+			const sessionId = await checkoutService.buyNow(
+				productSlug,
+				quantity,
+				variantId ? parseInt(variantId) : undefined
+			);
+			return sessionId;
+		} catch (error) {
+			console.error('Error creating buy now session:', error);
+			throw error;
+		}
 	}
 
 	// ==================== CHECKOUT OPERATIONS ====================
 	async prepareCartCheckout(cartItems: any[]): Promise<string> {
-		const sessionId = this.createCheckoutSession(cartItems, false);
-		return sessionId;
+		// Convert cart items to the format expected by the server
+		const items = cartItems.map((item) => ({
+			product_slug: item.productSlug || item.slug,
+			quantity: item.quantity,
+			variant_id: item.variantId ? parseInt(item.variantId) : undefined,
+		}));
+
+		// Create session on the server
+		const { session_id } = await checkoutService.createCheckoutSession(
+			'cart',
+			items
+		);
+
+		// Generate the checkout URL
+		return `/${session_id}`;
 	}
 
 	// ==================== URL GENERATION ====================

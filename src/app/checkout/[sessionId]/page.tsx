@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 import { toast } from 'react-hot-toast';
+import { checkoutService, type OrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
+import { shippingCalculator, type ShippingZone } from '@/services/ShippingCalculator';
 
 interface OrderData {
   email: string;
@@ -25,7 +27,7 @@ interface OrderData {
   expiryDate: string;
   cvv: string;
   cardName: string;
-  shippingMethod: 'inside_chattogram' | 'inside_dhaka' | 'outside_dhaka';
+  shippingMethod: ShippingZone;
   saveInfo: boolean;
   agreeTerms: boolean;
 }
@@ -46,52 +48,39 @@ export default function CheckoutPage() {
 
   // Validate session on mount
   useEffect(() => {
-    const validateSession = () => {
-      // Check if session exists in localStorage
-      const storedSession = localStorage.getItem('checkout_session');
-      const storedItems = localStorage.getItem('checkout_items');
-      const storedTimestamp = localStorage.getItem('checkout_timestamp');
-      const directBuyFlag = localStorage.getItem('is_direct_buy');
-      
-      if (storedSession === sessionId && storedItems && storedTimestamp) {
-        // Check if session is not expired (24 hours)
-        const sessionAge = Date.now() - parseInt(storedTimestamp);
-        const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const validateSession = async () => {
+      try {
+        const sessionData = await checkoutService.getCheckoutSession(sessionId);
         
-        if (sessionAge > maxAge) {
-          // Session expired
-          localStorage.removeItem('checkout_session');
-          localStorage.removeItem('checkout_items');
-          localStorage.removeItem('checkout_timestamp');
-          localStorage.removeItem('is_direct_buy');
-          router.replace('/cart');
-          return;
-        }
+        // Transform backend session data to frontend format
+        const items = sessionData.items.map(item => ({
+          id: item.product_id.toString(),
+          productSlug: item.product_slug,
+          productName: item.product_name,
+          productImage: item.image,
+          name: item.product_name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          categorySlug: item.category_slug,
+          variantId: item.variant_id,
+          variantName: item.variant_name,
+          variantOptions: item.variant_combinations,
+          weight: typeof item.weight === 'string' ? parseFloat(item.weight) : (item.weight || 0.1),
+          weightUnit: item.weight_unit || 'kg',
+        }));
         
-        try {
-          const items = JSON.parse(storedItems);
-          if (items.length === 0) {
-            router.replace('/cart');
-            return;
-          }
-          
-          // Set checkout items from localStorage
-          setCheckoutItems(items);
-          setIsDirectBuy(directBuyFlag === 'true');
-          setIsValidSession(true);
-          
-        } catch (error) {
-          console.error('Error parsing stored items:', error);
-          router.replace('/cart');
-          return;
-        }
-      } else {
-        // Invalid session, redirect to cart
+        setCheckoutItems(items);
+        setIsDirectBuy(sessionData.type === 'buy_now');
+        setIsValidSession(true);
+        setSessionLoading(false);
+        
+      } catch (error) {
+        console.error('Error validating session:', error);
+        setIsValidSession(false);
+        setSessionLoading(false);
         router.replace('/cart');
-        return;
       }
-      
-      setSessionLoading(false);
     };
 
     if (sessionId) {
@@ -116,7 +105,7 @@ export default function CheckoutPage() {
     expiryDate: '',
     cvv: '',
     cardName: '',
-    shippingMethod: 'outside_dhaka',
+    shippingMethod: 'outside_dhaka_nilphamari',
     saveInfo: false,
     agreeTerms: false,
   });
@@ -209,70 +198,49 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    // Simulate API call
     try {
-      // Create order payload
-      const orderPayload = {
+      // Create order using the new backend service
+      const orderData: CheckoutOrderData = {
+        session_id: sessionId,
         customer: {
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+          email: formData.email || undefined,
+          name: formData.firstName,
           phone: formData.phone,
         },
-        shipping: {
+        shipping_address: {
           address: formData.address,
           city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
+          zip_code: formData.zipCode,
           country: formData.country,
         },
-        payment: {
-          method: formData.paymentMethod,
-        },
-        items: checkoutItems.map(item => ({
-          product_id: item.productId,
-          variant_id: item.variantId,
-          quantity: item.quantity,
-          price: item.price,
-          product_name: item.productName,
-          variant_options: item.variantOptions || {},
-        })),
-        totals: {
-          subtotal: subtotal,
-          shipping: shipping,
-          discountAmount: discountAmount,
-          total: total,
-        }
+        shipping_method: formData.shippingMethod,
+        payment_method: formData.paymentMethod,
+        discount_code: appliedDiscount?.code,
+        notes: undefined,
       };
 
-      console.log('Order payload:', orderPayload);
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Generate mock order ID
-      const mockOrderId = `ORDER-${Date.now()}`;
-      setOrderId(mockOrderId);
+      const response = await checkoutService.createOrder(orderData);
+      
+      // Order created successfully
+      setOrderId(response.order.order_number);
       setOrderComplete(true);
       
-      // Clear items after successful order
-      if (isDirectBuy) {
-        // For direct buy, only clear localStorage
-        localStorage.removeItem('checkout_session');
-        localStorage.removeItem('checkout_items');
-        localStorage.removeItem('checkout_timestamp');
-        localStorage.removeItem('is_direct_buy');
-      } else {
-        // For regular checkout, clear cart
+      // Clear cart if not direct buy
+      if (!isDirectBuy) {
         clearCart();
-        localStorage.removeItem('checkout_session');
-        localStorage.removeItem('checkout_items');
-        localStorage.removeItem('checkout_timestamp');
       }
-
-    } catch (error) {
-      console.error('Error processing order:', error);
-      alert('Failed to process order. Please try again.');
+      
+      toast.success('Order created successfully!');
+      
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      
+      let errorMessage = 'Failed to create order. Please try again.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -281,27 +249,16 @@ export default function CheckoutPage() {
   // No need for cart redirect - session validation handles it
   // The session validation useEffect handles redirects
 
-  // Calculate totals with dynamic shipping
+  // Calculate totals with server-side pricing (no subtotal calculation here since backend will handle it)
   const subtotal = checkoutItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const getShippingCost = () => {
-    switch (formData.shippingMethod) {
-      case 'inside_chattogram':
-        return 50;
-      case 'inside_dhaka':
-        return 70;
-      case 'outside_dhaka':
-        return 130;
-      default:
-        return 130;
-    }
+    return checkoutService.getShippingCost(formData.shippingMethod, checkoutItems);
   };
   const shipping = getShippingCost();
   
-  // Calculate discount amount
+  // Calculate discount amount using the service
   const discountAmount = appliedDiscount 
-    ? appliedDiscount.type === 'percentage' 
-      ? (subtotal * appliedDiscount.value) / 100
-      : appliedDiscount.value
+    ? checkoutService.calculateDiscount(appliedDiscount.code, subtotal)
     : 0;
   
   const total = subtotal + shipping - discountAmount;
@@ -411,16 +368,24 @@ export default function CheckoutPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[var(--theme-red)] transition-colors ${
-                        errors.phone ? 'border-red-500' : 'border-gray-400'
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
+                        errors.phone ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="+880*****-119"
+                      placeholder="01*****-119"
                     />
                     {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-                    <p className="text-xs text-gray-500 mt-2">
-                      We may require your phone number and confirmations and delivery updates. Follow our 
-                      <span className="text-[var(--theme-red)]"> Terms & service</span>
-                    </p>
+					<p className="text-xs text-gray-500 mt-2">
+					  We may require your phone number for confirmations and delivery updates. Follow our
+					  <a
+						href="/help/terms-and-conditions"
+						className="text-blue-600 underline hover:text-blue-700 transition-colors ml-1"
+						target="_blank"
+						rel="noopener noreferrer"
+					  >
+						Terms &amp; Conditions
+					  </a>
+					  .
+					</p>
                   </div>
                 </div>
               </div>
@@ -437,8 +402,8 @@ export default function CheckoutPage() {
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[var(--theme-red)] transition-colors ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-400'
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
+                        errors.firstName ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Full Name"
                     />
@@ -453,8 +418,8 @@ export default function CheckoutPage() {
                       type="text"
                       value={formData.address}
                       onChange={(e) => handleInputChange('address', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[var(--theme-red)] transition-colors ${
-                        errors.address ? 'border-red-500' : 'border-gray-400'
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
+                        errors.address ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Address"
                     />
@@ -470,8 +435,8 @@ export default function CheckoutPage() {
                         type="text"
                         value={formData.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[var(--theme-red)] transition-colors ${
-                          errors.city ? 'border-red-500' : 'border-gray-400'
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
+                          errors.city ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="City"
                       />
@@ -486,8 +451,8 @@ export default function CheckoutPage() {
                         type="text"
                         value={formData.zipCode}
                         onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[var(--theme-red)] transition-colors ${
-                          errors.zipCode ? 'border-red-500' : 'border-gray-400'
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
+                          errors.zipCode ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="Postal code"
                       />
@@ -501,47 +466,31 @@ export default function CheckoutPage() {
               <div className="bg-white rounded-lg p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping method</h2>
                 <div className="space-y-3">
-                  <div 
-                    onClick={() => handleInputChange('shippingMethod', 'inside_chattogram')}
-                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
-                      formData.shippingMethod === 'inside_chattogram' 
-                        ? 'border-[var(--theme-red)] bg-[var(--theme-red-light)]' 
-                        : 'border-gray-400 hover:border-gray-500'
-                    }`}
-                  >
-                    <span className="text-gray-900">Inside Chattogram City</span>
-                    <span className={`font-semibold ${
-                      formData.shippingMethod === 'inside_chattogram' ? 'text-[var(--theme-red)]' : ''
-                    }`}>{formatCurrency(50)}</span>
-                  </div>
-                  
-                  <div 
-                    onClick={() => handleInputChange('shippingMethod', 'inside_dhaka')}
-                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
-                      formData.shippingMethod === 'inside_dhaka' 
-                        ? 'border-[var(--theme-red)] bg-[var(--theme-red-light)]' 
-                        : 'border-gray-400 hover:border-gray-500'
-                    }`}
-                  >
-                    <span className="text-gray-900">Inside Dhaka City</span>
-                    <span className={`font-semibold ${
-                      formData.shippingMethod === 'inside_dhaka' ? 'text-[var(--theme-red)]' : ''
-                    }`}>{formatCurrency(70)}</span>
-                  </div>
-                  
-                  <div 
-                    onClick={() => handleInputChange('shippingMethod', 'outside_dhaka')}
-                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
-                      formData.shippingMethod === 'outside_dhaka' 
-                        ? 'border-[var(--theme-red)] bg-[var(--theme-red-light)]' 
-                        : 'border-gray-400 hover:border-gray-500'
-                    }`}
-                  >
-                    <span className="text-gray-900">Outside Dhaka & Chittagong</span>
-                    <span className={`font-semibold ${
-                      formData.shippingMethod === 'outside_dhaka' ? 'text-[var(--theme-red)]' : ''
-                    }`}>{formatCurrency(130)}</span>
-                  </div>
+                  {checkoutService.getShippingOptions(checkoutItems).map((option) => (
+                    <div 
+                      key={option.zone}
+                      onClick={() => handleInputChange('shippingMethod', option.zone)}
+                      className={`border rounded-lg cursor-pointer transition-colors ${
+                        formData.shippingMethod === option.zone 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-400 hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between p-4">
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">{option.name}</span>
+                          <p className="text-sm text-gray-600 mt-1">{option.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`font-semibold text-lg ${
+                            formData.shippingMethod === option.zone ? 'text-blue-600' : 'text-gray-900'
+                          }`}>
+                            {formatCurrency(option.cost)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -639,7 +588,7 @@ export default function CheckoutPage() {
                 <h3 className="text-lg font-semibold text-gray-900">Order Summary</h3>
                 {!isDirectBuy && (
                   <Link href="/cart">
-                    <button className="text-[var(--theme-blue)] hover:text-[var(--theme-blue-dark)] p-1 rounded transition-colors">
+                    <button className="text-blue-600 hover:text-blue-700 p-1 rounded transition-colors">
                       <Edit3 className="w-4 h-4" />
                     </button>
                   </Link>
@@ -658,16 +607,16 @@ export default function CheckoutPage() {
                       <div className="relative w-16 h-16 flex-shrink-0">
                         <Image
                           src={item.productImage || '/placeholder-product.svg'}
-                          alt={item.productName}
+                          alt={item.productName || 'Product image'}
                           fill
                           className="object-cover rounded-lg"
                         />
-                        <div className="absolute -top-2 -right-2 bg-[var(--theme-red)] text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                        <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
                           {item.quantity}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 mb-1 hover:text-[var(--theme-blue)] transition-colors">{item.productName}</p>
+                        <p className="font-medium text-gray-900 mb-1 hover:text-blue-600 transition-colors">{item.productName}</p>
                         {(item.variantId && item.variantOptions) && (
                           <p className="text-sm text-gray-600 mb-1">
                             {Object.entries(item.variantOptions).map(([key, value]) => `${key}: ${value}`).join(', ')}
@@ -707,12 +656,12 @@ export default function CheckoutPage() {
                       value={discountCode}
                       onChange={(e) => setDiscountCode(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleApplyDiscount()}
-                      className="w-full px-4 py-3 pr-20 border border-gray-400 rounded-lg focus:outline-none focus:border-[var(--theme-red)] transition-colors"
+                      className="w-full px-4 py-3 pr-20 border border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                     />
-                    <button 
+					<button 
                       onClick={handleApplyDiscount}
                       disabled={discountLoading || !discountCode.trim()}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm bg-[var(--theme-red)] text-white rounded hover:bg-[var(--theme-red-dark)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-1"
                     >
                       {discountLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                       Apply
@@ -761,13 +710,13 @@ export default function CheckoutPage() {
                     type="checkbox"
                     checked={formData.agreeTerms}
                     onChange={(e) => setFormData(prev => ({ ...prev, agreeTerms: e.target.checked }))}
-                    className="mr-3 mt-1 text-[var(--theme-red)] focus:ring-[var(--theme-red)]"
+                    className="mr-3 mt-1 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">
                     I agree to the{' '}
-                    <a href="#" className="text-[var(--theme-blue)] underline">Terms of Service</a>
+                    <a href="/help/terms-and-conditions" className="text-blue-600 underline hover:text-blue-700 transition-colors">Terms of Service</a>
                     {' '}and{' '}
-                    <a href="#" className="text-[var(--theme-blue)] underline">Privacy Policy</a>
+                    <a href="/help/privacy-policy" className="text-blue-600 underline hover:text-blue-700 transition-colors">Privacy Policy</a>
                     . I confirm that all information provided is accurate and complete.
                   </span>
                 </label>
@@ -777,7 +726,7 @@ export default function CheckoutPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={isProcessing || !formData.agreeTerms}
-                className="w-full py-4 mt-6 bg-theme-primary hover:bg-theme-primary-dark disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-colors"
+                className="w-full py-4 mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-colors"
               >
                 {isProcessing ? (
                   <>

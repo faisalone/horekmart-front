@@ -95,6 +95,36 @@ const config: Config = {
 					900: '#5a2a87',
 					950: '#3b1a5c',
 				},
+				'theme-primary': {
+					DEFAULT: '#f22540',
+					light: '#ff5a70',
+					dark: '#d11330',
+					50: '#fef2f2',
+					100: '#fee2e2',
+					200: '#fecaca',
+					300: '#fca5a5',
+					400: '#f87171',
+					500: '#f22540',
+					600: '#d11330',
+					700: '#b91c1c',
+					800: '#991b1b',
+					900: '#7f1d1d',
+				},
+				'theme-secondary': {
+					DEFAULT: '#0074bf',
+					light: '#2196f3',
+					dark: '#005a9b',
+					50: '#eff6ff',
+					100: '#dbeafe',
+					200: '#bfdbfe',
+					300: '#93c5fd',
+					400: '#60a5fa',
+					500: '#0074bf',
+					600: '#005a9b',
+					700: '#1d4ed8',
+					800: '#1e40af',
+					900: '#1e3a8a',
+				},
 				'theme-accent': {
 					50: '#f0f9ff',
 					100: '#e0f2fe',
@@ -144,7 +174,10 @@ const config: Config = {
 			},
 		},
 	},
-	plugins: [require('tailwindcss-animate'), require('tailwind-scrollbar')({ nocompatible: true })],
+	plugins: [
+		require('tailwindcss-animate'),
+		require('tailwind-scrollbar')({ nocompatible: true }),
+	],
 };
 
 export default config;

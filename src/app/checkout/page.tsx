@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { productCheckoutService } from '@/services/ProductCheckoutService';
+import { checkoutService } from '@/services/CheckoutService';
 
 function CheckoutRedirectContent() {
   const router = useRouter();
@@ -24,10 +24,10 @@ function CheckoutRedirectContent() {
         
         if (mode === 'buy_now' && productSlug && quantity) {
           // Handle Order Now flow
-          const sessionId = await productCheckoutService.buyNow(
+          const sessionId = await checkoutService.buyNow(
             productSlug,
             parseInt(quantity),
-            variantId || undefined
+            variantId ? parseInt(variantId) : undefined
           );
           router.replace(`/checkout/${sessionId}`);
           

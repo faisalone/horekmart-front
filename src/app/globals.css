@@ -725,3 +725,34 @@ input[type="number"] {
 .animate-shimmer {
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+/* Text Color Classes */
+.text-theme-primary { color: var(--theme-primary); }
+.text-theme-primary-light { color: var(--theme-primary-light); }
+.text-theme-primary-dark { color: var(--theme-primary-dark); }
+.text-theme-secondary { color: var(--theme-secondary); }
+.text-theme-secondary-light { color: var(--theme-secondary-light); }
+.text-theme-secondary-dark { color: var(--theme-secondary-dark); }
+
+/* Border Color Classes */
+.border-theme-primary { border-color: var(--theme-primary); }
+.border-theme-primary-light { border-color: var(--theme-primary-light); }
+.border-theme-primary-dark { border-color: var(--theme-primary-dark); }
+.border-theme-secondary { border-color: var(--theme-secondary); }
+.border-theme-secondary-light { border-color: var(--theme-secondary-light); }
+.border-theme-secondary-dark { border-color: var(--theme-secondary-dark); }
+
+/* Focus and Ring Color Classes */
+.focus\:border-theme-primary:focus { border-color: var(--theme-primary); }
+.focus\:border-theme-primary-dark:focus { border-color: var(--theme-primary-dark); }
+.focus\:border-theme-secondary:focus { border-color: var(--theme-secondary); }
+.focus\:border-theme-secondary-dark:focus { border-color: var(--theme-secondary-dark); }
+
+.focus\:ring-theme-primary:focus {
+  --tw-ring-color: var(--theme-primary);
+  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+}
+.focus\:ring-theme-primary-dark:focus {
+  --tw-ring-color: var(--theme-primary-dark);
+  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+}
