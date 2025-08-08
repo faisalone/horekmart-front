@@ -349,7 +349,7 @@ input[type="number"] {
   border-color: rgb(75 85 99); /* gray-600 */
   color: white;
   border-radius: 0.5rem; /* rounded-lg */
-  padding: 0.75rem 2.5rem 0.75rem 0.75rem; /* Add proper padding with space for arrow */
+padding: 0.5rem 2.5rem 0.5rem 0.75rem; /* Reduced vertical padding for better fit */
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.75rem center;
   background-repeat: no-repeat;

@@ -113,6 +113,11 @@ export interface Product {
 	category_id: number; // Changed from string to number
 	vendor_id: number; // Changed from string to number
 	is_featured: boolean; // Changed from 'featured' to 'is_featured'
+	social_links?: {
+		facebook?: string[];
+		instagram?: string[];
+		youtube?: string[];
+	} | null;
 	weight?: number;
 	weight_unit?: 'kg' | 'g';
 	dimensions?: string;

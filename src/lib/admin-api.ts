@@ -342,6 +342,11 @@ class AdminApiClient {
 					// Handle boolean values properly for FormData
 					if (typeof value === 'boolean') {
 						formData.append(key, value ? '1' : '0');
+					} else if (
+						key === 'social_links' &&
+						typeof value === 'object'
+					) {
+						formData.append('social_links', JSON.stringify(value));
 					} else {
 						formData.append(key, value.toString());
 					}
@@ -403,6 +408,11 @@ class AdminApiClient {
 					// Handle boolean values properly for FormData
 					if (typeof value === 'boolean') {
 						formData.append(key, value ? '1' : '0');
+					} else if (
+						key === 'social_links' &&
+						typeof value === 'object'
+					) {
+						formData.append('social_links', JSON.stringify(value));
 					} else {
 						formData.append(key, value.toString());
 					}

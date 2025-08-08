@@ -82,8 +82,8 @@ function DashboardSidebar({ isOpen, onClose, className }: DashboardSidebarProps)
   };
 
   const isActive = (href: string) => {
-    if (href === '/admin') {
-      return pathname === '/admin';
+    if (href === '/dashboard') {
+      return pathname === '/dashboard';
     }
     return pathname.startsWith(href);
   };
@@ -123,7 +123,7 @@ function DashboardSidebar({ isOpen, onClose, className }: DashboardSidebarProps)
 
         {/* Logo */}
         <div className="p-6 border-b border-gray-700">
-          <Link href="/admin" className="flex items-center space-x-3" onClick={handleLinkClick}>
+          <Link href="/dashboard" className="flex items-center space-x-3" onClick={handleLinkClick}>
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <LayoutDashboard className="w-5 h-5 text-white" />
             </div>

@@ -1,10 +1,14 @@
+"use client";
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Heart, ShoppingCart } from 'lucide-react';
+import { Star, Heart } from 'lucide-react';
 import { Product } from '@/types';
 import { cn, getProductImageUrl, getProductUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 import { AutoFontText } from '@/components/AutoFontText';
+import { Button } from '@/components/ui/button';
+import { useProductCheckout } from '@/services/ProductCheckoutService';
+import { useRouter } from 'next/navigation';
 
 export interface ProductCardProps {
   product?: Product;
@@ -15,6 +19,8 @@ export interface ProductCardProps {
 }
 
 const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoading = false }: ProductCardProps) => {
+  const router = useRouter();
+  const { buyNow } = useProductCheckout();
   // Show skeleton if loading or no product
   if (isLoading || !product) {
     return (
@@ -69,15 +75,24 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
   // Use utility function to get the correct image URL
   const productImage = getProductImageUrl(product);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
-    onAddToCart?.(product);
+    try {
+      // Proceed directly to checkout for single-SKU products without variations
+      const checkoutUrl = await buyNow(product.slug, 1);
+      router.push(checkoutUrl);
+    } catch (error) {
+      console.error('Buy Now failed:', error);
+    }
   };
 
   const handleAddToWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     onAddToWishlist?.(product);
   };
+
+  const hasVariations = Array.isArray((product as any).variants) && ((product as any).variants?.length ?? 0) > 0;
+  const canBuyNow = inStock && !hasVariations;
 
   return (
     <div className={cn(
@@ -100,15 +115,6 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
             className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-50"
           >
             <Heart className="h-4 w-4 text-gray-600" />
-          </button>
-
-          {/* Quick Add Button with theme styling */}
-          <button
-            onClick={handleAddToCart}
-            disabled={!inStock}
-            className="absolute bottom-3 right-3 p-2 theme-button-secondary rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:bg-gray-400"
-          >
-            <ShoppingCart className="h-4 w-4" />
           </button>
         </div>
       </Link>
@@ -152,6 +158,35 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
             )}
           </div>
         </Link>
+
+        {/* Bottom action area: ensure no empty space */}
+        <div className="mt-3">
+          {canBuyNow ? (
+            <Button
+              onClick={handleBuyNow}
+              className="w-full bg-theme-primary-dark hover:bg-theme-primary text-white py-2 text-sm font-semibold"
+            >
+              Buy Now
+            </Button>
+          ) : hasVariations ? (
+            <Link href={getProductUrl(product)}>
+              <Button
+                className="w-full bg-theme-secondary-dark hover:bg-theme-secondary text-white py-2 text-sm font-semibold"
+              >
+                Choose Options
+              </Button>
+            </Link>
+          ) : (
+            <Link href={getProductUrl(product)}>
+              <Button
+                variant="outline"
+                className="w-full border-gray-300 text-gray-800 hover:bg-gray-50 py-2 text-sm font-semibold"
+              >
+                View Details
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

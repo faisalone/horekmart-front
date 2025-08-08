@@ -28,6 +28,11 @@ export interface Product {
 	thumbnail?: string | null;
 	thumb?: string | null; // API uses this field for main image
 	images?: Array<{ id: string; url: string } | ProductImage | string>; // Support all formats for compatibility
+	social_links?: {
+		facebook?: string[];
+		instagram?: string[];
+		youtube?: string[];
+	} | null;
 	variants?: any[]; // API variants will be included in product response
 	status: string;
 	category_id: number;

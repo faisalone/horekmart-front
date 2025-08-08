@@ -20,6 +20,9 @@ import {
 	X,
 	Share2,
 	ChevronUp,
+	Youtube,
+	Facebook,
+	Instagram,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { publicApi } from '@/lib/public-api';
@@ -29,6 +32,7 @@ import ProductPricing from '@/components/ProductPricing';
 import { ProductVariantSelector } from '@/components/ProductVariantSelector';
 import { ProductQuantitySelector } from '@/components/ProductQuantitySelector';
 import ProductDetailSection from '@/components/ProductDetailSection';
+import ProductGrid from '@/components/ProductGrid';
 import ReviewCard from '@/components/ReviewCard';
 import SpecificationItem from '@/components/SpecificationItem';
 import RatingOverview from '@/components/RatingOverview';
@@ -88,8 +92,26 @@ export default function ProductPage({ params }: ProductPageProps) {
 	const [showAllImages, setShowAllImages] = useState(false);
 	const [showImageModal, setShowImageModal] = useState(false);
 	const [showFullDescription, setShowFullDescription] = useState(false);
+	// Social media carousel state
+	const [socialCurrent, setSocialCurrent] = useState(0);
+	const [socialVisible, setSocialVisible] = useState(1);
 
 	const footerRef = useRef<HTMLDivElement>(null);
+
+	// Determine how many social items are visible responsively (1 on mobile, 2 on lg+)
+	useEffect(() => {
+		const mql = window.matchMedia('(min-width: 1024px)');
+		const update = () => setSocialVisible(mql.matches ? 2 : 1);
+		update();
+		if (mql.addEventListener) {
+			mql.addEventListener('change', update);
+			return () => mql.removeEventListener('change', update);
+		} else {
+			// Fallback for older browsers
+			mql.addListener(update);
+			return () => mql.removeListener(update);
+		}
+	}, []);
 
 	const getAllImages = useCallback((): Array<{
 		url: string;
@@ -913,7 +935,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 								</div>
 							</ProductDetailSection>
 
-							<ProductDetailSection
+							{/* <ProductDetailSection
 								title="Customer Reviews & Ratings"
 								icon={<Star className="w-3 h-3 text-white fill-current" />}
 								gradient="bg-gradient-to-r from-gray-600 to-gray-700"
@@ -971,39 +993,120 @@ export default function ProductPage({ params }: ProductPageProps) {
 										</div>
 									</div>
 								</div>
-							</ProductDetailSection>
+							</ProductDetailSection> */}
 
-							<ProductDetailSection
-								title="Product Video"
-								icon={
-									<div className="w-0 h-0 border-l-[6px] border-l-white border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent"></div>
-								}
-								gradient="bg-gradient-to-r from-gray-600 to-gray-700"
-							>
-								<div className="bg-gray-50 rounded-xl p-4 lg:p-6 border border-gray-200">
-									<div className="max-w-4xl mx-auto">
-										<div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-											<div className="w-full h-full flex items-center justify-center">
-												<div className="text-center">
-													<div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-														<div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div>
-													</div>
-													<h4 className="text-lg font-bold text-gray-800 mb-2">
-														Product Demo Video
-													</h4>
-													<p className="text-gray-600 text-sm">
-														YouTube or Facebook video will be embedded here
-													</p>
-													<div className="mt-4 inline-flex items-center px-3 py-2 bg-gray-200 rounded-full text-xs text-gray-600">
-														<div className="w-1.5 h-1.5 bg-gray-500 rounded-full mr-2"></div>
-														Ready for video embed
-													</div>
+							{(() => {
+								// Build dynamic embed list from product.social_links
+								const toYoutubeId = (url: string): string | null => {
+									try {
+										const u = new URL(url);
+										if (u.hostname.includes('youtu.be')) {
+											return u.pathname.slice(1) || null;
+										}
+										if (u.searchParams.get('v')) {
+											return u.searchParams.get('v');
+										}
+										const parts = u.pathname.split('/').filter(Boolean);
+										const i = parts.findIndex(p => p === 'shorts' || p === 'embed' || p === 'live');
+										if (i >= 0 && parts[i + 1]) return parts[i + 1];
+										// Fallback to last segment if looks like id
+										return parts[parts.length - 1] || null;
+									} catch { return null; }
+								};
+
+								const toFacebookEmbed = (url: string): string => {
+									return `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500`;
+								};
+
+								const toInstagramEmbed = (url: string): string | null => {
+									try {
+										const u = new URL(url);
+										const path = u.pathname.endsWith('/') ? u.pathname.slice(0, -1) : u.pathname;
+										if (!path) return null;
+										return `https://www.instagram.com${path}/embed`;
+									} catch { return null; }
+								};
+
+								const embeds: Array<{ platform: 'youtube'|'facebook'|'instagram'; src: string; title: string; bg: string }>=[];
+								const sl = product?.social_links || {} as any;
+								(sl.youtube || []).forEach((link: string) => {
+									const id = toYoutubeId(link);
+									if (id) embeds.push({ platform: 'youtube', src: `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1`, title: 'YouTube', bg: 'bg-black' });
+								});
+								(sl.facebook || []).forEach((link: string) => {
+									const src = toFacebookEmbed(link);
+									embeds.push({ platform: 'facebook', src, title: 'Facebook', bg: 'bg-white' });
+								});
+								(sl.instagram || []).forEach((link: string) => {
+									const src = toInstagramEmbed(link);
+									if (src) embeds.push({ platform: 'instagram', src, title: 'Instagram', bg: 'bg-white' });
+								});
+
+								if (embeds.length === 0) return null;
+
+								const maxIdx = Math.max(0, embeds.length - socialVisible);
+
+								return (
+									<ProductDetailSection
+										title="Social Media Showcase"
+										icon={<div className="w-3 h-3 bg-white rounded" />}
+										gradient="bg-gradient-to-r from-gray-700 to-gray-900"
+									>
+										{/* Full-width, no extra wrapper: responsive 2-up carousel */}
+										<div className="relative">
+											{/* Track */}
+											<div className="overflow-hidden">
+												<div
+													className="flex transition-transform duration-500 ease-out"
+													style={{ transform: `translateX(-${(socialCurrent * 100) / Math.max(socialVisible, 1)}%)` }}
+												>
+													{embeds.map((item, idx) => (
+														<div
+															key={`${item.platform}-${idx}`}
+															className="px-2 box-border h-[420px] lg:h-[520px] flex-shrink-0"
+															style={{ width: `${100 / Math.max(socialVisible, 1)}%` }}
+														>
+															<div className={`w-full h-full rounded-lg overflow-hidden border border-gray-200 ${item.bg}`}>
+																<iframe
+																	title={`${item.title} Embed`}
+																	className="w-full h-full"
+																	src={item.src}
+																	allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+																	scrolling={item.platform === 'facebook' ? 'no' : undefined}
+																	frameBorder={item.platform === 'instagram' || item.platform === 'facebook' ? 0 : undefined}
+																	allowFullScreen
+																></iframe>
+															</div>
+														</div>
+													))}
 												</div>
 											</div>
+
+											{/* Navigation */}
+											{embeds.length > socialVisible && (
+												<>
+													<button
+														onClick={() => setSocialCurrent((p) => Math.max(p - 1, 0))}
+														className={`absolute left-0 top-1/2 -translate-y-1/2 m-2 p-2 rounded-full bg-white shadow transition ${socialCurrent === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+														aria-label="Previous"
+														disabled={socialCurrent === 0}
+													>
+														<ChevronLeft className="w-5 h-5" />
+													</button>
+													<button
+														onClick={() => setSocialCurrent((p) => Math.min(p + 1, maxIdx))}
+														className={`absolute right-0 top-1/2 -translate-y-1/2 m-2 p-2 rounded-full bg-white shadow transition ${socialCurrent >= maxIdx ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+														aria-label="Next"
+														disabled={socialCurrent >= maxIdx}
+													>
+														<ChevronRight className="w-5 h-5" />
+													</button>
+												</>
+											)}
 										</div>
-									</div>
-								</div>
-							</ProductDetailSection>
+									</ProductDetailSection>
+								);
+							})()}
 						</div>
 					</div>
 
@@ -1215,45 +1318,25 @@ export default function ProductPage({ params }: ProductPageProps) {
 							style={{ animationDelay: '700ms' }}>
 							Related Products
 						</h3>
-						<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 transform transition-all duration-500"
-							 style={{ animationDelay: '800ms' }}>
-							{relatedProducts.map((relatedProduct) => (
-								<Link
-									key={relatedProduct.id}
-									href={getProductUrl(relatedProduct)}
-									className="group"
-								>
-									<div className="bg-white rounded-lg border hover:shadow-lg transition-shadow">
-										<div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
-											<Image
-												src={relatedProduct.thumbnail || '/placeholder-product.svg'}
-												alt={relatedProduct.name}
-												width={300}
-												height={300}
-												className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-											/>
-										</div>
-										<div className="p-3 lg:p-4">
-											<h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm lg:text-base">
-												{relatedProduct.name}
-											</h4>
-											<div className="flex items-center justify-between">
-												<span className="text-base lg:text-lg font-bold text-gray-900">
-													BDT{' '}
-													{parseFloat(
-														relatedProduct.sale_price || relatedProduct.price
-													).toFixed(2)}
-												</span>
-												{relatedProduct.sale_price && (
-													<span className="text-sm text-gray-500 line-through">
-														BDT {parseFloat(relatedProduct.price).toFixed(2)}
-													</span>
-												)}
-											</div>
-										</div>
-									</div>
-								</Link>
-							))}
+						{/* Reuse homepage ProductGrid for consistent cards and controls */}
+						<div className="transform transition-all duration-500" style={{ animationDelay: '800ms' }}>
+							{/* We pass only wishlist handler; Buy Now will show in ProductCard when eligible */}
+							{/* onAddToCart intentionally omitted to remove cart action */}
+							{/* grid columns set to 2 on small, 4 on lg to match previous */}
+							<ProductGrid
+								products={relatedProducts}
+								onAddToWishlist={(p: Product) => toggleWishlist({
+									productId: String(p.id),
+									productName: p.name,
+									productImage: p.thumbnail || '/placeholder-product.svg',
+									productSlug: p.slug,
+									categorySlug: p.category?.slug,
+									price: parseFloat(p.price),
+									salePrice: p.sale_price ? parseFloat(p.sale_price) : undefined,
+									inStock: p.in_stock ?? true,
+								})}
+								className="grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
+							/>
 						</div>
 					</div>
 				)}

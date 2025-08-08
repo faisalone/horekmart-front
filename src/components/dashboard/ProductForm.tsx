@@ -52,6 +52,11 @@ interface ProductFormData {
   og_title?: string;
   og_description?: string;
   focus_keyword?: string;
+  social_links?: {
+    facebook?: string[];
+    instagram?: string[];
+    youtube?: string[];
+  } | null;
 }
 
 interface UploadedImage {
@@ -87,6 +92,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     og_title: '',
     og_description: '',
     focus_keyword: '',
+  social_links: { facebook: [], instagram: [], youtube: [] },
   });
 
   const [keywordInput, setKeywordInput] = useState('');
@@ -134,6 +140,19 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
   const categories = categoriesData?.data || [];
   const vendors = vendorsData?.data || [];
 
+  // Helpers for social entries
+  type SocialPlatform = 'facebook' | 'instagram' | 'youtube';
+  type SocialEntry = { id: string; platform: SocialPlatform; url: string };
+  const [socialEntries, setSocialEntries] = useState<SocialEntry[]>([]);
+  const createEmptyEntry = (platform: SocialPlatform = 'facebook'): SocialEntry => ({ id: crypto.randomUUID(), platform, url: '' });
+  const ensureSingleEmptyRow = useCallback((entries: SocialEntry[]): SocialEntry[] => {
+    if (!entries || entries.length === 0) return [createEmptyEntry('facebook')];
+    const nonEmpty = entries.filter(e => e.url.trim() !== '');
+    const lastPlatform = (entries[entries.length - 1]?.platform) || 'facebook';
+    // Always ensure exactly one empty row at the end
+    return [...nonEmpty, createEmptyEntry(lastPlatform as SocialPlatform)];
+  }, []);
+
   // Initialize form with product data if editing
   useEffect(() => {
     if (product && mode === 'edit') {
@@ -159,6 +178,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         og_title: (product as any).og_title || '',
         og_description: (product as any).og_description || '',
         focus_keyword: (product as any).focus_keyword || '',
+  social_links: product.social_links || { facebook: [], instagram: [], youtube: [] },
       });
 
       // Set existing images using new images format with UUID and URL
@@ -183,8 +203,74 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
       if (product.variants && product.variants.length > 0) {
         setVariants(product.variants);
       }
+
+      // Initialize dynamic social entries from product.social_links
+      const entries: SocialEntry[] = [];
+      const sl = product.social_links || {} as NonNullable<ProductFormData['social_links']>;
+      (sl.facebook || []).forEach((url) => entries.push({ id: crypto.randomUUID(), platform: 'facebook', url }));
+      (sl.instagram || []).forEach((url) => entries.push({ id: crypto.randomUUID(), platform: 'instagram', url }));
+      (sl.youtube || []).forEach((url) => entries.push({ id: crypto.randomUUID(), platform: 'youtube', url }));
+      setSocialEntries((prev) => ensureSingleEmptyRow(entries));
     }
   }, [product, mode]);
+
+  // For create mode, ensure entries reflect default social_links
+  useEffect(() => {
+    if (!product && mode === 'create') {
+      setSocialEntries([createEmptyEntry('facebook')]);
+    }
+  }, [product, mode]);
+
+  // Keep formData.social_links in sync with dynamic entries
+  const syncEntriesToForm = useCallback((entries: SocialEntry[]) => {
+    const grouped: NonNullable<ProductFormData['social_links']> = {
+      facebook: [],
+      instagram: [],
+      youtube: [],
+    };
+    entries.forEach((e) => {
+      if (!e.url.trim()) return;
+      grouped[e.platform] = [...(grouped[e.platform] || []), e.url.trim()];
+    });
+    setFormData((prev) => ({
+      ...prev,
+      social_links: {
+        facebook: grouped.facebook?.length ? grouped.facebook : [],
+        instagram: grouped.instagram?.length ? grouped.instagram : [],
+        youtube: grouped.youtube?.length ? grouped.youtube : [],
+      }
+    }));
+  }, []);
+
+  const updateSocialEntry = (id: string, patch: Partial<SocialEntry>) => {
+    // Update
+    let next = socialEntries.map((e) => (e.id === id ? { ...e, ...patch } as SocialEntry : e));
+    // Ensure only one empty row at the end and auto-append when last gets filled
+    const idx = next.findIndex(e => e.id === id);
+    const isLast = idx === next.length - 1;
+    const becameNonEmpty = (patch.url !== undefined) ? patch.url.trim() !== '' : next[idx].url.trim() !== '';
+    if (isLast && becameNonEmpty) {
+      const lastPlatform = next[idx].platform;
+      next = [...next, createEmptyEntry(lastPlatform)];
+    }
+    // Collapse to one empty row at the end
+    next = ensureSingleEmptyRow(next);
+    setSocialEntries(next);
+    syncEntriesToForm(next);
+  };
+
+  const removeSocialEntry = (id: string) => {
+    const idx = socialEntries.findIndex(e => e.id === id);
+    // Do not remove the last row; also protect against removing when only a single row exists
+    if (idx === socialEntries.length - 1 || socialEntries.length === 1) {
+      return;
+    }
+    let next = socialEntries.filter((e) => e.id !== id);
+    if (next.length === 0) next = [createEmptyEntry('facebook')];
+    next = ensureSingleEmptyRow(next);
+    setSocialEntries(next);
+    syncEntriesToForm(next);
+  };
 
   const handleInputChange = useCallback((field: keyof ProductFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -314,6 +400,15 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         newErrors.canonical_url = 'Canonical URL must be a valid URL';
       }
     }
+
+    // Validate social link URLs if present
+    const urlRegex = /^(https?:\/\/)[^\s]+$/i;
+    // Validate each dynamic entry
+    socialEntries.forEach((entry, idx) => {
+      if (entry.url && !urlRegex.test(entry.url)) {
+        newErrors[`social_links.entry.${idx}`] = `${entry.platform} link must be a valid URL`;
+      }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -457,6 +552,54 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
             </CardContent>
           </Card>
         </div>
+
+        {/* Social Media Links - Dedicated Section */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Social Media Links</CardTitle>
+            <CardDescription className="text-gray-400">
+              Add links to Facebook posts/reels, Instagram reels/carousels, and YouTube videos/shorts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {socialEntries.map((entry, index) => (
+              <div key={entry.id} className="flex flex-col sm:flex-row gap-2 items-stretch">
+                <select
+                  value={entry.platform}
+                  onChange={(e) => updateSocialEntry(entry.id, { platform: e.target.value as SocialPlatform })}
+                  className="h-10 sm:w-40 text-white focus:outline-none"
+                >
+                  <option value="facebook">Facebook</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="youtube">YouTube</option>
+                </select>
+                <Input
+                  value={entry.url}
+                  onChange={(e) => updateSocialEntry(entry.id, { url: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const v = entry.url.trim();
+                      if (v) {
+                        updateSocialEntry(entry.id, { url: v });
+                      }
+                    }
+                  }}
+                  placeholder={`Paste ${entry.platform} link and press Enter`}
+                  className="h-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => removeSocialEntry(entry.id)}
+                  disabled={index === socialEntries.length - 1 || socialEntries.length === 1}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
         {/* Product Variants */}
         <ProductVariantManager

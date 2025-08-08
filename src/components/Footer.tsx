@@ -12,38 +12,7 @@ const Footer = () => {
     <footer className="bg-gray-900 text-white">
       
       {/* Payment Methods Banner - Professional */}
-      <div className="bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-4 text-gray-200">Secure Payment Methods</h3>
-            <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 mb-4">
-              {/* Professional payment method cards - responsive */}
-              <div className="bg-white rounded-lg p-2 sm:p-3 w-12 sm:w-14 md:w-16 h-8 sm:h-9 md:h-10 flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-xs sm:text-sm">VISA</span>
-              </div>
-              <div className="bg-white rounded-lg p-2 sm:p-3 w-12 sm:w-14 md:w-16 h-8 sm:h-9 md:h-10 flex items-center justify-center">
-                <span className="text-red-500 font-bold text-xs sm:text-sm">MC</span>
-              </div>
-              <div className="bg-white rounded-lg p-2 sm:p-3 w-12 sm:w-14 md:w-16 h-8 sm:h-9 md:h-10 flex items-center justify-center">
-                <span className="text-blue-700 font-bold text-xs sm:text-sm">AMEX</span>
-              </div>
-              <div className="bg-white rounded-lg p-2 sm:p-3 w-12 sm:w-14 md:w-16 h-8 sm:h-9 md:h-10 flex items-center justify-center">
-                <span className="text-blue-500 font-bold text-xs sm:text-sm">PayPal</span>
-              </div>
-              <div className="bg-white rounded-lg p-2 sm:p-3 w-12 sm:w-14 md:w-16 h-8 sm:h-9 md:h-10 flex items-center justify-center">
-                <span className="text-black font-bold text-xs sm:text-sm">Apple</span>
-              </div>
-              <div className="bg-white rounded-lg p-2 sm:p-3 w-12 sm:w-14 md:w-16 h-8 sm:h-9 md:h-10 flex items-center justify-center">
-                <span className="text-green-600 font-bold text-xs sm:text-sm">GPay</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-400">
-              <Shield className="inline h-4 w-4 mr-2" />
-              256-bit SSL encryption • PCI DSS compliant • 100% secure transactions
-            </p>
-          </div>
-        </div>
-      </div>
+
 
       {/* Main Footer Content - Professional Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -160,9 +129,9 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="text-white font-medium text-lg hover:text-orange-400 transition-colors duration-200"
                 >
-                  Our Location
+                  Horekmart HQ
                 </a>
-                <p className="text-sm text-gray-400 mt-1">Horekmart HQ, Alam Market, Koimari Road, Jaldhaka, Nilphamari</p>
+                <p className="text-sm text-gray-400 mt-1">Alam Market, Koimari Road, Jaldhaka, Nilphamari</p>
               </div>
             </div>
             
@@ -181,14 +150,14 @@ const Footer = () => {
                     Icon: FaInstagram,
                     name: 'Instagram',
                     color: 'hover:bg-pink-600',
-                    url: 'https://instagram.com/horekmart.shop'
+                    url: 'https://instagram.com/horekmartshop'
                   },
-                  {
-                    Icon: FaSquareXTwitter,
-                    name: 'X',
-                    color: 'hover:bg-gray-600',
-                    url: 'https://x.com/horekmart'
-                  },
+                //   {
+                //     Icon: FaSquareXTwitter,
+                //     name: 'X',
+                //     color: 'hover:bg-gray-600',
+                //     url: 'https://x.com/horekmart'
+                //   },
                   {
                     Icon: FaYoutube,
                     name: 'YouTube',
@@ -219,8 +188,6 @@ const Footer = () => {
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-400 mb-4 md:mb-0">
               <span>© {new Date().getFullYear()} Horekmart. All rights reserved.</span>
-              <span className="hidden md:inline">•</span>
-              <span className="text-gray-500">Built with excellence</span>
             </div>
             
             <div className="flex items-center space-x-6">

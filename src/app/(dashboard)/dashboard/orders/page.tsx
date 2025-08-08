@@ -408,16 +408,6 @@ export default function OrdersPage() {
 
       {/* Orders Table */}
       <Card className="border border-gray-700 bg-gray-800/50 backdrop-blur">
-        <CardHeader className="border-b border-gray-700 bg-gray-800/50">
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-white">Orders ({stats.total})</CardTitle>
-              <CardDescription className="text-gray-300">
-                {isFetching ? 'Loading...' : `Showing ${data?.meta?.from || 0}-${data?.meta?.to || 0} of ${stats.total} orders`}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -432,11 +422,11 @@ export default function OrdersPage() {
                 <table className="w-full">
                   <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id} className="border-b border-gray-700 bg-gray-700/50">
+                      <tr key={headerGroup.id} className="border-b border-gray-700">
                         {headerGroup.headers.map((header) => (
                           <th
                             key={header.id}
-                            className="text-left p-4 font-semibold text-gray-300 bg-gray-700/50"
+                            className="text-left p-4 font-semibold text-gray-300"
                           >
                             {header.isPlaceholder
                               ? null
@@ -501,7 +491,7 @@ export default function OrdersPage() {
               {data?.data.length === 0 && !isLoading && (
                 <div className="text-center py-12">
                   <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders found</h3>
+                  <h3 className="text-lg font-semibold text-gray-400 mb-2">No orders found</h3>
                   <p className="text-gray-600 mb-4">
                     {filters.search || filters.status 
                       ? 'No orders match your current filters.' 
