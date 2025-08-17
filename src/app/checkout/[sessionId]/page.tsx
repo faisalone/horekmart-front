@@ -501,7 +501,7 @@ export default function CheckoutPage() {
                 
                 <div className="space-y-3">
                   {/* bKash */}
-                  <div 
+                  {/* <div 
                     onClick={() => handleInputChange('paymentMethod', 'bkash')}
                     className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                       formData.paymentMethod === 'bkash' 
@@ -523,10 +523,10 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mt-2">Pay securely with your bKash account</p>
-                  </div>
+                  </div> */}
 
                   {/* Nagad */}
-                  <div 
+                  {/* <div 
                     onClick={() => handleInputChange('paymentMethod', 'nagad')}
                     className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                       formData.paymentMethod === 'nagad' 
@@ -548,7 +548,7 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mt-2">Pay instantly with your Nagad wallet</p>
-                  </div>
+                  </div> */}
 
                   {/* Pay Later */}
                   <div 
