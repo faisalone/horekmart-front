@@ -1,133 +1,67 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+ import React, { useMemo } from 'react';
 import Image from 'next/image';
-import { useDebounce } from 'use-debounce';
-import {
+import { 
   useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   createColumnHelper,
-  flexRender,
+  flexRender
 } from '@tanstack/react-table';
-import { adminApi } from '@/lib/admin-api';
-import { formatCurrency } from '@/lib/currency';
-import { Product, TableFilter } from '@/types/admin';
-import { PaginatedResponse } from '@/types/admin';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CustomSelect } from '@/components/ui/select-custom';
 import Filters from '@/components/dashboard/Filters';
-import { productsFilterConfig, updateFilterConfigOptions } from '@/config/adminFilters';
-import {
-  Search,
-  Plus,
-  Filter,
-  Download,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
-  Package,
-  Share,
+import { 
+  Plus, 
+  Download, 
+  Package, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  Share 
 } from 'lucide-react';
-import { cn, getProductImageUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
+import { Product } from '@/types/admin';
 import { ProductViewModal } from '@/components/dashboard/ProductViewModal';
 import { SocialMediaPostModal } from '@/components/dashboard/SocialMediaPostModal';
+import { useProductsPage } from '@/hooks/useProductsPage';
 
 const columnHelper = createColumnHelper<Product>();
 
 export default function ProductsPage() {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isSocialMediaModalOpen, setIsSocialMediaModalOpen] = useState(false);
-  const [socialMediaProduct, setSocialMediaProduct] = useState<Product | null>(null);
-  const [filters, setFilters] = useState<TableFilter>({
-    search: '',
-    status: '',
-    category_id: '',
-    vendor_id: '',
-    sort_by: undefined,
-    sort_order: undefined,
-    page: 1,
-    per_page: 10,
-  });
+  const {
+    selectedProduct,
+    setSelectedProduct,
+    isViewModalOpen,
+    setIsViewModalOpen,
+    isSocialMediaModalOpen,
+    setIsSocialMediaModalOpen,
+    socialMediaProduct,
+    setSocialMediaProduct,
+    data,
+    isLoading,
+    isFetching,
+    error,
+    products,
+    createTableConfig,
+    filterConfig,
+    filters,
+    handleAddProduct,
+    handleEditProduct,
+    handleViewProduct,
+    handleSocialMediaPost,
+    handleDeleteProduct,
+    handleFiltersChange,
+    handleClearFilters,
+    deleteProductMutation,
+  } = useProductsPage();
 
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  // Fetch categories and vendors for filters
-  const { data: categoriesData } = useQuery({
-    queryKey: ['admin-categories'],
-    queryFn: () => adminApi.getCategories({ per_page: 100 }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const { data: vendorsData } = useQuery({
-    queryKey: ['admin-vendors'],
-    queryFn: () => adminApi.getVendors({ per_page: 100 }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  // Fetch products with advanced TanStack Query configuration
-  const { data, isLoading, isFetching, error } = useQuery<PaginatedResponse<Product>>({
-    queryKey: ['admin-products', filters],
-    queryFn: () => adminApi.getProducts(filters),
-    staleTime: 1000 * 60 * 2, // 2 minutes - data stays fresh
-    gcTime: 1000 * 60 * 10, // 10 minutes - garbage collection time
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: (previousData) => previousData, // Keep previous data while loading
-    retry: 2, // Retry failed requests 2 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-  });
-
-  // Delete product mutation
-  const deleteProductMutation = useMutation({
-    mutationFn: (id: number) => adminApi.deleteProduct(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['admin-products'],
-        type: 'all'
-      });
-    },
-  });
-
-  const handleAddProduct = () => {
-    router.push('/dashboard/products/add');
-  };
-
-  const handleEditProduct = (productId: number) => {
-    router.push(`/dashboard/products/${productId}/edit`);
-  };
-
-  const handleViewProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setIsViewModalOpen(true);
-  };
-
-  const handleSocialMediaPost = (product: Product) => {
-    setSocialMediaProduct(product);
-    setIsSocialMediaModalOpen(true);
-  };
-
-  const handleDeleteProduct = (productId: number) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      deleteProductMutation.mutate(productId);
-    }
-  };
-
-  const columns = [
+  // Create table columns
+  const columns = useMemo(() => [
     columnHelper.accessor('image', {
       header: 'Image',
       cell: ({ row }) => {
         const product = row.original;
-        // Always use first image from images collection for display  
         let imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNTAgMTAwQzE2NC4zIDEwMCAxNzYgMTExLjcgMTc2IDEyNkMxNzYgMTQwLjMgMTY0LjMgMTUyIDE1MCAxNTJDMTM1LjcgMTUyIDEyNCAxNDAuMyAxMjQgMTI2QzEyNCAxMTEuNyAxMzUuNyAxMDAgMTUwIDEwMFoiIGZpbGw9IiM5Q0E0QUYiLz4KPHBhdGggZD0iTTEwMCAxODBIMjAwQzIwNS41IDE4MCAyMTAgMTg0LjUgMjEwIDE5MFYyMDBDMjEwIDIwNS41IDIwNS41IDIxMCAyMDAgMjEwSDEwMEM5NC41IDIxMCA5MCAyMDUuNSA5MCAyMDBWMTkwQzkwIDE4NC41IDk0LjUgMTgwIDEwMCAxODBaIiBmaWxsPSIjOUNBNEFGIi8+Cjwvc3ZnPgo=';
         
         if (product.images && product.images.length > 0) {
@@ -275,63 +209,10 @@ export default function ProductsPage() {
       ),
       size: 150,
     }),
-  ];
+  ], [deleteProductMutation.isPending, handleViewProduct, handleSocialMediaPost, handleEditProduct, handleDeleteProduct]);
 
-  const products = data?.data || [];
-
-  const table = useReactTable({
-    data: products,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-
-  // Filter handlers
-  const handleFiltersChange = (newFilters: Partial<TableFilter>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
-
-  const handleClearFilters = () => {
-    setFilters({ 
-      search: '', 
-      status: '', 
-      category_id: '', 
-      vendor_id: '', 
-      sort_by: undefined, 
-      sort_order: undefined, 
-      page: 1, 
-      per_page: 10 
-    });
-  };
-
-  // Create dynamic filter config with categories and vendors
-  const filterConfig = React.useMemo(() => {
-    let config = { ...productsFilterConfig };
-    
-    // Add categories to category filter
-    if (categoriesData?.data) {
-      config = updateFilterConfigOptions(config, 'category_id', 
-        categoriesData.data.map(category => ({
-          value: category.id.toString(),
-          label: category.name
-        }))
-      );
-    }
-    
-    // Add vendors to vendor filter
-    if (vendorsData?.data) {
-      config = updateFilterConfigOptions(config, 'vendor_id',
-        vendorsData.data.map(vendor => ({
-          value: vendor.id.toString(),
-          label: vendor.business_name || vendor.name
-        }))
-      );
-    }
-    
-    return config;
-  }, [categoriesData?.data, vendorsData?.data]);
+  // Create table instance
+  const table = useReactTable(createTableConfig(columns));
 
   if (error) {
     return (
@@ -633,7 +514,7 @@ export default function ProductsPage() {
               </Button>
               
               <span className="flex items-center px-4 text-gray-300">
-                Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                Page {data?.meta?.current_page || 1} of {data?.meta?.last_page || 1}
               </span>
               
               <Button
