@@ -61,7 +61,7 @@ const BannerBlock = ({
         <div className="absolute inset-x-0 top-full group-hover:top-0 transition-all duration-300 ease-out theme-overlay-secondary text-white h-full">
           <div className="px-4 py-3 text-center h-full flex items-center justify-center">
             <AutoFontText className="text-lg font-bold hover:text-white/90 transition-colors duration-200 truncate w-full max-w-full">
-              ভিজিট করুন
+              Visit Now
             </AutoFontText>
           </div>
         </div>
