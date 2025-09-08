@@ -96,7 +96,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
 
   return (
     <div className={cn(
-      'group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200',
+      'group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col h-full',
       className
     )}>
       <Link href={getProductUrl(product)}>
@@ -119,8 +119,8 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
         </div>
       </Link>
 
-      <div className="p-4">
-        <Link href={getProductUrl(product)}>
+      <div className="p-4 flex flex-col flex-grow">
+        <Link href={getProductUrl(product)} className="flex-grow">
           <div className="space-y-2">
             {/* Category */}
             <div className="text-sm text-gray-500">
@@ -159,8 +159,8 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
           </div>
         </Link>
 
-        {/* Bottom action area: ensure no empty space */}
-        <div className="mt-3">
+        {/* Bottom action area: ensure no empty space - This will always be at the bottom */}
+        <div className="mt-auto pt-3">
           {canBuyNow ? (
             <Button
               onClick={handleBuyNow}

@@ -135,17 +135,77 @@ export default function ProductsPage() {
   };
 
   const uniqueBrands = [...new Set(products.map(p => p.vendor?.business_name).filter(Boolean))] as string[];
-  // Price range calculation - reserved for future dynamic price filter implementation
-  // const priceRange = products.reduce(
-  //   (range, product) => {
-  //     const price = product.salePrice || product.price;
-  //     return {
-  //       min: Math.min(range.min, price),
-  //       max: Math.max(range.max, price),
-  //     };
-  //   },
-  //   { min: Infinity, max: 0 }
-  // );
+  
+  // Dynamic price range calculation based on actual product prices
+  const priceRange = products.length > 0 ? products.reduce(
+    (range, product) => {
+      const price = product.sale_price ? parseFloat(product.sale_price) : parseFloat(product.price);
+      return {
+        min: Math.min(range.min, price),
+        max: Math.max(range.max, price),
+      };
+    },
+    { min: Infinity, max: 0 }
+  ) : { min: 0, max: 0 };
+
+  // Generate dynamic price ranges based on actual data
+  const generatePriceRanges = () => {
+    if (priceRange.min === Infinity || priceRange.max === 0) {
+      return [];
+    }
+
+    const ranges = [];
+    const { min, max } = priceRange;
+    const range = max - min;
+
+    // If price range is small (less than 1000), create smaller intervals
+    if (range <= 1000) {
+      const interval = Math.ceil(range / 4);
+      for (let i = 0; i < 4; i++) {
+        const start = Math.floor(min + (interval * i));
+        const end = i === 3 ? max : Math.floor(min + (interval * (i + 1)));
+        if (start < end) {
+          ranges.push({ start, end, label: `${start} - ${end.toLocaleString()} Tk` });
+        }
+      }
+    } else {
+      // For larger ranges, use predefined intervals
+      const intervals = [
+        { start: min, end: 500, label: `${Math.floor(min)} - 500 Tk` },
+        { start: 500, end: 1000, label: '500 - 1,000 Tk' },
+        { start: 1000, end: 5000, label: '1,000 - 5,000 Tk' },
+        { start: 5000, end: 10000, label: '5,000 - 10,000 Tk' },
+      ];
+
+      // Only include ranges that have products
+      intervals.forEach(interval => {
+        if (interval.start < max && interval.end > min) {
+          const actualStart = Math.max(interval.start, Math.floor(min));
+          const actualEnd = Math.min(interval.end, Math.ceil(max));
+          if (actualStart < actualEnd) {
+            ranges.push({
+              start: actualStart,
+              end: actualEnd,
+              label: interval.label
+            });
+          }
+        }
+      });
+
+      // Add "Over X" range if max price is higher than the last interval
+      if (max > 10000) {
+        ranges.push({
+          start: 10000,
+          end: Infinity,
+          label: `Over 10,000 Tk`
+        });
+      }
+    }
+
+    return ranges;
+  };
+
+  const dynamicPriceRanges = generatePriceRanges();
 
   // Handler functions for cart and wishlist
   const handleAddToCart = async (product: Product) => {
@@ -268,46 +328,25 @@ export default function ProductsPage() {
                     />
                     <span className="ml-2 text-sm text-gray-700">Any Price</span>
                   </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priceRange"
-                      checked={filters.priceRange?.[0] === 0 && filters.priceRange?.[1] === 100}
-                      onChange={() => handleFilterChange({ priceRange: [0, 100] })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Under $100</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priceRange"
-                      checked={filters.priceRange?.[0] === 100 && filters.priceRange?.[1] === 500}
-                      onChange={() => handleFilterChange({ priceRange: [100, 500] })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">$100 - $500</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priceRange"
-                      checked={filters.priceRange?.[0] === 500 && filters.priceRange?.[1] === 1000}
-                      onChange={() => handleFilterChange({ priceRange: [500, 1000] })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">$500 - $1000</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priceRange"
-                      checked={filters.priceRange?.[0] === 1000}
-                      onChange={() => handleFilterChange({ priceRange: [1000, Infinity] })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Over $1000</span>
-                  </label>
+                  {dynamicPriceRanges.map((range, index) => (
+                    <label key={index} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="priceRange"
+                        checked={filters.priceRange?.[0] === range.start && filters.priceRange?.[1] === range.end}
+                        onChange={() => handleFilterChange({ priceRange: [range.start, range.end] })}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{range.label}</span>
+                    </label>
+                  ))}
+                  {priceRange.min !== Infinity && priceRange.max > 0 && (
+                    <div className="mt-3 pt-2 border-t border-gray-200">
+                      <span className="text-xs text-gray-500">
+                        Price range: {Math.floor(priceRange.min).toLocaleString()} - {Math.ceil(priceRange.max).toLocaleString()} Tk
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
