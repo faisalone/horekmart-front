@@ -29,6 +29,7 @@ class PublicApiClient {
 	async getProducts(params?: {
 		search?: string;
 		category?: string;
+		vendor?: string;
 		featured?: boolean;
 		sort_by?: string;
 		sort_order?: 'asc' | 'desc';
@@ -72,10 +73,12 @@ class PublicApiClient {
 	}
 
 	/**
-	 * Get all vendors (new endpoint)
+	 * Get all vendors
 	 */
-	async getVendors(): Promise<any[]> {
-		const response = await this.client.get('/v1/vendors');
+	async getVendors(): Promise<PaginatedResponse<any>> {
+		const response = await this.client.get<PaginatedResponse<any>>(
+			'/v1/vendors'
+		);
 		return response.data;
 	}
 

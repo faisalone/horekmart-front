@@ -9,7 +9,7 @@ import PromoBanner from '@/components/PromoBanner';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { publicApi } from '@/lib/public-api';
-import { Product, Category } from '@/types';
+import { Product, Category, Vendor } from '@/types';
 import BannerBlock from '@/components/BannerBlock';
 import BannerBlockSkeleton from '@/components/BannerBlockSkeleton';
 import AnimatedElement from '@/components/AnimatedElement';
@@ -20,6 +20,7 @@ import { useProductCheckout } from '@/services/ProductCheckoutService';
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Cart and wishlist contexts
@@ -32,15 +33,18 @@ export default function HomePage() {
         setLoading(true);
         
         // Fetch products and categories - simplified to just get a large set of products
-        const [productsResponse, categoriesData] = await Promise.all([
+        const [productsResponse, categoriesData, vendorsResponse] = await Promise.all([
           publicApi.getProducts({ per_page: 50 }), // Get more products to have variety
           publicApi.getCategories(),
+          publicApi.getVendors(),
         ]);
 
         // Use the data array from the API response
         const allProducts = productsResponse?.data || [];
+        const allVendors = vendorsResponse?.data || [];
         
         setProducts(allProducts);
+        setVendors(allVendors);
         
         // Sort categories by sort_order and take first 9
         const sortedCategories = (categoriesData || [])
@@ -52,6 +56,7 @@ export default function HomePage() {
         // Keep loading as false to show the page even if API fails
         setProducts([]);
         setCategories([]);
+        setVendors([]);
       } finally {
         setLoading(false);
       }
@@ -66,6 +71,34 @@ export default function HomePage() {
   const latestProducts = products.slice(8, 16); // Next 8 products  
   const mostViewedProducts = products.slice(16, 24); // Next 8 products
   const saleProducts = products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price)).slice(0, 8);
+
+  // Function to generate initials from business name
+  const generateInitials = (businessName: string): string => {
+    return businessName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .slice(0, 2) // Take first 2 initials
+      .join('');
+  };
+
+  // Create dynamic brand/vendor data
+  const getBrandData = () => {
+    if (vendors.length === 0) return [];
+    
+    // Filter only approved and active vendors
+    const activeVendors = vendors.filter(vendor => 
+      vendor.status === 'approved' && vendor.is_active
+    );
+    
+    return activeVendors.slice(0, 12).map(vendor => ({
+      id: vendor.id,
+      name: vendor.business_name,
+      logo: vendor.logo || null, // Vendors might not have logos
+      initials: generateInitials(vendor.business_name),
+      items: products.filter(p => p.vendor?.business_name === vendor.business_name).length,
+      slug: vendor.business_name.toLowerCase().replace(/\s+/g, '-'),
+    }));
+  };
 
   const handleAddToCart = async (product: Product) => {
     try {
@@ -106,18 +139,18 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Promotional Banner */}
-      <AnimatedElement animation="slideDown">
+      {/* <AnimatedElement animation="slideDown">
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <PromoBanner />
           </div>
         </section>
-      </AnimatedElement>
+      </AnimatedElement> */}
 
       {/* Main Banner Section - Enhanced 3 Row Masonry Layout */}
       <AnimatedElement animation="fadeIn" delay={200}>
         <section className="bg-gradient-to-br from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-7xl mx-auto px-4 py-6">
             
             {/* Enhanced 3 Row Masonry Grid Layout with better mobile experience */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-6">
@@ -329,9 +362,9 @@ export default function HomePage() {
         <section className="py-12 bg-theme-subtle-secondary relative">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Shop by brand</h2>
-            <Link href="/brands" className="text-theme-primary hover:text-theme-primary-dark transition-colors text-lg font-semibold flex items-center bg-theme-primary/10 hover:bg-theme-primary/20 px-4 py-2 rounded-full cursor-pointer">
-              All brands <ArrowRight className="ml-2 h-5 w-5" />
+            <h2 className="text-3xl font-bold text-gray-900">Shop by vendor</h2>
+            <Link href="/vendors" className="text-theme-primary hover:text-theme-primary-dark transition-colors text-lg font-semibold flex items-center bg-theme-primary/10 hover:bg-theme-primary/20 px-4 py-2 rounded-full cursor-pointer">
+              All vendors <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
           
@@ -371,49 +404,61 @@ export default function HomePage() {
               className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-2 px-24"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {[
-                { name: 'John Electronics', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg', items: products.filter(p => p.vendor?.business_name === 'John Electronics Store').length },
-                { name: 'Fashion Hub', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg', items: products.filter(p => p.vendor?.business_name === 'Fashion Hub Inc.').length },
-                { name: 'Home Solutions', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg', items: products.filter(p => p.vendor?.business_name === 'Home Solutions Ltd.').length },
-                { name: 'Electronics', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg', items: products.filter(p => p.category?.name === 'Electronics').length },
-                { name: 'Clothing', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Sony_logo.svg', items: products.filter(p => p.category?.name === 'Clothing').length },
-                { name: 'Home & Garden', logo: 'https://logos-world.net/wp-content/uploads/2020/12/Dyson-Logo-700x394.png', items: products.filter(p => p.category?.name === 'Home & Garden').length },
-                { name: 'Books', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/LG_symbol.svg', items: products.filter(p => p.category?.name === 'Books').length || 5 },
-                { name: 'Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg', items: products.filter(p => p.category?.name === 'Sports & Outdoors').length || 8 },
-                { name: 'Featured', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', items: products.filter(p => p.is_featured).length || 6 },
-                { name: 'On Sale', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg', items: products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price)).length || 12 },
-                { name: 'In Stock', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Tesla_T_symbol.svg', items: products.filter(p => p.in_stock).length || 4 },
-                { name: 'Premium', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/HP_logo_2012.svg', items: products.filter(p => parseFloat(p.price) > 500).length || 7 },
-                { name: 'Budget', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/48/Dell_Logo.svg', items: products.filter(p => parseFloat(p.price) < 100).length || 9 },
-              ].map((brand) => (
-                <Link
-                  key={brand.name}
-                  href={`/brands/${brand.name.toLowerCase()}`}
-                  className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-theme-secondary/20"
-                >
-                  {/* Brand Logo */}
-                  <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                    <Image 
-                      src={brand.logo} 
-                      alt={`${brand.name} logo`}
-                      width={80}
-                      height={80}
-                      className="max-w-full max-h-full object-contain transition-all duration-300 group-hover:scale-110"
-                    />
+              {loading ? (
+                // Show skeleton loaders while loading
+                Array.from({ length: 8 }, (_, index) => (
+                  <div
+                    key={`brand-skeleton-${index}`}
+                    className="relative bg-white rounded-xl p-6 text-center flex-shrink-0 w-40 sm:w-44 md:w-48 border border-theme-secondary/20 animate-pulse"
+                  >
+                    <div className="w-20 h-20 mx-auto mb-4 bg-gray-200 rounded-lg"></div>
+                    <div className="h-6"></div>
                   </div>
-                  
-                  {/* Text and Arrow Block - slides in from left on hover */}
-                  <div className="flex items-center justify-center gap-2 h-6 overflow-hidden">
-                    {/* Arrow - slides in from left */}
-                    <ArrowRight className="h-6 w-6 text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
+                ))
+              ) : (
+                getBrandData().map((brand) => (
+                  <Link
+                    key={brand.id}
+                    href={`/products?vendor=${encodeURIComponent(brand.name)}`}
+                    className="relative bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group hover:scale-105 overflow-hidden flex-shrink-0 w-40 sm:w-44 md:w-48 border border-theme-secondary/20"
+                  >
+                    {/* Brand Logo or Initials */}
+                    <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                      {brand.logo ? (
+                        <Image 
+                          src={brand.logo} 
+                          alt={`${brand.name} logo`}
+                          width={80}
+                          height={80}
+                          className="max-w-full max-h-full object-contain transition-all duration-300 group-hover:scale-110 rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-theme-primary rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:bg-theme-primary-dark group-hover:shadow-xl">
+                          {brand.initials}
+                        </div>
+                      )}
+                    </div>
                     
-                    {/* Product Count Text - slides in from left */}
-                    <p className="font-bold text-gray-900 group-hover:text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap">
-                      {brand.items} Products
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                    {/* Brand Name */}
+                    <div className="mb-2">
+                      <h3 className="font-semibold text-gray-900 text-sm group-hover:text-theme-primary transition-colors duration-300 truncate">
+                        {brand.name}
+                      </h3>
+                    </div>
+                    
+                    {/* Text and Arrow Block - slides in from left on hover */}
+                    <div className="flex items-center justify-center gap-2 h-6 overflow-hidden">
+                      {/* Arrow - slides in from left */}
+                      <ArrowRight className="h-5 w-5 text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
+                      
+                      {/* Product Count Text - slides in from left */}
+                      <p className="font-bold text-gray-900 group-hover:text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap text-sm">
+                        {brand.items} Products
+                      </p>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>

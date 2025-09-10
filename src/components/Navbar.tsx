@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, Menu, X, ChevronDown, Store } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useCart } from '@/contexts/CartContext';
@@ -13,6 +14,7 @@ import { AutoFontText } from '@/components/AutoFontText';
 export interface NavbarProps {}
 
 const Navbar = ({ }: NavbarProps = {}) => {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
@@ -60,7 +62,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+      router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
       setIsMobileSearchOpen(false); // Close mobile search after submit
     }
   };
@@ -119,7 +121,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search everything at Walmart online and in store"
+                    placeholder="Search everything at Horekmart online and in store"
                     className="w-full pl-4 pr-12 py-4 text-black rounded-full border-2 border-gray-300 focus:border-purple-500 focus:outline-none text-base bg-white"
                   />
                   <button
@@ -134,7 +136,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
               {/* Right Side - Actions */}
               <div className="flex items-center space-x-6">
                 {/* Reorder */}
-                <Link 
+                {/* <Link 
                   href="/reorder" 
                   className="flex items-center space-x-2 text-white transition-colors hover:opacity-80"
                 >
@@ -154,7 +156,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                       <AutoFontText>My Items</AutoFontText>
                     </div>
                   </div>
-                </Link>
+                </Link> */}
 
                 {/* Cart */}
                 <Link 
@@ -319,34 +321,34 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   style={{ paddingTop: '8px', marginTop: '-4px' }}
                 >
                   <div className="grid grid-cols-1 gap-1 p-3 pt-1">
-                    <Link href="/electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Electronics</AutoFontText>
                     </Link>
-                    <Link href="/clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Clothing, Shoes & Accessories</AutoFontText>
                     </Link>
-                    <Link href="/home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Home & Garden</AutoFontText>
                     </Link>
-                    <Link href="/grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Grocery & Essentials</AutoFontText>
                     </Link>
-                    <Link href="/sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Sports & Outdoors</AutoFontText>
                     </Link>
-                    <Link href="/auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Auto & Tires</AutoFontText>
                     </Link>
-                    <Link href="/toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Toys & Games</AutoFontText>
                     </Link>
-                    <Link href="/baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Baby</AutoFontText>
                     </Link>
-                    <Link href="/health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Health & Wellness</AutoFontText>
                     </Link>
-                    <Link href="/beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
+                    <Link href="/products?category=Beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
                       <AutoFontText>Beauty & Personal Care</AutoFontText>
                     </Link>
                   </div>
@@ -356,29 +358,20 @@ const Navbar = ({ }: NavbarProps = {}) => {
 
             {/* Main Navigation Menu */}
             <nav className="hidden lg:flex items-center space-x-8">
-              <Link href="/grocery" className="text-base text-white hover:opacity-80 transition-colors">
-                Grocery & essentials
+              <Link href="/products?category=Grocery" className="text-base text-white hover:opacity-80 transition-colors">
+                All Products
               </Link>
-              <Link href="/valentine" className="text-base text-white hover:opacity-80 transition-colors">
-                Valentine&apos;s Day
+              <Link href="/products?category=Valentine" className="text-base text-white hover:opacity-80 transition-colors">
+                Trendings
               </Link>
-              <Link href="/fashion" className="text-base text-white hover:opacity-80 transition-colors">
-                Fashion
+              <Link href="/products?category=Fashion" className="text-base text-white hover:opacity-80 transition-colors">
+                Deals & Offers
               </Link>
-              <Link href="/electronics" className="text-base text-white hover:opacity-80 transition-colors">
-                Electronics
+              <Link href="/products?category=Electronics" className="text-base text-white hover:opacity-80 transition-colors">
+                About Us
               </Link>
-              <Link href="/home" className="text-base text-white hover:opacity-80 transition-colors">
-                Home
-              </Link>
-              <Link href="/auto" className="text-base text-white hover:opacity-80 transition-colors">
-                Auto
-              </Link>
-              <Link href="/pharmacy" className="text-base text-white hover:opacity-80 transition-colors">
-                Pharmacy
-              </Link>
-              <Link href="/registry" className="text-base text-white hover:opacity-80 transition-colors">
-                Registry
+              <Link href="/products?category=Electronics" className="text-base text-white hover:opacity-80 transition-colors">
+                Contact Us
               </Link>
             </nav>
           </div>
@@ -395,21 +388,21 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 Departments
               </button>
               <Link
-                href="/grocery"
+                href="/products?category=Grocery"
                 className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Grocery & essentials
               </Link>
               <Link
-                href="/fashion"
+                href="/products?category=Fashion"
                 className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Fashion
               </Link>
               <Link
-                href="/electronics"
+                href="/products?category=Electronics"
                 className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >

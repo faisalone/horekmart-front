@@ -79,10 +79,6 @@ const SortingHeader = ({
                 'Showing all products'
               }
             </span>
-            <div className="flex items-center gap-4">
-              <span>💝 Premium quality products</span>
-              <span>🚚 Fast shipping available</span>
-            </div>
           </div>
         </div>
       )}

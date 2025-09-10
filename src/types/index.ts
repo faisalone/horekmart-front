@@ -110,21 +110,22 @@ export interface Vendor {
 	email: string;
 	business_name: string;
 	business_registration_number?: string | null;
-	description?: string;
+	description?: string | null;
 	phone: string;
-	address: string;
-	city: string;
-	state: string;
-	country: string;
-	postal_code: string;
+	address?: string | null;
+	city?: string | null;
+	state?: string | null;
+	country?: string | null;
+	postal_code?: string | null;
 	status: string;
 	documents?: string | null;
 	approved_at?: string | null;
 	approved_by?: number | null;
 	commission_rate: string;
 	is_active: boolean;
-	created_at: string;
-	updated_at: string;
+	logo?: string | null; // Add logo field for future use
+	created_at?: string;
+	updated_at?: string;
 }
 
 export interface Category {
@@ -177,6 +178,7 @@ export interface Order {
 }
 
 export interface SearchFilters {
+	search?: string;
 	category?: string;
 	priceRange?: [number, number];
 	brand?: string[];

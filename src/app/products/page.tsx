@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Filter } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,23 @@ import { Product, Category, SearchFilters } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 
-export default function ProductsPage() {
+function ProductsPageContent() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
+  
+  // Get search query, category, and vendor from URL parameters
+  const urlSearchQuery = searchParams.get('q') || '';
+  const categoryQuery = searchParams.get('category') || '';
+  const vendorQuery = searchParams.get('vendor') || '';
+  
   const [filters, setFilters] = useState<SearchFilters>({
+    search: urlSearchQuery,
+    category: categoryQuery,
     sortBy: 'name',
     sortOrder: 'asc',
   });
@@ -40,25 +52,68 @@ export default function ProductsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [productsResponse, categoriesData] = await Promise.all([
-          publicApi.getProducts(),
-          publicApi.getCategories(),
-        ]);
-        setProducts(productsResponse.data);
+        
+        // Fetch categories first
+        const categoriesData = await publicApi.getCategories();
         setCategories(categoriesData);
-        setFilteredProducts(productsResponse.data);
+        
+        // If there's a search query, perform search; otherwise get all products
+        if (urlSearchQuery) {
+          setSearchLoading(true);
+          const searchResponse = await publicApi.getProducts({ 
+            search: urlSearchQuery,
+            category: categoryQuery || undefined,
+            vendor: vendorQuery || undefined
+          });
+          setProducts(searchResponse.data);
+          setAllProducts(searchResponse.data);
+          setFilteredProducts(searchResponse.data);
+        } else if (categoryQuery) {
+          // Filter by category only
+          const productsResponse = await publicApi.getProducts({ 
+            category: categoryQuery,
+            vendor: vendorQuery || undefined
+          });
+          setProducts(productsResponse.data);
+          setAllProducts(productsResponse.data);
+          setFilteredProducts(productsResponse.data);
+        } else if (vendorQuery) {
+          // Filter by vendor only
+          const productsResponse = await publicApi.getProducts({ 
+            vendor: vendorQuery 
+          });
+          setProducts(productsResponse.data);
+          setAllProducts(productsResponse.data);
+          setFilteredProducts(productsResponse.data);
+        } else {
+          const productsResponse = await publicApi.getProducts();
+          setProducts(productsResponse.data);
+          setAllProducts(productsResponse.data);
+          setFilteredProducts(productsResponse.data);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         setProducts([]);
+        setAllProducts([]);
         setCategories([]);
         setFilteredProducts([]);
       } finally {
         setLoading(false);
+        setSearchLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [urlSearchQuery, categoryQuery, vendorQuery]);
+
+  // Update filters when URL search query, category, or vendor changes
+  useEffect(() => {
+    setFilters(prev => ({ 
+      ...prev, 
+      search: urlSearchQuery,
+      category: categoryQuery || undefined 
+    }));
+  }, [urlSearchQuery, categoryQuery, vendorQuery]);
 
   useEffect(() => {
     let filtered = [...products];
@@ -129,6 +184,8 @@ export default function ProductsPage() {
 
   const clearFilters = () => {
     setFilters({
+      search: urlSearchQuery, // Keep the search query when clearing other filters
+      category: categoryQuery || undefined, // Keep the category query when clearing other filters
       sortBy: 'name',
       sortOrder: 'asc',
     });
@@ -260,7 +317,7 @@ export default function ProductsPage() {
         onSortChange={handleSortChange}
         sortOptions={sortOptions}
         showAdditionalInfo={false}
-        isLoading={loading}
+        isLoading={loading || searchLoading}
       />
 
       {/* Filters and Controls */}
@@ -413,16 +470,82 @@ export default function ProductsPage() {
 
         {/* Main Content */}
         <div className="flex-1">
+          {/* No results message for search */}
+          {(urlSearchQuery || categoryQuery) && !searchLoading && !loading && filteredProducts.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-6xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {urlSearchQuery && categoryQuery ? (
+                  `No products found for "${urlSearchQuery}" in ${categoryQuery}`
+                ) : urlSearchQuery ? (
+                  `No products found for "${urlSearchQuery}"`
+                ) : (
+                  `No products found in ${categoryQuery}`
+                )}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Try using different keywords or browse our categories below.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 mb-6">
+                {categories.slice(0, 6).map(category => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      // Navigate to category and clear search
+                      window.location.href = `/products?category=${encodeURIComponent(category.name)}`;
+                    }}
+                    className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => window.location.href = '/products'}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Browse All Products
+              </button>
+            </div>
+          )}
+
           {/* Products Grid */}
           <ProductGrid
             products={filteredProducts}
             onAddToCart={handleAddToCart}
             onAddToWishlist={handleAddToWishlist}
-            loading={loading}
+            loading={loading || searchLoading}
             className="grid-cols-2 lg:grid-cols-3"
           />
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function ProductsPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<ProductsPageLoading />}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }
