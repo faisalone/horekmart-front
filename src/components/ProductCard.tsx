@@ -119,11 +119,11 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
         </div>
       </Link>
 
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-2 sm:p-4 flex flex-col flex-grow">
         <Link href={getProductUrl(product)} className="flex-grow">
-          <div className="space-y-2">
-            {/* Category */}
-            <div className="text-sm text-gray-500">
+          <div className="space-y-1 sm:space-y-2">
+            {/* Category - Hidden on mobile to save space */}
+            <div className="hidden sm:block text-sm text-gray-500">
               <AutoFontText>
                 {product.category?.name || 'General'}
               </AutoFontText>
@@ -131,7 +131,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
             
             {/* Price - Stack vertically on mobile, horizontal on desktop */}
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-0 sm:gap-2">
-              <span className="text-base sm:text-lg font-bold text-gray-900">
+              <span className="text-sm sm:text-lg font-bold text-gray-900">
                 {formatCurrency(salePrice || price)}
               </span>
               {hasDiscount && (
@@ -141,16 +141,16 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
               )}
             </div>
             
-            {/* Product Name with theme hover color - Allow up to 3 lines */}
-            <h3 className="text-base font-medium text-gray-900 line-clamp-3 group-hover:text-theme-secondary transition-colors leading-tight">
+            {/* Product Name with theme hover color - Allow up to 2 lines on mobile, 3 on desktop */}
+            <h3 className="text-sm sm:text-base font-medium text-gray-900 line-clamp-2 sm:line-clamp-3 group-hover:text-theme-secondary transition-colors leading-tight">
               <AutoFontText>
                 {product.name}
               </AutoFontText>
             </h3>
             
-            {/* Vendor */}
+            {/* Vendor - Hidden on mobile to save space */}
             {product.vendor && (
-              <div className="text-sm text-gray-400">
+              <div className="hidden sm:block text-sm text-gray-400">
                 <AutoFontText>
                   by {product.vendor.business_name}
                 </AutoFontText>
@@ -160,18 +160,18 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
         </Link>
 
         {/* Bottom action area: ensure no empty space - This will always be at the bottom */}
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2 sm:pt-3">
           {canBuyNow ? (
             <Button
               onClick={handleBuyNow}
-              className="w-full bg-theme-primary-dark hover:bg-theme-primary text-white py-2 text-sm font-semibold"
+              className="w-full bg-theme-primary-dark hover:bg-theme-primary text-white py-1.5 sm:py-2 text-xs sm:text-sm font-semibold"
             >
               Buy Now
             </Button>
           ) : hasVariations ? (
             <Link href={getProductUrl(product)}>
               <Button
-                className="w-full bg-theme-secondary-dark hover:bg-theme-secondary text-white py-2 text-sm font-semibold"
+                className="w-full bg-theme-secondary-dark hover:bg-theme-secondary text-white py-1.5 sm:py-2 text-xs sm:text-sm font-semibold"
               >
                 Choose Options
               </Button>
@@ -180,7 +180,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
             <Link href={getProductUrl(product)}>
               <Button
                 variant="outline"
-                className="w-full border-gray-300 text-gray-800 hover:bg-gray-50 py-2 text-sm font-semibold"
+                className="w-full border-gray-300 text-gray-800 hover:bg-gray-50 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold"
               >
                 View Details
               </Button>

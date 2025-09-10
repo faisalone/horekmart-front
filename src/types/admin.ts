@@ -214,12 +214,16 @@ export interface Order {
 		| 'cancelled'
 		| 'refunded';
 	payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
-	total_amount: number;
-	shipping_amount: number;
+	payment_method?: string;
+	subtotal: number;
 	tax_amount: number;
+	shipping_amount: number;
+	discount_amount: number;
+	total_amount: number;
+	currency: string;
 	items: OrderItem[];
-	shipping_address: Address;
-	billing_address: Address;
+	shipping_address: OrderShippingAddress;
+	billing_address: OrderBillingAddress;
 	created_at: string;
 	updated_at: string;
 	customer?: Pick<Customer, 'id' | 'name' | 'email'>;
@@ -231,9 +235,29 @@ export interface OrderItem {
 	product_id: string;
 	variant_id?: string;
 	quantity: number;
-	unit_price: number;
-	total_price: number;
+	price: number; // Backend uses 'price' for unit price
+	total: number; // Backend uses 'total' for total price
+	product_name: string;
+	product_sku: string;
+	product_variants?: any;
 	product?: Pick<Product, 'id' | 'name' | 'image'>;
+}
+
+export interface OrderShippingAddress {
+	address: string;
+	city: string;
+	zip_code: string;
+	country: string;
+}
+
+export interface OrderBillingAddress {
+	name: string;
+	email?: string;
+	phone: string;
+	address: string;
+	city: string;
+	zip_code: string;
+	country: string;
 }
 
 export interface Customer {

@@ -16,16 +16,15 @@ export default function AnimatedElement({
   className = '' 
 }: AnimatedElementProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true); // Start visible for better UX
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setTimeout(() => setIsVisible(true), delay);
-        } else {
-          setIsVisible(false); // Reset for reverse animation
         }
+        // Don't reset to false when out of view to maintain visibility
       },
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
@@ -40,18 +39,7 @@ export default function AnimatedElement({
   const getAnimationClasses = () => {
     const baseClasses = 'transition-all duration-700 ease-out';
     
-    if (!isVisible) {
-      switch (animation) {
-        case 'fadeIn': return `${baseClasses} opacity-0`;
-        case 'slideUp': return `${baseClasses} opacity-0 translate-y-8`;
-        case 'slideDown': return `${baseClasses} opacity-0 -translate-y-8`;
-        case 'slideLeft': return `${baseClasses} opacity-0 translate-x-8`;
-        case 'slideRight': return `${baseClasses} opacity-0 -translate-x-8`;
-        case 'scaleUp': return `${baseClasses} opacity-0 scale-95`;
-        default: return `${baseClasses} opacity-0`;
-      }
-    }
-    
+    // Always start visible with opacity 100 for better UX
     return `${baseClasses} opacity-100 translate-y-0 translate-x-0 scale-100`;
   };
 

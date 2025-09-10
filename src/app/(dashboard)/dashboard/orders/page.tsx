@@ -580,7 +580,7 @@ export default function OrdersPage() {
                     </div>
                     <div>
                       <span className="text-gray-300">Phone:</span>
-                      <div className="text-white font-medium">N/A</div>
+                      <div className="text-white font-medium">{selectedOrder.billing_address?.phone || 'N/A'}</div>
                     </div>
                   </div>
                 </div>
@@ -590,13 +590,10 @@ export default function OrdersPage() {
               <div className="bg-gray-700/50 p-4 rounded-lg border border-gray-600">
                 <h3 className="font-semibold mb-3 text-white">Shipping Address</h3>
                 <div className="text-sm text-gray-300">
-                  <div className="font-medium text-white">{selectedOrder.shipping_address.first_name} {selectedOrder.shipping_address.last_name}</div>
-                  <div>{selectedOrder.shipping_address.address_line_1}</div>
-                  {selectedOrder.shipping_address.address_line_2 && (
-                    <div>{selectedOrder.shipping_address.address_line_2}</div>
-                  )}
-                  <div>{selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.state} {selectedOrder.shipping_address.postal_code}</div>
-                  <div>{selectedOrder.shipping_address.country}</div>
+                  <div className="font-medium text-white">{selectedOrder.customer?.name || 'N/A'}</div>
+                  <div>{selectedOrder.shipping_address?.address}</div>
+                  <div>{selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.zip_code}</div>
+                  <div>{selectedOrder.shipping_address?.country}</div>
                 </div>
               </div>
 
@@ -607,13 +604,13 @@ export default function OrdersPage() {
                   {selectedOrder.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center p-3 bg-gray-600/50 rounded border border-gray-500">
                       <div>
-                        <div className="font-medium text-white">{item.product?.name || `Product ${item.product_id}`}</div>
+                        <div className="font-medium text-white">{item.product?.name || item.product_name || `Product ${item.product_id}`}</div>
                         <div className="text-sm text-gray-300">
-                          Qty: {item.quantity} × {formatCurrency(item.unit_price)}
+                          Qty: {item.quantity} × {formatCurrency(item.price)}
                         </div>
                       </div>
                       <div className="font-semibold text-white">
-                        {formatCurrency(item.total_price)}
+                        {formatCurrency(item.total)}
                       </div>
                     </div>
                   ))}
