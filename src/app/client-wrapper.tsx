@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import FloatingButton from '@/components/FloatingButton';
 import { AdminAuthProvider } from '@/hooks/useAdminAuth';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
@@ -52,6 +53,13 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               <Navbar />
               <main className="flex-1">{children}</main>
               <Footer />
+              {/* WhatsApp Float Button - Only show on main layout pages */}
+              <FloatingButton 
+                type="whatsapp"
+                onClick={() => {}}
+                phoneNumber="+880 1763 223035"
+                message="Hello! I'm interested in your products."
+              />
             </div>
           )}
           </AdminAuthProvider>

@@ -44,6 +44,9 @@ import { useProductCheckout } from '@/services/ProductCheckoutService';
 import RichTextDisplay from '@/components/ui/RichTextDisplay';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getProductUrl } from '@/lib/utils';
+import { useSEO } from '@/hooks/useSEO';
+import { generateProductSEO, generateProductStructuredData } from '@/services/seo';
+import { SEOData } from '@/types';
 
 interface BreadcrumbItem {
 	label: string;
@@ -87,6 +90,26 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 	// Legacy hooks (might remove these later)
 	const productPageData = useProductPage(product, variants);
+
+	// SEO Integration
+	const [seoData, setSeoData] = useState<SEOData | null>(null);
+	
+	useEffect(() => {
+		if (product) {
+			generateProductSEO(product).then(setSeoData);
+		}
+	}, [product]);
+	
+	useSEO(seoData || { title: 'Loading...', description: 'Loading product...' });
+
+	// Generate structured data for SEO
+	const [structuredData, setStructuredData] = useState<any>(null);
+	
+	useEffect(() => {
+		if (product) {
+			generateProductStructuredData(product).then(setStructuredData);
+		}
+	}, [product]);
 
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 	const [showAllImages, setShowAllImages] = useState(false);
@@ -628,6 +651,16 @@ export default function ProductPage({ params }: ProductPageProps) {
 
 	return (
 		<div className="min-h-screen bg-white">
+			{/* SEO Structured Data */}
+			{structuredData && (
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(structuredData),
+					}}
+				/>
+			)}
+			
 			<div className="max-w-7xl mx-auto px-4 py-8">
 				{/* Breadcrumb */}
 				<Breadcrumb items={breadcrumbItems} className="mb-8" />

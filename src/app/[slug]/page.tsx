@@ -12,9 +12,11 @@ import SortingHeader from '@/components/SortingHeader';
 import CategoryPageSkeleton from '@/components/CategoryPageSkeleton';
 import { ListDropdown } from '@/components/ui/ListDropdown';
 import { publicApi } from '@/lib/public-api';
-import { Product, Category } from '@/types';
+import { Product, Category, SEOData } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
+import { generateCategoryPageSEO, generateCategoryStructuredData } from '@/services/seo';
+import { useSEO } from '@/hooks/useSEO';
 
 interface CategoryPageProps {
 	params: Promise<{ slug: string }>;
@@ -32,9 +34,19 @@ export default function CategoryPage({ }: CategoryPageProps) {
 	const [loading, setLoading] = useState(true);
 	const [sortBy, setSortBy] = useState('featured');
 
+	// SEO state
+	const [seoData, setSeoData] = useState<SEOData | null>(null);
+	const [structuredData, setStructuredData] = useState<any>(null);
+
 	// Cart and wishlist contexts
 	const { toggleItem: toggleWishlist } = useWishlist();
 	const { addToCart: addToCartService } = useProductCheckout();
+
+	// Apply SEO to page
+	useSEO(seoData || { 
+		title: category ? `${category.name} - Category` : 'Loading Category...', 
+		description: category ? `Shop ${category.name} products` : 'Loading category...'
+	});
 
 	// Sort options for custom select
 	const sortOptions = [
@@ -69,6 +81,14 @@ export default function CategoryPage({ }: CategoryPageProps) {
 				setCategory(currentCategory);
 				setProducts(productsResponse.data);
 				setFilteredProducts(productsResponse.data);
+
+				// Generate SEO data for this category
+				const categorySeoData = await generateCategoryPageSEO(currentCategory);
+				setSeoData(categorySeoData);
+
+				// Generate structured data for this category
+				const categoryStructuredData = await generateCategoryStructuredData(currentCategory, productsResponse.data.length);
+				setStructuredData(categoryStructuredData);
 			} catch (error) {
 				console.error('Error fetching category data:', error);
 				setProducts([]);
@@ -171,9 +191,20 @@ export default function CategoryPage({ }: CategoryPageProps) {
 	}
 
 	return (
-		<div className="bg-gray-50 min-h-screen">
-			{/* Compact Hero Section - Mobile Optimized */}
-			<AnimatedElement animation="fadeIn">
+		<>
+			{/* Structured Data for SEO */}
+			{structuredData && (
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(structuredData),
+					}}
+				/>
+			)}
+			
+			<div className="bg-gray-50 min-h-screen">
+				{/* Compact Hero Section - Mobile Optimized */}
+				<AnimatedElement animation="fadeIn">
 				<div className="relative overflow-hidden bg-gradient-to-br from-white via-gray-50 to-gray-100">
 					{/* Content - Compact for mobile */}
 					<div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:py-12 lg:py-16">
@@ -274,5 +305,6 @@ export default function CategoryPage({ }: CategoryPageProps) {
 				</div>
 			</div>
 		</div>
+		</>
 	);
 }

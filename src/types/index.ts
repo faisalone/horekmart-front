@@ -1,3 +1,24 @@
+export interface SEOData {
+	title?: string;
+	description?: string;
+	keywords?: string;
+	canonicalUrl?: string;
+	ogTitle?: string;
+	ogDescription?: string;
+	ogImage?: string;
+	focusKeyword?: string;
+}
+
+export interface SiteConfig {
+	name: string;
+	description: string;
+	url: string;
+	ogImage?: string;
+	keywords?: string[];
+	locale?: string;
+	type?: string;
+}
+
 export interface ProductImage {
 	id: number;
 	product_id: number;
@@ -19,6 +40,7 @@ export interface Product {
 	name: string;
 	slug: string;
 	description: string;
+	short_description?: string;
 	sku: string;
 	price: string;
 	sale_price?: string | null;
@@ -40,6 +62,14 @@ export interface Product {
 	is_featured: boolean;
 	weight?: number | string;
 	weight_unit?: 'kg' | 'g' | 'lb' | 'oz';
+	// SEO fields
+	meta_title?: string;
+	meta_description?: string;
+	meta_keywords?: string;
+	canonical_url?: string;
+	og_title?: string;
+	og_description?: string;
+	focus_keyword?: string;
 	created_at: string;
 	updated_at: string;
 	category?: Category;

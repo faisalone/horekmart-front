@@ -12,6 +12,10 @@ import { Product, Category, SearchFilters, Vendor } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import { useCategories } from '@/contexts/CategoriesContext';
+import { useSEO } from '@/hooks/useSEO';
+import FloatingButton from '@/components/FloatingButton';
+import { generateCategorySEO, generateSearchSEO, generateDefaultSEO, generateProductsPageSEO } from '@/services/seo';
+import { SEOData } from '@/types';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
@@ -45,6 +49,54 @@ function ProductsPageContent() {
   // Cart and wishlist contexts
   const { toggleItem: toggleWishlist } = useWishlist();
   const { addToCart: addToCartService } = useProductCheckout();
+
+  // SEO Integration
+  const [seoData, setSeoData] = useState<SEOData | null>(null);
+  
+  useEffect(() => {
+    const generateSEOForCurrentPage = async () => {
+      if (urlSearchQuery) {
+        return await generateSearchSEO(urlSearchQuery);
+      }
+      if (categoryQuery) {
+        const categoryName = categoryQuery.charAt(0).toUpperCase() + categoryQuery.slice(1).replace(/-/g, ' ');
+        return await generateCategorySEO(categoryName, categoryQuery);
+      }
+      return await generateProductsPageSEO();
+    };
+
+    generateSEOForCurrentPage().then(setSeoData);
+  }, [urlSearchQuery, categoryQuery]);
+
+  // Use better fallback with site defaults while SEO data loads
+  const getFallbackSEO = () => {
+    if (urlSearchQuery) {
+      return {
+        title: process.env.NEXT_PUBLIC_APP_NAME ? `Search: ${urlSearchQuery} - ${process.env.NEXT_PUBLIC_APP_NAME}` : `Search: ${urlSearchQuery}`,
+        description: `Search results for "${urlSearchQuery}" - Find what you're looking for.`
+      };
+    }
+    if (categoryQuery) {
+      const categoryName = categoryQuery.charAt(0).toUpperCase() + categoryQuery.slice(1).replace(/-/g, ' ');
+      return {
+        title: process.env.NEXT_PUBLIC_APP_NAME ? `${categoryName} - ${process.env.NEXT_PUBLIC_APP_NAME}` : categoryName,
+        description: `Shop ${categoryName.toLowerCase()} products with great prices and fast delivery.`
+      };
+    }
+    return {
+      title: process.env.NEXT_PUBLIC_APP_NAME ? `Products - ${process.env.NEXT_PUBLIC_APP_NAME}` : 'Products',
+      description: 'Browse our wide selection of quality products with great prices and fast delivery.'
+    };
+  };
+
+  const fallbackSEO = {
+    ...getFallbackSEO(),
+    ogImage: process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || '',
+    ogTitle: getFallbackSEO().title,
+    ogDescription: getFallbackSEO().description
+  };
+
+  useSEO(seoData || fallbackSEO);
 
   // Function to fetch products with pagination
   const fetchProducts = async (page: number = 1, reset: boolean = false) => {
@@ -401,15 +453,10 @@ function ProductsPageContent() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Mobile Floating Filter Button */}
-      <button
+      <FloatingButton 
+        type="filter"
         onClick={() => setIsFilterOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl hover:bg-blue-700 transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95"
-        style={{ boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)' }}
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-        </svg>
-      </button>
+      />
 
       {/* Mobile Filter Modal */}
       {isFilterOpen && (

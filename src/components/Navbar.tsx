@@ -363,16 +363,16 @@ const Navbar = ({ }: NavbarProps = {}) => {
               <Link href="/products" className="text-base text-white hover:opacity-80 transition-colors">
                 All Products
               </Link>
-              <Link href="/products?category=Valentine" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/trendings" className="text-base text-white hover:opacity-80 transition-colors">
                 Trendings
               </Link>
-              <Link href="/products?category=Fashion" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/deals" className="text-base text-white hover:opacity-80 transition-colors">
                 Deals & Offers
               </Link>
-              <Link href="/products?category=Electronics" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/about" className="text-base text-white hover:opacity-80 transition-colors">
                 About Us
               </Link>
-              <Link href="/products?category=Electronics" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/contact" className="text-base text-white hover:opacity-80 transition-colors">
                 Contact Us
               </Link>
             </nav>
