@@ -68,8 +68,16 @@ class PublicApiClient {
 	 * Get all categories
 	 */
 	async getCategories(): Promise<Category[]> {
-		const response = await this.client.get<Category[]>('/v1/categories');
+		const response = await this.client.get<Category[]>('v1/categories');
 		return response.data;
+	}
+
+	/**
+	 * Get only parent categories (categories with parent_id: null)
+	 */
+	async getParentCategories(): Promise<Category[]> {
+		const categories = await this.getCategories();
+		return categories.filter((category) => category.parent_id === null);
 	}
 
 	/**

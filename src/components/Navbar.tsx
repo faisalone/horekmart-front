@@ -9,6 +9,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/currency';
 import { AutoFontText } from '@/components/AutoFontText';
+import { publicApi } from '@/lib/public-api';
+import { Category } from '@/types';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface NavbarProps {}
@@ -19,6 +21,8 @@ const Navbar = ({ }: NavbarProps = {}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -83,6 +87,24 @@ const Navbar = ({ }: NavbarProps = {}) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isMobileSearchOpen]);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const parentCategories = await publicApi.getParentCategories();
+        setCategories(parentCategories);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories([]); // Fallback to empty array
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -298,9 +320,9 @@ const Navbar = ({ }: NavbarProps = {}) => {
       {/* Bottom Header - Departments and Menu - Desktop Only */}
       <div className="hidden lg:block text-white theme-gradient-primary">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center h-14">
-            {/* Departments Dropdown - Enhanced smooth interaction */}
-            <div className="relative hidden lg:block mr-8">
+          <div className="relative flex items-center justify-center h-14">
+            {/* Departments Dropdown - Positioned absolutely on the left */}
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
               <button
                 onMouseEnter={handleDepartmentsMouseEnter}
                 onMouseLeave={handleDepartmentsMouseLeave}
@@ -321,43 +343,39 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   style={{ paddingTop: '8px', marginTop: '-4px' }}
                 >
                   <div className="grid grid-cols-1 gap-1 p-3 pt-1">
-                    <Link href="/products?category=Electronics" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Electronics</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Clothing" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Clothing, Shoes & Accessories</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Home" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Home & Garden</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Grocery" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Grocery & Essentials</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Sports" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Sports & Outdoors</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Auto" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Auto & Tires</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Toys" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Toys & Games</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Baby" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Baby</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Health" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Health & Wellness</AutoFontText>
-                    </Link>
-                    <Link href="/products?category=Beauty" className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors">
-                      <AutoFontText>Beauty & Personal Care</AutoFontText>
-                    </Link>
+                    {categoriesLoading ? (
+                      // Loading skeleton
+                      <div className="space-y-2">
+                        {[...Array(6)].map((_, index) => (
+                          <div key={index} className="px-4 py-3">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : categories.length > 0 ? (
+                      // Dynamic categories from API
+                      categories.map((category) => (
+                        <Link 
+                          key={category.id}
+                          href={`/${category.slug}`} 
+                          className="block px-4 py-3 hover:bg-gray-100 text-base rounded transition-colors"
+                        >
+                          <AutoFontText>{category.name}</AutoFontText>
+                        </Link>
+                      ))
+                    ) : (
+                      // Fallback message when no categories
+                      <div className="px-4 py-3 text-gray-500 text-base">
+                        <AutoFontText>No categories available</AutoFontText>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Main Navigation Menu */}
-            <nav className="hidden lg:flex items-center space-x-8">
+            {/* Main Navigation Menu - Centered */}
+            <nav className="flex items-center space-x-8">
               <Link href="/products?category=Grocery" className="text-base text-white hover:opacity-80 transition-colors">
                 All Products
               </Link>
@@ -384,30 +402,37 @@ const Navbar = ({ }: NavbarProps = {}) => {
           <div className="px-4 pt-4 pb-4 space-y-4">
             {/* Mobile Navigation Links */}
             <div className="space-y-2">
-              <button className="w-full text-left px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md font-medium">
-                Departments
-              </button>
-              <Link
-                href="/products?category=Grocery"
-                className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Grocery & essentials
-              </Link>
-              <Link
-                href="/products?category=Fashion"
-                className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Fashion
-              </Link>
-              <Link
-                href="/products?category=Electronics"
-                className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Electronics
-              </Link>
+              <div className="px-4 py-3 text-gray-900 font-medium">
+                <AutoFontText>Departments</AutoFontText>
+              </div>
+              
+              {categoriesLoading ? (
+                // Loading skeleton for mobile
+                <div className="space-y-2 px-4">
+                  {[...Array(4)].map((_, index) => (
+                    <div key={index} className="py-2">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : categories.length > 0 ? (
+                // Dynamic categories for mobile
+                categories.slice(0, 6).map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/${category.slug}`}
+                    className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <AutoFontText>{category.name}</AutoFontText>
+                  </Link>
+                ))
+              ) : (
+                // Fallback for mobile
+                <div className="px-4 py-3 text-gray-500">
+                  <AutoFontText>No categories available</AutoFontText>
+                </div>
+              )}
               <Link
                 href="/reorder"
                 className="flex items-center px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"

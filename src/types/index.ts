@@ -132,8 +132,9 @@ export interface Category {
 	id: number;
 	name: string;
 	slug: string;
-	description?: string;
+	description?: string | null;
 	image?: string | null;
+	image_url?: string | null;
 	parent_id?: number | null;
 	sort_order: number;
 	is_active: boolean;
