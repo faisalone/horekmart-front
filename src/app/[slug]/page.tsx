@@ -172,14 +172,14 @@ export default function CategoryPage({ }: CategoryPageProps) {
 
 	return (
 		<div className="bg-gray-50 min-h-screen">
-			{/* Hero Section with Background Image */}
+			{/* Compact Hero Section - Mobile Optimized */}
 			<AnimatedElement animation="fadeIn">
 				<div className="relative overflow-hidden bg-gradient-to-br from-white via-gray-50 to-gray-100">
-					{/* Content */}
-					<div className="relative z-10 max-w-7xl mx-auto px-4 py-16 lg:py-20">
-						{/* Background Image - Larger and covering content area with gradient mask */}
+					{/* Content - Compact for mobile */}
+					<div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:py-12 lg:py-16">
+						{/* Background Image - Only show on larger screens */}
 						{category.image && (
-							<div className="absolute inset-0 -z-10">
+							<div className="absolute inset-0 -z-10 hidden md:block">
 								<div
 									className="w-full h-full bg-cover bg-center bg-no-repeat opacity-30"
 									style={{
@@ -195,8 +195,8 @@ export default function CategoryPage({ }: CategoryPageProps) {
 							</div>
 						)}
 
-						{/* Breadcrumb */}
-						<div className="mb-8">
+						{/* Breadcrumb - Compact */}
+						<div className="mb-3 md:mb-6">
 							<Breadcrumb
 								items={[{ label: category.name }]}
 								theme="light"
@@ -204,29 +204,23 @@ export default function CategoryPage({ }: CategoryPageProps) {
 							/>
 						</div>
 
+						{/* Title Only - No Description */}
 						<div className="max-w-4xl">
-							<div className="space-y-6">
-								<div>
-									<h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4 leading-tight tracking-tight">
-										{category.name}
-									</h1>
-									<div className="w-24 h-1 bg-theme-secondary rounded-full"></div>
-								</div>
-
-								<p className="text-xl text-gray-700 leading-relaxed max-w-3xl">
-									{category.description ||
-										`Explore our carefully curated selection of premium ${category.name.toLowerCase()} products designed to meet your highest expectations.`}
-								</p>
+							<div>
+								<h1 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-800 mb-2 md:mb-4 leading-tight tracking-tight">
+									{category.name}
+								</h1>
+								<div className="w-16 md:w-24 h-1 bg-theme-secondary rounded-full"></div>
 							</div>
 						</div>
 					</div>
 
-					{/* Decorative elements */}
-					<div className="absolute top-1/2 right-8 transform -translate-y-1/2 w-32 h-32 bg-theme-secondary/20 rounded-full blur-3xl"></div>
-					<div className="absolute bottom-8 left-8 w-24 h-24 bg-theme-secondary/20 rounded-full blur-2xl"></div>
+					{/* Decorative elements - Only on larger screens */}
+					<div className="absolute top-1/2 right-8 transform -translate-y-1/2 w-32 h-32 bg-theme-secondary/20 rounded-full blur-3xl hidden md:block"></div>
+					<div className="absolute bottom-8 left-8 w-24 h-24 bg-theme-secondary/20 rounded-full blur-2xl hidden md:block"></div>
 					
 					{/* Bottom fade-out effect */}
-					<div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent"></div>
+					<div className="absolute bottom-0 left-0 right-0 h-8 md:h-16 bg-gradient-to-t from-gray-50 to-transparent"></div>
 				</div>
 			</AnimatedElement>
 
@@ -234,7 +228,7 @@ export default function CategoryPage({ }: CategoryPageProps) {
 			
 
 			<div className="bg-gray-50 min-h-screen">
-				<div className="max-w-7xl mx-auto px-4 py-8">
+				<div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
 					{/* Enhanced Controls Bar */}
 					<SortingHeader
 						totalProducts={products.length}
@@ -244,6 +238,7 @@ export default function CategoryPage({ }: CategoryPageProps) {
 						sortOptions={sortOptions}
 						categoryName={category.name}
 						isLoading={loading}
+						className="mb-4 md:mb-8"
 					/>
 
 					{/* Products Grid */}

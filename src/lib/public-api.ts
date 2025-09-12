@@ -3,14 +3,19 @@ import { Product, Category } from '@/types';
 
 interface PaginatedResponse<T> {
 	data: T[];
-	current_page: number;
-	last_page: number;
-	per_page: number;
-	total: number;
+	meta: {
+		current_page: number;
+		last_page: number;
+		per_page: number;
+		total: number;
+	};
 }
 
 class PublicApiClient {
 	private client: AxiosInstance;
+	private categoriesCache: Category[] | null = null;
+	private categoriesCacheTime: number | null = null;
+	private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 	constructor() {
 		this.client = axios.create({
@@ -65,10 +70,27 @@ class PublicApiClient {
 	}
 
 	/**
-	 * Get all categories
+	 * Get all categories with caching
 	 */
 	async getCategories(): Promise<Category[]> {
+		const now = Date.now();
+
+		// Check if we have cached data and it's still valid
+		if (
+			this.categoriesCache &&
+			this.categoriesCacheTime &&
+			now - this.categoriesCacheTime < this.CACHE_DURATION
+		) {
+			return this.categoriesCache;
+		}
+
+		// Fetch fresh data
 		const response = await this.client.get<Category[]>('v1/categories');
+
+		// Cache the response
+		this.categoriesCache = response.data;
+		this.categoriesCacheTime = now;
+
 		return response.data;
 	}
 

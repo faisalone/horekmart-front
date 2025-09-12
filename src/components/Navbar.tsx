@@ -9,8 +9,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/currency';
 import { AutoFontText } from '@/components/AutoFontText';
-import { publicApi } from '@/lib/public-api';
-import { Category } from '@/types';
+import { useCategories } from '@/contexts/CategoriesContext';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface NavbarProps {}
@@ -21,10 +20,11 @@ const Navbar = ({ }: NavbarProps = {}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use categories context
+  const { parentCategories: categories, loading: categoriesLoading } = useCategories();
   
   // Use the global authentication state
   const { isAuthenticated, loading } = useAdminAuth();
@@ -88,23 +88,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
     };
   }, [isMobileSearchOpen]);
 
-  // Fetch categories on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setCategoriesLoading(true);
-        const parentCategories = await publicApi.getParentCategories();
-        setCategories(parentCategories);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-        setCategories([]); // Fallback to empty array
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
 
-    fetchCategories();
-  }, []);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -144,7 +128,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search everything at Horekmart online and in store"
-                    className="w-full pl-4 pr-12 py-4 text-black rounded-full border-2 border-gray-300 focus:border-purple-500 focus:outline-none text-base bg-white"
+                    className="w-full pl-4 pr-12 py-4 text-black rounded-full border-2 border-gray-300 focus:border-theme-primary focus:outline-none text-base bg-white transition-colors duration-200"
                   />
                   <button
                     type="submit"
@@ -376,7 +360,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
 
             {/* Main Navigation Menu - Centered */}
             <nav className="flex items-center space-x-8">
-              <Link href="/products?category=Grocery" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/products" className="text-base text-white hover:opacity-80 transition-colors">
                 All Products
               </Link>
               <Link href="/products?category=Valentine" className="text-base text-white hover:opacity-80 transition-colors">

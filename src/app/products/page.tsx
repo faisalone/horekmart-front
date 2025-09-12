@@ -8,18 +8,26 @@ import { Button } from '@/components/ui/button';
 import SortingHeader from '@/components/SortingHeader';
 import { publicApi } from '@/lib/public-api';
 import { cn } from '@/lib/utils';
-import { Product, Category, SearchFilters } from '@/types';
+import { Product, Category, SearchFilters, Vendor } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
+import { useCategories } from '@/contexts/CategoriesContext';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [sellers, setSellers] = useState<Vendor[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
+  
+  // Use categories context
+  const { categories } = useCategories();
   
   // Get search query, category, and vendor from URL parameters
   const urlSearchQuery = searchParams.get('q') || '';
@@ -38,68 +46,98 @@ function ProductsPageContent() {
   const { toggleItem: toggleWishlist } = useWishlist();
   const { addToCart: addToCartService } = useProductCheckout();
 
+  // Function to fetch products with pagination
+  const fetchProducts = async (page: number = 1, reset: boolean = false) => {
+    try {
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const params = {
+        per_page: 15,
+        page: page,
+        search: urlSearchQuery || undefined,
+        category: categoryQuery || undefined,
+        vendor: vendorQuery || undefined,
+        sort_by: filters.sortBy || 'name',
+        sort_order: filters.sortOrder || 'asc',
+      };
+
+      const response = await publicApi.getProducts(params);
+      
+      setTotalProducts(response.meta.total);
+      setHasMore(page < response.meta.last_page);
+      
+      if (reset || page === 1) {
+        setProducts(response.data);
+        setAllProducts(response.data);
+        setFilteredProducts(response.data);
+      } else {
+        // Prevent duplicate products by filtering out already existing IDs
+        setProducts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newProducts = response.data.filter(p => !existingIds.has(p.id));
+          return [...prev, ...newProducts];
+        });
+        setAllProducts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newProducts = response.data.filter(p => !existingIds.has(p.id));
+          return [...prev, ...newProducts];
+        });
+        setFilteredProducts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newProducts = response.data.filter(p => !existingIds.has(p.id));
+          return [...prev, ...newProducts];
+        });
+      }
+      
+      setCurrentPage(page);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      if (reset || page === 1) {
+        setProducts([]);
+        setAllProducts([]);
+        setFilteredProducts([]);
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setSearchLoading(false);
+    }
+  };
+
+  // Function to load more products
+  const loadMoreProducts = async () => {
+    if (!loadingMore && hasMore && !loading) {
+      await fetchProducts(currentPage + 1, false);
+    }
+  };
+
   // Sort options for the sorting header
   const sortOptions = [
     { value: 'name-asc', label: '🔤 Name A-Z' },
     { value: 'name-desc', label: '🔤 Name Z-A' },
     { value: 'price-asc', label: '💰 Price: Low to High' },
     { value: 'price-desc', label: '💎 Price: High to Low' },
-    { value: 'rating-desc', label: '⭐ Highest Rated' },
     { value: 'newest-desc', label: '🆕 Newest First' }
   ];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        // Fetch sellers first
+        const sellersData = await publicApi.getVendors();
+        setSellers(sellersData.data);
         
-        // Fetch categories first
-        const categoriesData = await publicApi.getCategories();
-        setCategories(categoriesData);
-        
-        // If there's a search query, perform search; otherwise get all products
-        if (urlSearchQuery) {
-          setSearchLoading(true);
-          const searchResponse = await publicApi.getProducts({ 
-            search: urlSearchQuery,
-            category: categoryQuery || undefined,
-            vendor: vendorQuery || undefined
-          });
-          setProducts(searchResponse.data);
-          setAllProducts(searchResponse.data);
-          setFilteredProducts(searchResponse.data);
-        } else if (categoryQuery) {
-          // Filter by category only
-          const productsResponse = await publicApi.getProducts({ 
-            category: categoryQuery,
-            vendor: vendorQuery || undefined
-          });
-          setProducts(productsResponse.data);
-          setAllProducts(productsResponse.data);
-          setFilteredProducts(productsResponse.data);
-        } else if (vendorQuery) {
-          // Filter by vendor only
-          const productsResponse = await publicApi.getProducts({ 
-            vendor: vendorQuery 
-          });
-          setProducts(productsResponse.data);
-          setAllProducts(productsResponse.data);
-          setFilteredProducts(productsResponse.data);
-        } else {
-          const productsResponse = await publicApi.getProducts();
-          setProducts(productsResponse.data);
-          setAllProducts(productsResponse.data);
-          setFilteredProducts(productsResponse.data);
-        }
+        // Reset pagination and fetch first page
+        setCurrentPage(1);
+        setHasMore(true);
+        await fetchProducts(1, true);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setProducts([]);
-        setAllProducts([]);
-        setCategories([]);
-        setFilteredProducts([]);
-      } finally {
-        setLoading(false);
-        setSearchLoading(false);
+        console.error('Error fetching sellers:', error);
+        setSellers([]);
       }
     };
 
@@ -133,10 +171,10 @@ function ProductsPageContent() {
       });
     }
 
-    // Apply vendor filter (replacing brand filter)
-    if (filters.brand && filters.brand.length > 0) {
+    // Apply seller filter
+    if (filters.seller && filters.seller.length > 0) {
       filtered = filtered.filter(product => 
-        product.vendor && filters.brand!.includes(product.vendor.business_name)
+        product.vendor && filters.seller!.includes(product.vendor.business_name)
       );
     }
 
@@ -178,6 +216,16 @@ function ProductsPageContent() {
     setFilteredProducts(filtered);
   }, [products, filters]);
 
+  // Watch for filter changes that should trigger a new fetch (excluding sort changes)
+  useEffect(() => {
+    if (filters.seller || filters.priceRange || filters.inStock !== undefined) {
+      // When filters change, we need to refetch from the server
+      // For now, we'll keep frontend filtering, but in a real app you'd send these to the API
+      // Reset pagination when filters change significantly
+      setCurrentPage(1);
+    }
+  }, [filters.seller, filters.priceRange, filters.inStock]);
+
   const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
@@ -191,7 +239,46 @@ function ProductsPageContent() {
     });
   };
 
-  const uniqueBrands = [...new Set(products.map(p => p.vendor?.business_name).filter(Boolean))] as string[];
+  // Prevent body scroll when mobile filter modal is open
+  useEffect(() => {
+    if (isFilterOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFilterOpen]);
+
+  // Infinite scroll functionality
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      // Debounce scroll events
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (
+          window.innerHeight + document.documentElement.scrollTop
+          >= document.documentElement.offsetHeight - 1000 // Load when 1000px from bottom
+          && !loadingMore && hasMore && !loading
+        ) {
+          loadMoreProducts();
+        }
+      }, 100); // 100ms debounce
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timeoutId);
+    };
+  }, [loadingMore, hasMore, loading, currentPage]);
+
+  const uniqueSellers = sellers.filter(seller => seller.is_active);
   
   // Dynamic price range calculation based on actual product prices
   const priceRange = products.length > 0 ? products.reduce(
@@ -304,30 +391,181 @@ function ProductsPageContent() {
   // Handler for sort change from SortingHeader
   const handleSortChange = (value: string) => {
     const [sortBy, sortOrder] = value.split('-');
-    handleFilterChange({ sortBy: sortBy as any, sortOrder: sortOrder as any });
+    setFilters(prev => ({ ...prev, sortBy: sortBy as any, sortOrder: sortOrder as any }));
+    // Reset pagination and refetch with new sort
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchProducts(1, true);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Sorting Header */}
-      <SortingHeader
-        totalProducts={products.length}
-        filteredProducts={filteredProducts.length}
-        sortBy={`${filters.sortBy}-${filters.sortOrder}`}
-        onSortChange={handleSortChange}
-        sortOptions={sortOptions}
-        showAdditionalInfo={false}
-        isLoading={loading || searchLoading}
-      />
+      {/* Mobile Floating Filter Button */}
+      <button
+        onClick={() => setIsFilterOpen(true)}
+        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl hover:bg-blue-700 transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95"
+        style={{ boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)' }}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+        </svg>
+      </button>
+
+      {/* Mobile Filter Modal */}
+      {isFilterOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 z-50 bg-transparent flex items-end justify-center"
+          onClick={() => setIsFilterOpen(false)}
+        >
+          <div 
+            className="w-full h-5/6 bg-white rounded-t-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+              <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+              <button
+                onClick={() => setIsFilterOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Mobile Filter Content - Scrollable */}
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
+              {/* Category Filter */}
+              <div>
+                <h4 className="text-base font-medium text-gray-900 mb-4">Category</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="mobile-category"
+                      value=""
+                      checked={!filters.category}
+                      onChange={() => handleFilterChange({ category: undefined })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-3 text-gray-700">All Categories</span>
+                  </label>
+                  {categories.map(category => (
+                    <label key={category.id} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="mobile-category"
+                        value={category.name}
+                        checked={filters.category === category.name}
+                        onChange={() => handleFilterChange({ category: category.name })}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-3 text-gray-700">{category.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <h4 className="text-base font-medium text-gray-900 mb-4">Price Range</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="mobile-priceRange"
+                      checked={!filters.priceRange}
+                      onChange={() => handleFilterChange({ priceRange: undefined })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-3 text-gray-700">Any Price</span>
+                  </label>
+                  {dynamicPriceRanges.map((range, index) => (
+                    <label key={index} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="mobile-priceRange"
+                        checked={filters.priceRange?.[0] === range.start && filters.priceRange?.[1] === range.end}
+                        onChange={() => handleFilterChange({ priceRange: [range.start, range.end] })}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-3 text-gray-700">{range.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seller Filter */}
+              <div>
+                <h4 className="text-base font-medium text-gray-900 mb-4">Seller</h4>
+                <div className="space-y-3">
+                  {uniqueSellers.map(seller => (
+                    <label key={seller.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={filters.seller?.includes(seller.business_name) || false}
+                        onChange={(e) => {
+                          const currentSellers = filters.seller || [];
+                          if (e.target.checked) {
+                            handleFilterChange({ seller: [...currentSellers, seller.business_name] });
+                          } else {
+                            handleFilterChange({ seller: currentSellers.filter(s => s !== seller.business_name) });
+                          }
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-3 text-gray-700">{seller.business_name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+
+
+              {/* Stock Filter */}
+              <div>
+                <h4 className="text-base font-medium text-gray-900 mb-4">Availability</h4>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={filters.inStock === true}
+                    onChange={(e) => handleFilterChange({ inStock: e.target.checked ? true : undefined })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-3 text-gray-700">In Stock Only</span>
+                </label>
+              </div>
+              </div>
+
+              {/* Mobile Filter Footer - Fixed at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-4 space-y-3 bg-white">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Results: {filteredProducts.length} products</span>
+                  <button
+                    onClick={clearFilters}
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Clear all
+                  </button>
+                </div>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters and Controls */}
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Filters */}
-        <div className={cn(
-          'w-full lg:w-64 flex-shrink-0',
-          'lg:block',
-          isFilterOpen ? 'block' : 'hidden'
-        )}>
+        {/* Desktop Sidebar Filters */}
+        <div className="hidden lg:block w-64 flex-shrink-0">
           <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
@@ -347,7 +585,7 @@ function ProductsPageContent() {
                   <label className="flex items-center">
                     <input
                       type="radio"
-                      name="category"
+                      name="desktop-category"
                       value=""
                       checked={!filters.category}
                       onChange={() => handleFilterChange({ category: undefined })}
@@ -359,7 +597,7 @@ function ProductsPageContent() {
                     <label key={category.id} className="flex items-center">
                       <input
                         type="radio"
-                        name="category"
+                        name="desktop-category"
                         value={category.name}
                         checked={filters.category === category.name}
                         onChange={() => handleFilterChange({ category: category.name })}
@@ -378,7 +616,7 @@ function ProductsPageContent() {
                   <label className="flex items-center">
                     <input
                       type="radio"
-                      name="priceRange"
+                      name="desktop-priceRange"
                       checked={!filters.priceRange}
                       onChange={() => handleFilterChange({ priceRange: undefined })}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
@@ -389,7 +627,7 @@ function ProductsPageContent() {
                     <label key={index} className="flex items-center">
                       <input
                         type="radio"
-                        name="priceRange"
+                        name="desktop-priceRange"
                         checked={filters.priceRange?.[0] === range.start && filters.priceRange?.[1] === range.end}
                         onChange={() => handleFilterChange({ priceRange: [range.start, range.end] })}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
@@ -407,49 +645,32 @@ function ProductsPageContent() {
                 </div>
               </div>
 
-              {/* Brand Filter */}
+              {/* Seller Filter */}
               <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-3">Brand</h4>
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Seller</h4>
                 <div className="space-y-2">
-                  {uniqueBrands.map(brand => (
-                    <label key={brand} className="flex items-center">
+                  {uniqueSellers.map(seller => (
+                    <label key={seller.id} className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={filters.brand?.includes(brand) || false}
+                        checked={filters.seller?.includes(seller.business_name) || false}
                         onChange={(e) => {
-                          const currentBrands = filters.brand || [];
+                          const currentSellers = filters.seller || [];
                           if (e.target.checked) {
-                            handleFilterChange({ brand: [...currentBrands, brand] });
+                            handleFilterChange({ seller: [...currentSellers, seller.business_name] });
                           } else {
-                            handleFilterChange({ brand: currentBrands.filter(b => b !== brand) });
+                            handleFilterChange({ seller: currentSellers.filter(s => s !== seller.business_name) });
                           }
                         }}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <span className="ml-2 text-sm text-gray-700">{brand}</span>
+                      <span className="ml-2 text-sm text-gray-700">{seller.business_name}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              {/* Rating Filter */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-3">Minimum Rating</h4>
-                <div className="space-y-2">
-                  {[4, 3, 2, 1].map(rating => (
-                    <label key={rating} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="rating"
-                        checked={filters.rating === rating}
-                        onChange={() => handleFilterChange({ rating })}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{rating}+ stars</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+
 
               {/* Stock Filter */}
               <div>
@@ -470,6 +691,32 @@ function ProductsPageContent() {
 
         {/* Main Content */}
         <div className="flex-1">
+          {/* Mobile Sorting Header Only */}
+          <div className="lg:hidden mb-4">
+            <SortingHeader
+              totalProducts={totalProducts}
+              filteredProducts={filteredProducts.length}
+              sortBy={`${filters.sortBy}-${filters.sortOrder}`}
+              onSortChange={handleSortChange}
+              sortOptions={sortOptions}
+              showAdditionalInfo={false}
+              isLoading={loading || searchLoading}
+            />
+          </div>
+
+          {/* Desktop Sorting Header */}
+          <div className="hidden lg:block mb-6">
+            <SortingHeader
+              totalProducts={totalProducts}
+              filteredProducts={filteredProducts.length}
+              sortBy={`${filters.sortBy}-${filters.sortOrder}`}
+              onSortChange={handleSortChange}
+              sortOptions={sortOptions}
+              showAdditionalInfo={false}
+              isLoading={loading || searchLoading}
+            />
+          </div>
+
           {/* No results message for search */}
           {(urlSearchQuery || categoryQuery) && !searchLoading && !loading && filteredProducts.length === 0 && (
             <div className="text-center py-12">

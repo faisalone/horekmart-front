@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { AdminAuthProvider } from '@/hooks/useAdminAuth';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
+import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { Toaster } from 'sonner';
 
 interface ClientWrapperProps {
@@ -33,14 +34,15 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <CartProvider>
       <WishlistProvider>
-        <AdminAuthProvider>
-          <Toaster 
-            position="top-center"
-            richColors
-            closeButton
-            expand={false}
-            duration={4000}
-          />
+        <CategoriesProvider>
+          <AdminAuthProvider>
+            <Toaster 
+              position="top-center"
+              richColors
+              closeButton
+              expand={false}
+              duration={4000}
+            />
           {/* Routes without main layout render children directly */}
           {shouldExcludeMainLayout ? (
             <>{children}</>
@@ -52,7 +54,8 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               <Footer />
             </div>
           )}
-        </AdminAuthProvider>
+          </AdminAuthProvider>
+        </CategoriesProvider>
       </WishlistProvider>
     </CartProvider>
   );

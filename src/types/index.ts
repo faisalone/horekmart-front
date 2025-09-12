@@ -182,9 +182,8 @@ export interface SearchFilters {
 	search?: string;
 	category?: string;
 	priceRange?: [number, number];
-	brand?: string[];
-	rating?: number;
+	seller?: string[];
 	inStock?: boolean;
-	sortBy?: 'name' | 'price' | 'rating' | 'newest';
+	sortBy?: 'name' | 'price' | 'newest';
 	sortOrder?: 'asc' | 'desc';
 }
