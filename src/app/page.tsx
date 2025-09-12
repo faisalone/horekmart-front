@@ -245,8 +245,8 @@ export default function HomePage() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?featured=true" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
-                View All Popular Products <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/products?sort=trending" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+                View All Trending Products <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -289,7 +289,7 @@ export default function HomePage() {
             </div>
 
             <div className="text-center mt-12">
-              <Link href="/deals" className="inline-flex items-center text-white hover:text-white/80 text-lg font-semibold bg-white/10 hover:bg-white/20 px-8 py-4 rounded-full transition-all hover:scale-105 border-2 border-white/30">
+              <Link href="/products?sort=deals" className="inline-flex items-center text-white hover:text-white/80 text-lg font-semibold bg-white/10 hover:bg-white/20 px-8 py-4 rounded-full transition-all hover:scale-105 border-2 border-white/30">
                 Shop All Flash Deals <ArrowRight className="ml-2 h-6 w-6" />
               </Link>
             </div>
@@ -319,7 +319,7 @@ export default function HomePage() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?sort=latest" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+              <Link href="/products?sort=newest-desc" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
                 See All New Arrivals <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
@@ -349,7 +349,7 @@ export default function HomePage() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?sort=views" className="inline-flex items-center text-theme-primary hover:text-theme-primary-dark text-lg font-semibold bg-theme-primary/10 hover:bg-theme-primary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+              <Link href="/products?sort=most-viewed" className="inline-flex items-center text-theme-primary hover:text-theme-primary-dark text-lg font-semibold bg-theme-primary/10 hover:bg-theme-primary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
                 Explore Most Viewed <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>

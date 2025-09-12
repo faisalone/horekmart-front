@@ -33,16 +33,27 @@ function ProductsPageContent() {
   // Use categories context
   const { categories } = useCategories();
   
-  // Get search query, category, and vendor from URL parameters
+  // Get search query, category, vendor, and sort from URL parameters
   const urlSearchQuery = searchParams.get('q') || '';
   const categoryQuery = searchParams.get('category') || '';
   const vendorQuery = searchParams.get('vendor') || '';
+  const sortQuery = searchParams.get('sort') || '';
+  
+  // Initialize sort based on URL parameter or default
+  const getInitialSort = () => {
+    if (sortQuery && ['trending', 'deals', 'most-viewed', 'best-sellers'].includes(sortQuery)) {
+      return { sortBy: sortQuery as SearchFilters['sortBy'], sortOrder: 'desc' as const };
+    }
+    if (sortQuery === 'newest-desc') {
+      return { sortBy: 'newest' as const, sortOrder: 'desc' as const };
+    }
+    return { sortBy: 'trending' as const, sortOrder: 'desc' as const };
+  };
   
   const [filters, setFilters] = useState<SearchFilters>({
     search: urlSearchQuery,
     category: categoryQuery,
-    sortBy: 'name',
-    sortOrder: 'asc',
+    ...getInitialSort(),
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -169,11 +180,15 @@ function ProductsPageContent() {
 
   // Sort options for the sorting header
   const sortOptions = [
+    { value: 'trending', label: '🔥 Trending' },
+    { value: 'deals', label: '💸 Best Deals' },
+    { value: 'most-viewed', label: '👀 Most Viewed' },
+    { value: 'best-sellers', label: '⭐ Best Sellers' },
+    { value: 'newest-desc', label: '🆕 Newest First' },
     { value: 'name-asc', label: '🔤 Name A-Z' },
     { value: 'name-desc', label: '🔤 Name Z-A' },
     { value: 'price-asc', label: '💰 Price: Low to High' },
-    { value: 'price-desc', label: '💎 Price: High to Low' },
-    { value: 'newest-desc', label: '🆕 Newest First' }
+    { value: 'price-desc', label: '💎 Price: High to Low' }
   ];
 
   useEffect(() => {
@@ -194,16 +209,19 @@ function ProductsPageContent() {
     };
 
     fetchData();
-  }, [urlSearchQuery, categoryQuery, vendorQuery]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery]);
 
-  // Update filters when URL search query, category, or vendor changes
+  // Update filters when URL parameters change
   useEffect(() => {
+    const sortConfig = getInitialSort();
     setFilters(prev => ({ 
       ...prev, 
       search: urlSearchQuery,
-      category: categoryQuery || undefined 
+      category: categoryQuery || undefined,
+      sortBy: sortConfig.sortBy,
+      sortOrder: sortConfig.sortOrder
     }));
-  }, [urlSearchQuery, categoryQuery, vendorQuery]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery]);
 
   useEffect(() => {
     let filtered = [...products];
@@ -440,10 +458,25 @@ function ProductsPageContent() {
     toggleWishlist(wishlistItem);
   };
 
+  // Helper function to get the sortBy value for SortingHeader
+  const getSortByValue = () => {
+    if (['trending', 'deals', 'most-viewed', 'best-sellers'].includes(filters.sortBy || '')) {
+      return filters.sortBy || 'name-asc';
+    }
+    return `${filters.sortBy}-${filters.sortOrder}`;
+  };
+
   // Handler for sort change from SortingHeader
   const handleSortChange = (value: string) => {
-    const [sortBy, sortOrder] = value.split('-');
-    setFilters(prev => ({ ...prev, sortBy: sortBy as any, sortOrder: sortOrder as any }));
+    // Check if it's a special sorting algorithm
+    if (['trending', 'deals', 'most-viewed', 'best-sellers'].includes(value)) {
+      setFilters(prev => ({ ...prev, sortBy: value as any, sortOrder: 'desc' }));
+    } else {
+      // Regular sort with format: "field-direction"
+      const [sortBy, sortOrder] = value.split('-');
+      setFilters(prev => ({ ...prev, sortBy: sortBy as any, sortOrder: sortOrder as any }));
+    }
+    
     // Reset pagination and refetch with new sort
     setCurrentPage(1);
     setHasMore(true);
@@ -743,7 +776,7 @@ function ProductsPageContent() {
             <SortingHeader
               totalProducts={totalProducts}
               filteredProducts={filteredProducts.length}
-              sortBy={`${filters.sortBy}-${filters.sortOrder}`}
+              sortBy={getSortByValue()}
               onSortChange={handleSortChange}
               sortOptions={sortOptions}
               showAdditionalInfo={false}
@@ -756,7 +789,7 @@ function ProductsPageContent() {
             <SortingHeader
               totalProducts={totalProducts}
               filteredProducts={filteredProducts.length}
-              sortBy={`${filters.sortBy}-${filters.sortOrder}`}
+              sortBy={getSortByValue()}
               onSortChange={handleSortChange}
               sortOptions={sortOptions}
               showAdditionalInfo={false}

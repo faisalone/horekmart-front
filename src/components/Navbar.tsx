@@ -20,6 +20,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'departments' | 'hotItems'>('departments');
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -363,87 +364,217 @@ const Navbar = ({ }: NavbarProps = {}) => {
               <Link href="/products" className="text-base text-white hover:opacity-80 transition-colors">
                 All Products
               </Link>
-              <Link href="/trendings" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/products?sort=trendings" className="text-base text-white hover:opacity-80 transition-colors">
                 Trendings
               </Link>
-              <Link href="/deals" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/products?sort=deals" className="text-base text-white hover:opacity-80 transition-colors">
                 Deals & Offers
-              </Link>
-              <Link href="/about" className="text-base text-white hover:opacity-80 transition-colors">
-                About Us
-              </Link>
-              <Link href="/contact" className="text-base text-white hover:opacity-80 transition-colors">
-                Contact Us
               </Link>
             </nav>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Full Screen Overlay */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-200">
-          <div className="px-4 pt-4 pb-4 space-y-4">
-            {/* Mobile Navigation Links */}
-            <div className="space-y-2">
-              <div className="px-4 py-3 text-gray-900 font-medium">
-                <AutoFontText>Departments</AutoFontText>
-              </div>
-              
-              {categoriesLoading ? (
-                // Loading skeleton for mobile
-                <div className="space-y-2 px-4">
-                  {[...Array(4)].map((_, index) => (
-                    <div key={index} className="py-2">
-                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    </div>
-                  ))}
+        <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto">
+          {/* Modal Backdrop */}
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+            {/* Modal Header with Close Button */}
+            <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-6 py-4 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </div>
+                  <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                    <AutoFontText>Browse</AutoFontText>
+                  </h1>
                 </div>
-              ) : categories.length > 0 ? (
-                // Dynamic categories for mobile
-                categories.slice(0, 6).map((category) => (
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="h-6 w-6 text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            {/* Tab System */}
+            <div className="px-6 pt-4">
+              <div className="flex space-x-1 bg-gray-100 rounded-xl p-1 mb-6">
+                <button
+                  onClick={() => setActiveTab('departments')}
+                  className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    activeTab === 'departments'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <AutoFontText>Departments</AutoFontText>
+                </button>
+                <button
+                  onClick={() => setActiveTab('hotItems')}
+                  className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    activeTab === 'hotItems'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <AutoFontText>Hot Items</AutoFontText>
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'departments' ? (
+              // Departments Tab Content
+              <div className="px-6 pb-4">
+                {categoriesLoading ? (
+                  // Premium loading skeleton
+                  <div className="space-y-3">
+                    {[...Array(4)].map((_, index) => (
+                      <div key={index} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                        <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : categories.length > 0 ? (
+                  // Premium category display
+                  <div className="grid grid-cols-1 gap-3">
+                    {categories.slice(0, 8).map((category, index) => {
+                      const hoverColors = [
+                        'hover:bg-purple-50/30 hover:border-purple-200',
+                        'hover:bg-blue-50/30 hover:border-blue-200',
+                        'hover:bg-green-50/30 hover:border-green-200',
+                        'hover:bg-orange-50/30 hover:border-orange-200',
+                        'hover:bg-red-50/30 hover:border-red-200',
+                        'hover:bg-indigo-50/30 hover:border-indigo-200',
+                        'hover:bg-teal-50/30 hover:border-teal-200',
+                        'hover:bg-pink-50/30 hover:border-pink-200'
+                      ];
+                      const hoverColor = hoverColors[index % hoverColors.length];
+                      
+                      return (
+                        <Link
+                          key={category.id}
+                          href={`/${category.slug}`}
+                          className={`group flex items-center justify-between px-6 py-4 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 ${hoverColor}`}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div>
+                            <span className="text-lg font-bold text-gray-900 tracking-tight">
+                              <AutoFontText>{category.name}</AutoFontText>
+                            </span>
+                            <p className="text-sm text-gray-600 mt-0.5">Explore collection</p>
+                          </div>
+                          <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+                            <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Fallback for mobile
+                  <div className="px-5 py-8 bg-white rounded-xl shadow-sm border border-gray-100 text-center">
+                    <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <p className="text-gray-500">
+                      <AutoFontText>No categories available</AutoFontText>
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Hot Items Tab Content
+              <div className="px-6 pb-4">
+                <div className="space-y-2">
                   <Link
-                    key={category.id}
-                    href={`/${category.slug}`}
-                    className="block px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
+                    href="/products"
+                    className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <AutoFontText>{category.name}</AutoFontText>
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 tracking-tight">
+                        <AutoFontText>All Products</AutoFontText>
+                      </span>
+                      <p className="text-sm text-gray-600 mt-0.5">Browse everything</p>
+                    </div>
+                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </Link>
-                ))
-              ) : (
-                // Fallback for mobile
-                <div className="px-4 py-3 text-gray-500">
-                  <AutoFontText>No categories available</AutoFontText>
+
+                  <Link
+                    href="/products?sort=trending"
+                    className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-orange-200 hover:bg-orange-50/30"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 tracking-tight">
+                        <AutoFontText>Trendings</AutoFontText>
+                      </span>
+                      <p className="text-sm text-gray-600 mt-0.5">What's hot right now</p>
+                    </div>
+                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/products?sort=deals"
+                    className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 hover:bg-green-50/30"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 tracking-tight">
+                        <AutoFontText>Deals & Offers</AutoFontText>
+                      </span>
+                      <p className="text-sm text-gray-600 mt-0.5">Save more today</p>
+                    </div>
+                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
                 </div>
-              )}
-              <Link
-                href="/reorder"
-                className="flex items-center px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <div className="h-5 w-5 flex items-center justify-center mr-3">
-                  <div className="grid grid-cols-2 gap-0.5">
-                    <div className="w-1 h-1 bg-gray-900 rounded-sm"></div>
-                    <div className="w-1 h-1 bg-gray-900 rounded-sm"></div>
-                    <div className="w-1 h-1 bg-gray-900 rounded-sm"></div>
-                    <div className="w-1 h-1 bg-gray-900 rounded-sm"></div>
-                  </div>
-                </div>
-                Reorder
-              </Link>
+              </div>
+            )}
+
+            {/* Premium Seller Button */}
+            <div className="px-6 pb-8">
               <button
                 onClick={() => {
                   handleSellerClick();
                   setIsMenuOpen(false);
                 }}
                 disabled={loading}
-                className={`flex items-center px-4 py-3 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white rounded-lg font-semibold transition-all duration-300 mx-2 mb-2 cursor-pointer ${
+                className={`w-full flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 cursor-pointer ${
                   loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                <Store className="h-5 w-5 mr-3" />
-                {loading ? 'Loading...' : isAuthenticated ? 'Go to Dashboard' : 'Start Selling'}
+                <Store className="h-6 w-6" />
+                <span>
+                  <AutoFontText>
+                    {loading ? 'Loading...' : isAuthenticated ? 'Go to Dashboard' : 'Start Selling'}
+                  </AutoFontText>
+                </span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </button>
             </div>
           </div>

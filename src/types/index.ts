@@ -214,6 +214,13 @@ export interface SearchFilters {
 	priceRange?: [number, number];
 	seller?: string[];
 	inStock?: boolean;
-	sortBy?: 'name' | 'price' | 'newest';
+	sortBy?:
+		| 'name'
+		| 'price'
+		| 'newest'
+		| 'trending'
+		| 'deals'
+		| 'most-viewed'
+		| 'best-sellers';
 	sortOrder?: 'asc' | 'desc';
 }
