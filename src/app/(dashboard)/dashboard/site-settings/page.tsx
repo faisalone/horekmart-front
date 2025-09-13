@@ -20,6 +20,7 @@ import {
   Briefcase,
   Flag,
   AlertCircle,
+  FileImage,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,7 @@ const groupIcons: Record<string, any> = {
   social: Share2,
   business: Briefcase,
   features: Flag,
+  assets: FileImage,
 };
 
 const groupLabels: Record<string, string> = {
@@ -43,6 +45,7 @@ const groupLabels: Record<string, string> = {
   social: 'Social Media',
   business: 'Business Settings',
   features: 'Feature Flags',
+  assets: 'Asset Management',
 };
 
 export default function SiteSettingsPage() {
@@ -314,6 +317,7 @@ export default function SiteSettingsPage() {
   if (!settings) return null;
 
   const availableGroups = Object.keys(settings).filter(group => settings[group].length > 0);
+  const allTabs = [...availableGroups, 'assets']; // Add assets as a separate tab
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -360,8 +364,25 @@ export default function SiteSettingsPage() {
         <div className="space-y-8">
           <div className="bg-slate-900/50 p-2 rounded-xl border border-slate-700/50 backdrop-blur-sm">
             <div className="flex flex-wrap gap-2">
-              {availableGroups.map((group) => {
+              {allTabs.map((group) => {
                 const Icon = groupIcons[group] || SettingsIcon;
+                const isAssets = group === 'assets';
+                
+                if (isAssets) {
+                  return (
+                    <Link key={group} href="/dashboard/site-settings/assets">
+                      <button
+                        className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-800"
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span className="whitespace-nowrap">
+                          {groupLabels[group] || group}
+                        </span>
+                      </button>
+                    </Link>
+                  );
+                }
+                
                 return (
                   <button
                     key={group}

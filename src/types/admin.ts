@@ -467,3 +467,23 @@ export interface SiteSettingBulkUpdateRequest {
 		value: string | null;
 	}>;
 }
+
+// Asset Upload Types
+export interface AssetUploadOptions {
+	path?: string;
+	disk?: 'local' | 'public' | 's3';
+}
+
+export interface Asset {
+	id: string;
+	disk: string;
+	path: string;
+	url: string | null; // null for local/private storage
+	name: string;
+	size: number;
+	mime_type: string;
+	extension: string;
+	metadata?: any;
+	created_at?: string;
+	updated_at?: string;
+}

@@ -28,6 +28,7 @@ import {
 	SiteSettingCreateRequest,
 	SiteSettingUpdateRequest,
 	SiteSettingBulkUpdateRequest,
+	Asset,
 } from '@/types/admin';
 
 class AdminApiClient {
@@ -668,7 +669,9 @@ class AdminApiClient {
 		let imageUrl = undefined;
 		if (image) {
 			try {
-				const uploadResult = await this.uploadFile(image, 'categories');
+				const uploadResult = await this.uploadFile(image, {
+					path: 'categories',
+				});
 				imageUrl = uploadResult.url;
 			} catch (error) {
 				console.error('Error uploading category image:', error);
@@ -698,7 +701,9 @@ class AdminApiClient {
 		let imageUrl = undefined;
 		if (image) {
 			try {
-				const uploadResult = await this.uploadFile(image, 'categories');
+				const uploadResult = await this.uploadFile(image, {
+					path: 'categories',
+				});
 				imageUrl = uploadResult.url;
 			} catch (error) {
 				console.error('Error uploading category image:', error);
@@ -723,26 +728,63 @@ class AdminApiClient {
 		await this.client.delete(`/admin/categories/${id}`);
 	}
 
-	// File upload
+	// Asset management (simplified file uploads)
+	async getAssets(): Promise<Asset[]> {
+		const response = await this.client.get<{ data: Asset[] }>(
+			'/admin/assets'
+		);
+		return response.data.data;
+	}
+
 	async uploadFile(
 		file: File,
-		path: string = 'uploads'
-	): Promise<{ url: string }> {
+		options: {
+			path?: string;
+			disk?: 'local' | 'public' | 's3';
+		} = {}
+	): Promise<{
+		id: string;
+		disk: string;
+		path: string;
+		url: string | null;
+		name: string;
+		size: number;
+		mime_type: string;
+		extension: string;
+	}> {
 		const formData = new FormData();
 		formData.append('file', file);
-		formData.append('path', path);
 
-		const response = await this.client.post<ApiResponse<{ url: string }>>(
-			'/admin/upload',
-			formData,
-			{
-				headers: {
-					'Content-Type': 'multipart/form-data',
-				},
-			}
-		);
+		// Add options to form data
+		if (options.path) formData.append('path', options.path);
+		if (options.disk) formData.append('disk', options.disk);
+
+		const response = await this.client.post<{
+			data: {
+				id: string;
+				disk: string;
+				path: string;
+				url: string | null;
+				name: string;
+				size: number;
+				mime_type: string;
+				extension: string;
+			};
+		}>('/admin/assets', formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		});
 
 		return response.data.data;
+	}
+
+	async deleteAsset(assetId: string): Promise<{ message: string }> {
+		const response = await this.client.delete<{
+			message: string;
+		}>(`/admin/assets/${assetId}`);
+
+		return response.data;
 	}
 
 	// Variation Management
