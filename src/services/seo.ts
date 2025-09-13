@@ -11,7 +11,25 @@ export const getSiteConfig = async (): Promise<SiteConfig> => {
 };
 
 /**
- * Generate SEO data for products - ONLY from backend, no frontend fallbacks
+ * Get product OG image with simplified fallback chain based on actual API data
+ */
+const getProductOGImage = (product: Product): string | undefined => {
+	// Priority 1: Product thumb field (primary product image)
+	if (product.thumb) return product.thumb;
+
+	// Priority 2: First image from images array
+	if (product.images && product.images.length > 0) {
+		const firstImage = product.images[0];
+		if (typeof firstImage === 'object' && 'url' in firstImage) {
+			return firstImage.url;
+		}
+	}
+
+	return undefined;
+};
+
+/**
+ * Generate SEO data for products - From product metadata with site defaults as fallback
  */
 export const generateProductSEO = async (
 	product: Product
@@ -19,24 +37,45 @@ export const generateProductSEO = async (
 	const siteConfig = await siteSettingsService.getSiteConfig();
 	const productImage = getProductImage(product);
 
+	// Priority: Product metadata > Site defaults
+	const title =
+		product.meta_title ||
+		(siteConfig.name
+			? `${product.name} - ${siteConfig.name}`
+			: product.name);
+
+	const description =
+		product.meta_description ||
+		product.short_description ||
+		siteConfig.description ||
+		'';
+
+	const keywords =
+		product.meta_keywords || siteConfig.keywords?.join(', ') || '';
+
+	const canonicalUrl =
+		product.canonical_url ||
+		(siteConfig.url
+			? `${siteConfig.url}/products/${product.category?.slug}/${product.slug}`
+			: '');
+
+	const ogTitle = product.og_title || product.meta_title || title;
+
+	const ogDescription =
+		product.og_description || product.meta_description || description;
+
+	// OG Image priority: product thumbnail field > other product images > site default og
+	const ogImage = getProductOGImage(product) || siteConfig.ogImage || '';
+
 	return {
-		title:
-			product.meta_title ||
-			(siteConfig.name
-				? `${product.name} - ${siteConfig.name}`
-				: product.name),
-		description:
-			product.meta_description || product.short_description || '',
-		keywords: product.meta_keywords || '',
-		canonicalUrl:
-			product.canonical_url ||
-			(siteConfig.url
-				? `${siteConfig.url}/products/${product.slug}`
-				: ''),
-		ogTitle: product.og_title || product.meta_title || '',
-		ogDescription: product.og_description || product.meta_description || '',
-		ogImage: productImage || '',
-		focusKeyword: product.focus_keyword || '',
+		title,
+		description,
+		keywords,
+		canonicalUrl,
+		ogTitle,
+		ogDescription,
+		ogImage,
+		focusKeyword: product.focus_keyword || product.name.toLowerCase(),
 	};
 };
 
@@ -53,9 +92,7 @@ export const generateCategorySEO = async (
 		? `${categoryName} - ${siteConfig.name}`
 		: categoryName;
 
-	const description = `Shop ${categoryName.toLowerCase()} products at ${
-		siteConfig.name || 'our store'
-	}. Browse our collection of quality ${categoryName.toLowerCase()} items.`;
+	const description = siteConfig.description || '';
 
 	return {
 		title,
@@ -66,7 +103,7 @@ export const generateCategorySEO = async (
 		ogTitle: title,
 		ogDescription: description,
 		ogImage: siteConfig.ogImage || '',
-		keywords: `${categoryName.toLowerCase()}, shop, buy, products`,
+		keywords: siteConfig.keywords?.join(', ') || '',
 		focusKeyword: categoryName.toLowerCase(),
 	};
 };
@@ -79,38 +116,26 @@ export const generateCategoryPageSEO = async (
 ): Promise<SEOData> => {
 	const siteConfig = await siteSettingsService.getSiteConfig();
 
-	// Build title with category name
+	// Build title with category name and site name
 	const title = siteConfig.name
 		? `${category.name} - ${siteConfig.name}`
 		: category.name;
 
-	// Build description from category description or generate one
-	const description =
-		category.description ||
-		`Shop ${category.name.toLowerCase()} products at ${
-			siteConfig.name || 'our store'
-		}. Browse our wide selection of quality ${category.name.toLowerCase()} items with fast delivery and great prices.`;
+	// Use category description or site default description
+	const description = category.description || siteConfig.description || '';
 
 	// Use category image for OG image, fallback to site default
 	const ogImage =
 		category.image_url || category.image || siteConfig.ogImage || '';
 
-	// Build canonical URL
+	// Build canonical URL for category page
 	const canonicalUrl = siteConfig.url
 		? `${siteConfig.url}/${category.slug}`
 		: '';
 
-	// Generate keywords from category name and description
-	const keywords = [
-		category.name.toLowerCase(),
-		...(category.description
-			? category.description.toLowerCase().split(/\s+/).slice(0, 5)
-			: []),
-		'shop',
-		'buy',
-		'online',
-		'store',
-	].join(', ');
+	// Use category metadata or site defaults for keywords
+	const keywords =
+		category.meta_keywords || siteConfig.keywords?.join(', ') || '';
 
 	return {
 		title,
@@ -138,7 +163,7 @@ export const generateCategoryStructuredData = async (
 		'@type': 'CollectionPage',
 		name: category.name,
 		url: siteConfig.url ? `${siteConfig.url}/${category.slug}` : '',
-		description: category.description || `Shop ${category.name} products`,
+		description: category.description || '',
 		mainEntity: {
 			'@type': 'ItemList',
 			name: `${category.name} Products`,
@@ -154,7 +179,7 @@ export const generateCategoryStructuredData = async (
 				{
 					'@type': 'ListItem',
 					position: 1,
-					name: 'Home',
+					name: siteConfig.name || 'Home',
 					item: siteConfig.url || '',
 				},
 				{
@@ -189,9 +214,9 @@ export const generateSearchSEO = async (
 		? `Search: ${searchQuery} - ${siteConfig.name}`
 		: `Search: ${searchQuery}`;
 
-	const description = `Search results for "${searchQuery}" at ${
-		siteConfig.name || 'our store'
-	}. Find the best products matching your search.`;
+	const description = `Search results for "${searchQuery}"${
+		siteConfig.name ? ` at ${siteConfig.name}` : ''
+	}. ${siteConfig.description || ''}`;
 
 	return {
 		title,
@@ -202,7 +227,9 @@ export const generateSearchSEO = async (
 		ogTitle: title,
 		ogDescription: description,
 		ogImage: siteConfig.ogImage || '',
-		keywords: `search, ${searchQuery}, products, shop, buy`,
+		keywords: `search, ${searchQuery}, ${
+			siteConfig.keywords?.join(', ') || ''
+		}`,
 		focusKeyword: searchQuery,
 	};
 };
@@ -225,26 +252,90 @@ export const generateDefaultSEO = async (): Promise<SEOData> => {
 };
 
 /**
- * Generate SEO data for products page
+ * Generate SEO data for products page with enhanced context handling
  */
-export const generateProductsPageSEO = async (): Promise<SEOData> => {
+export const generateProductsPageSEO = async (context?: {
+	searchQuery?: string;
+	categoryQuery?: string;
+	type?: string;
+}): Promise<SEOData> => {
 	const siteConfig = await siteSettingsService.getSiteConfig();
 
-	const title = siteConfig.name
-		? `Products - ${siteConfig.name}`
-		: 'Products';
+	let title: string;
+	let description: string;
+	let keywords: string;
+	let canonicalUrl: string;
 
-	const description =
-		siteConfig.description ||
-		'Browse our wide selection of quality products with great prices and fast delivery.';
+	// Handle search results page
+	if (context?.searchQuery) {
+		title = siteConfig.name
+			? `Search: "${context.searchQuery}" - ${siteConfig.name}`
+			: `Search: "${context.searchQuery}"`;
+		description = `Search results for "${context.searchQuery}". ${
+			siteConfig.description || ''
+		}`;
+		keywords = `${context.searchQuery}, search, ${
+			siteConfig.keywords?.join(', ') || ''
+		}`;
+		canonicalUrl = siteConfig.url
+			? `${siteConfig.url}/products?q=${encodeURIComponent(
+					context.searchQuery
+			  )}`
+			: '';
+	}
+	// Handle category filtered products page
+	else if (context?.categoryQuery) {
+		const categoryName =
+			context.categoryQuery.charAt(0).toUpperCase() +
+			context.categoryQuery.slice(1).replace(/-/g, ' ');
+		title = siteConfig.name
+			? `${categoryName} Products - ${siteConfig.name}`
+			: `${categoryName} Products`;
+		description = `Browse ${categoryName.toLowerCase()} products. ${
+			siteConfig.description || ''
+		}`;
+		keywords = `${categoryName.toLowerCase()}, products, ${
+			siteConfig.keywords?.join(', ') || ''
+		}`;
+		canonicalUrl = siteConfig.url
+			? `${siteConfig.url}/products?category=${context.categoryQuery}`
+			: '';
+	}
+	// Handle special types (trending, deals, etc.)
+	else if (context?.type) {
+		const typeLabels: Record<string, string> = {
+			trending: 'Trending Products',
+			deals: 'Best Deals',
+			'most-viewed': 'Most Viewed Products',
+			'best-sellers': 'Best Sellers',
+		};
+		const typeLabel = typeLabels[context.type] || 'Products';
+		title = siteConfig.name
+			? `${typeLabel} - ${siteConfig.name}`
+			: typeLabel;
+		description = `Discover ${typeLabel.toLowerCase()}. ${
+			siteConfig.description || ''
+		}`;
+		keywords = `${context.type}, ${typeLabel.toLowerCase()}, ${
+			siteConfig.keywords?.join(', ') || ''
+		}`;
+		canonicalUrl = siteConfig.url
+			? `${siteConfig.url}/products?type=${context.type}`
+			: '';
+	}
+	// Default products page
+	else {
+		title = siteConfig.name ? `Products - ${siteConfig.name}` : 'Products';
+		description = siteConfig.description || '';
+		keywords = siteConfig.keywords?.join(', ') || '';
+		canonicalUrl = siteConfig.url ? `${siteConfig.url}/products` : '';
+	}
 
 	return {
 		title,
 		description,
-		keywords:
-			siteConfig.keywords?.join(', ') ||
-			'products, shop, buy, online, store',
-		canonicalUrl: siteConfig.url ? `${siteConfig.url}/products` : '',
+		keywords,
+		canonicalUrl,
 		ogTitle: title,
 		ogDescription: description,
 		ogImage: siteConfig.ogImage || '',
@@ -252,21 +343,20 @@ export const generateProductsPageSEO = async (): Promise<SEOData> => {
 };
 
 /**
- * Extract product image for OG tags
+ * Extract product image - simplified based on actual API data
  */
 const getProductImage = (product: Product): string | undefined => {
-	// Try different image sources
+	// Priority 1: Product thumb field
 	if (product.thumb) return product.thumb;
-	if (product.image) return product.image;
-	if (product.thumbnail) return product.thumbnail;
+
+	// Priority 2: First image from images array
 	if (product.images && product.images.length > 0) {
 		const firstImage = product.images[0];
-		if (typeof firstImage === 'string') return firstImage;
-		if (typeof firstImage === 'object' && 'url' in firstImage)
+		if (typeof firstImage === 'object' && 'url' in firstImage) {
 			return firstImage.url;
-		if (typeof firstImage === 'object' && 'file_url' in firstImage)
-			return (firstImage as any).file_url;
+		}
 	}
+
 	return undefined;
 };
 
@@ -275,7 +365,7 @@ const getProductImage = (product: Product): string | undefined => {
  */
 export const generateProductStructuredData = async (product: Product) => {
 	const siteConfig = await siteSettingsService.getSiteConfig();
-	const productImage = getProductImage(product);
+	const productImage = getProductOGImage(product);
 
 	const structuredData: any = {
 		'@context': 'https://schema.org',

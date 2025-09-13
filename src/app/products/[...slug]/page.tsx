@@ -185,18 +185,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 			});
 		}
 
-		// Fallback to thumbnail if no other images
-		if (
-			product &&
-			product.thumbnail &&
-			!images.some((img) => img.url === product.thumbnail)
-		) {
-			images.unshift({
-				url: product.thumbnail,
-				alt: `${product.name} - Main Image`,
-				type: 'thumbnail',
-			});
-		}
+		// No additional thumbnail fallback needed since we already handle thumb above
 
 		if (images.length === 0) {
 			images.push({
@@ -1361,7 +1350,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 								onAddToWishlist={(p: Product) => toggleWishlist({
 									productId: String(p.id),
 									productName: p.name,
-									productImage: p.thumbnail || '/placeholder-product.svg',
+									productImage: p.thumb || (p.images && p.images.length > 0 ? p.images[0].url : undefined) || '/placeholder-product.svg',
 									productSlug: p.slug,
 									categorySlug: p.category?.slug,
 									price: parseFloat(p.price),

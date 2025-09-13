@@ -129,7 +129,7 @@ export default function HomePage() {
     const wishlistItem = {
       productId: product.id.toString(),
       productName: product.name,
-      productImage: productImage || product.image || product.thumbnail || undefined,
+      productImage: productImage,
       productSlug: product.slug,
       categorySlug: product.category?.slug,
       price: parseFloat(product.price),

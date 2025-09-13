@@ -224,7 +224,7 @@ class ProductCheckoutService {
 						return firstImage;
 					}
 				}
-				return product.image || undefined;
+				return product.thumb || undefined;
 			})(),
 			productSlug: product.slug,
 			categorySlug: product.category?.slug,
@@ -242,10 +242,6 @@ class ProductCheckoutService {
 			id: `${product.id}-${variantId || 'default'}-${Date.now()}`,
 			addedAt: new Date(),
 		};
-
-		console.log('Created checkout item:', checkoutItem);
-		console.log('Variant info:', variantInfo);
-		console.log('Variant options:', checkoutItem.variantOptions);
 
 		return checkoutItem;
 	}

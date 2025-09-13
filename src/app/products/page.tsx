@@ -112,18 +112,15 @@ function ProductsPageContent() {
   
   useEffect(() => {
     const generateSEOForCurrentPage = async () => {
-      if (urlSearchQuery) {
-        return await generateSearchSEO(urlSearchQuery);
-      }
-      if (categoryQuery) {
-        const categoryName = categoryQuery.charAt(0).toUpperCase() + categoryQuery.slice(1).replace(/-/g, ' ');
-        return await generateCategorySEO(categoryName, categoryQuery);
-      }
-      return await generateProductsPageSEO();
+      return await generateProductsPageSEO({
+        searchQuery: urlSearchQuery || undefined,
+        categoryQuery: categoryQuery || undefined,
+        type: selectedType || undefined
+      });
     };
 
     generateSEOForCurrentPage().then(setSeoData);
-  }, [urlSearchQuery, categoryQuery]);
+  }, [urlSearchQuery, categoryQuery, selectedType]);
 
   // Use better fallback with site defaults while SEO data loads
   const getFallbackSEO = () => {
@@ -564,7 +561,7 @@ function ProductsPageContent() {
     const wishlistItem = {
       productId: product.id.toString(),
       productName: product.name,
-      productImage: productImage || product.image || product.thumbnail || undefined,
+      productImage: productImage,
       productSlug: product.slug,
       categorySlug: product.category?.slug,
       price: parseFloat(product.price),

@@ -46,10 +46,8 @@ export interface Product {
 	sale_price?: string | null;
 	stock_quantity: number;
 	in_stock: boolean;
-	image?: string | null;
-	thumbnail?: string | null;
 	thumb?: string | null; // API uses this field for main image
-	images?: Array<{ id: string; url: string } | ProductImage | string>; // Support all formats for compatibility
+	images?: Array<{ id: string; url: string }>; // Actual API format
 	social_links?: {
 		facebook?: string[];
 		instagram?: string[];

@@ -154,9 +154,9 @@ export default function CategoryPage({ }: CategoryPageProps) {
 			}
 		}
 		
-		// Fallback to other image fields
+		// Fallback to thumb if no productImage found
 		if (!productImage) {
-			productImage = product.thumb || product.image || product.thumbnail || undefined;
+			productImage = product.thumb || undefined;
 		}
 
 		const wishlistItem = {
