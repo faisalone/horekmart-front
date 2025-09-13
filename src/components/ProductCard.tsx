@@ -9,6 +9,7 @@ import { AutoFontText } from '@/components/AutoFontText';
 import { Button } from '@/components/ui/button';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import { useRouter } from 'next/navigation';
+import { useGTM } from '@/hooks/useGTM';
 
 export interface ProductCardProps {
   product?: Product;
@@ -21,6 +22,7 @@ export interface ProductCardProps {
 const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoading = false }: ProductCardProps) => {
   const router = useRouter();
   const { buyNow } = useProductCheckout();
+  const { trackAddToCart, trackButtonClick, trackProductView } = useGTM();
   // Show skeleton if loading or no product
   if (isLoading || !product) {
     return (
@@ -78,6 +80,10 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
   const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
+      // Track the "Buy Now" button click
+      trackButtonClick('buy_now_product_card', 'product_card');
+      trackAddToCart(product, 1);
+      
       // Proceed directly to checkout for single-SKU products without variations
       const checkoutUrl = await buyNow(product.slug, 1);
       router.push(checkoutUrl);
@@ -88,6 +94,8 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
 
   const handleAddToWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
+    // Track wishlist addition
+    trackButtonClick('add_to_wishlist', 'product_card');
     onAddToWishlist?.(product);
   };
 
@@ -99,7 +107,10 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
       'group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col h-full',
       className
     )}>
-      <Link href={getProductUrl(product)}>
+      <Link 
+        href={getProductUrl(product)}
+        onClick={() => trackProductView(product)}
+      >
         <div className="relative aspect-square overflow-hidden bg-gray-50">
           <Image
             src={productImage}

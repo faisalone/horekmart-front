@@ -100,7 +100,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 		}
 	}, [product]);
 	
-	useSEO(seoData || { title: 'Loading...', description: 'Loading product...' });
+	useSEO(seoData || { title: '', description: '' });
 
 	// Generate structured data for SEO
 	const [structuredData, setStructuredData] = useState<any>(null);

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FloatingButton from '@/components/FloatingButton';
+import GoogleTagManager from '@/components/GoogleTagManager';
 import { AdminAuthProvider } from '@/hooks/useAdminAuth';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
@@ -40,6 +41,9 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
       <WishlistProvider>
         <CategoriesProvider>
           <AdminAuthProvider>
+            {/* Google Tag Manager - Track page views */}
+            <GoogleTagManager />
+            
             <Toaster 
               position="top-center"
               richColors

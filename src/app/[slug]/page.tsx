@@ -42,11 +42,8 @@ export default function CategoryPage({ }: CategoryPageProps) {
 	const { toggleItem: toggleWishlist } = useWishlist();
 	const { addToCart: addToCartService } = useProductCheckout();
 
-	// Apply SEO to page
-	useSEO(seoData || { 
-		title: category ? `${category.name} - Category` : 'Loading Category...', 
-		description: category ? `Shop ${category.name} products` : 'Loading category...'
-	});
+	// Apply SEO to page - only use backend data
+	useSEO(seoData || { title: '', description: '' });
 
 	// Sort options for custom select
 	const sortOptions = [

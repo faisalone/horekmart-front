@@ -16,6 +16,7 @@ import { useSEO } from '@/hooks/useSEO';
 import FloatingButton from '@/components/FloatingButton';
 import { generateCategorySEO, generateSearchSEO, generateDefaultSEO, generateProductsPageSEO } from '@/services/seo';
 import { SEOData } from '@/types';
+import { useGTM } from '@/hooks/useGTM';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
@@ -106,6 +107,9 @@ function ProductsPageContent() {
   // Cart and wishlist contexts
   const { toggleItem: toggleWishlist } = useWishlist();
   const { addToCart: addToCartService } = useProductCheckout();
+  
+  // GTM tracking
+  const { trackSearch } = useGTM();
 
   // SEO Integration
   const [seoData, setSeoData] = useState<SEOData | null>(null);
@@ -121,37 +125,15 @@ function ProductsPageContent() {
     };
 
     generateSEOForCurrentPage().then(setSeoData);
-  }, [urlSearchQuery, categoryQuery, selectedType, products]);
-
-  // Use better fallback with site defaults while SEO data loads
-  const getFallbackSEO = () => {
+    
+    // Track search queries
     if (urlSearchQuery) {
-      return {
-        title: process.env.NEXT_PUBLIC_APP_NAME ? `Search: ${urlSearchQuery} - ${process.env.NEXT_PUBLIC_APP_NAME}` : `Search: ${urlSearchQuery}`,
-        description: `Search results for "${urlSearchQuery}" - Find what you're looking for.`
-      };
+      trackSearch(urlSearchQuery);
     }
-    if (categoryQuery) {
-      const categoryName = categoryQuery.charAt(0).toUpperCase() + categoryQuery.slice(1).replace(/-/g, ' ');
-      return {
-        title: process.env.NEXT_PUBLIC_APP_NAME ? `${categoryName} - ${process.env.NEXT_PUBLIC_APP_NAME}` : categoryName,
-        description: `Shop ${categoryName.toLowerCase()} products with great prices and fast delivery.`
-      };
-    }
-    return {
-      title: process.env.NEXT_PUBLIC_APP_NAME ? `Products - ${process.env.NEXT_PUBLIC_APP_NAME}` : 'Products',
-      description: 'Browse our wide selection of quality products with great prices and fast delivery.'
-    };
-  };
+  }, [urlSearchQuery, categoryQuery, selectedType, products, trackSearch]);
 
-  const fallbackSEO = {
-    ...getFallbackSEO(),
-    ogImage: process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || '',
-    ogTitle: getFallbackSEO().title,
-    ogDescription: getFallbackSEO().description
-  };
-
-  useSEO(seoData || fallbackSEO);
+  // Only use SEO data from backend - no manual fallbacks
+  useSEO(seoData || { title: '', description: '' });
 
   // Function to fetch products with pagination and duplicate prevention
   const fetchProducts = useCallback(async (page: number = 1, reset: boolean = false) => {
