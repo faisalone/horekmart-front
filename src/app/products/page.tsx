@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Filter } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,18 @@ import { SEOData } from '@/types';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  // Get search query, category, vendor, sort, and type from URL parameters
+  const urlSearchQuery = searchParams.get('q') || '';
+  const categoryQuery = searchParams.get('category') || '';
+  const vendorQuery = searchParams.get('vendor') || '';
+  const sortQuery = searchParams.get('sort') || '';
+  const typeQuery = searchParams.get('type') || ''; // New type parameter for Trending, Deals, etc.
+  const priceMinQuery = searchParams.get('price_min');
+  const priceMaxQuery = searchParams.get('price_max');
+  const inStockQuery = searchParams.get('in_stock');
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [sellers, setSellers] = useState<Vendor[]>([]);
@@ -29,33 +41,63 @@ function ProductsPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
-  
   // Use categories context
-  const { categories } = useCategories();
+  const { categories } = useCategories();  
   
-  // Get search query, category, vendor, and sort from URL parameters
-  const urlSearchQuery = searchParams.get('q') || '';
-  const categoryQuery = searchParams.get('category') || '';
-  const vendorQuery = searchParams.get('vendor') || '';
-  const sortQuery = searchParams.get('sort') || '';
-  
-  // Initialize sort based on URL parameter or default
+  // Initialize sort based on URL parameter (only regular sorting, not type)
   const getInitialSort = useCallback(() => {
-    if (sortQuery && ['trending', 'deals', 'most-viewed', 'best-sellers'].includes(sortQuery)) {
-      return { sortBy: sortQuery as SearchFilters['sortBy'], sortOrder: 'desc' as const };
+    if (!sortQuery) {
+      return { sortBy: undefined, sortOrder: undefined };
     }
-    if (sortQuery === 'newest-desc') {
-      return { sortBy: 'newest' as const, sortOrder: 'desc' as const };
+    
+    // Handle regular sorting from URL (e.g., "newest-desc", "name-asc", "price-desc")
+    if (sortQuery.includes('-')) {
+      const [frontendField, order] = sortQuery.split('-');
+      
+      // Map frontend field names to backend column names
+      const fieldMapping: Record<string, string> = {
+        'newest': 'created_at',
+        'name': 'name',
+        'price': 'price'
+      };
+      
+      const backendField = fieldMapping[frontendField] || frontendField;
+      
+      return { 
+        sortBy: backendField as SearchFilters['sortBy'], 
+        sortOrder: order as 'asc' | 'desc' 
+      };
     }
-    return { sortBy: 'trending' as const, sortOrder: 'desc' as const };
+    
+    // Return undefined when no valid sort is specified
+    return { sortBy: undefined, sortOrder: undefined };
   }, [sortQuery]);
+
+  // Initialize filters from URL parameters
+  const getInitialFilters = useCallback(() => {
+    const priceRange = priceMinQuery && priceMaxQuery 
+      ? [parseInt(priceMinQuery), parseInt(priceMaxQuery)] as [number, number]
+      : undefined;
+      
+    const sellers = vendorQuery ? vendorQuery.split(',') : undefined;
+    
+    const inStock = inStockQuery === 'true' ? true : inStockQuery === 'false' ? false : undefined;
+    
+    return {
+      search: urlSearchQuery,
+      category: categoryQuery || undefined,
+      priceRange,
+      seller: sellers,
+      inStock,
+      ...getInitialSort(),
+    };
+  }, [urlSearchQuery, categoryQuery, vendorQuery, priceMinQuery, priceMaxQuery, inStockQuery, getInitialSort]);
   
-  const [filters, setFilters] = useState<SearchFilters>({
-    search: urlSearchQuery,
-    category: categoryQuery,
-    ...getInitialSort(),
-  });
+  const [filters, setFilters] = useState<SearchFilters>(getInitialFilters());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<string>(
+    typeQuery || '' // Use type parameter instead of checking sort
+  );
 
   // Ref to prevent duplicate API calls
   const fetchingRef = useRef(false);
@@ -140,8 +182,9 @@ function ProductsPageContent() {
         search: urlSearchQuery || undefined,
         category: categoryQuery || undefined,
         vendor: vendorQuery || undefined,
-        sort_by: filters.sortBy || 'name',
-        sort_order: (filters.sortOrder || 'asc') as 'asc' | 'desc',
+        ...(selectedType && { type: selectedType }), // Send type parameter
+        ...(filters.sortBy && { sort_by: filters.sortBy }),
+        ...(filters.sortOrder && { sort_order: filters.sortOrder }),
       };
 
       const response = await publicApi.getProducts(params);
@@ -186,7 +229,7 @@ function ProductsPageContent() {
       setSearchLoading(false);
       fetchingRef.current = false;
     }
-  }, [urlSearchQuery, categoryQuery, vendorQuery, filters.sortBy, filters.sortOrder]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, filters.sortBy, filters.sortOrder, selectedType]);
 
   // Function to load more products
   const loadMoreProducts = useCallback(async () => {
@@ -195,17 +238,22 @@ function ProductsPageContent() {
     }
   }, [loadingMore, hasMore, loading, fetchProducts, currentPage]);
 
-  // Sort options for the sorting header
+  // Sort options for the sorting header (only regular sorting)
+  // Regular sort options for the dropdown (excluding quick filters)
   const sortOptions = [
-    { value: 'trending', label: '🔥 Trending' },
-    { value: 'deals', label: '💸 Best Deals' },
-    { value: 'most-viewed', label: '👀 Most Viewed' },
-    { value: 'best-sellers', label: '⭐ Best Sellers' },
-    { value: 'newest-desc', label: '🆕 Newest First' },
-    { value: 'name-asc', label: '🔤 Name A-Z' },
-    { value: 'name-desc', label: '🔤 Name Z-A' },
-    { value: 'price-asc', label: '💰 Price: Low to High' },
-    { value: 'price-desc', label: '💎 Price: High to Low' }
+    { value: 'newest-desc', label: 'Newest First' },
+    { value: 'name-asc', label: 'Name A-Z' },
+    { value: 'name-desc', label: 'Name Z-A' },
+    { value: 'price-asc', label: 'Price: Low to High' },
+    { value: 'price-desc', label: 'Price: High to Low' }
+  ];
+
+  // Quick filters for horizontal scrollable section
+  const quickFilters = [
+    { value: 'trending', label: 'Trending', icon: '🔥' },
+    { value: 'deals', label: 'Best Deals', icon: '💸' },
+    { value: 'most-viewed', label: 'Most Viewed', icon: '👀' },
+    { value: 'best-sellers', label: 'Best Sellers', icon: '⭐' }
   ];
 
   // Initial data fetch and when URL parameters or sort changes
@@ -231,19 +279,14 @@ function ProductsPageContent() {
     };
 
     fetchData();
-  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery, fetchProducts]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery, typeQuery, fetchProducts]);
 
   // Update filters when URL parameters change
   useEffect(() => {
-    const sortConfig = getInitialSort();
-    setFilters(prev => ({ 
-      ...prev, 
-      search: urlSearchQuery,
-      category: categoryQuery || undefined,
-      sortBy: sortConfig.sortBy,
-      sortOrder: sortConfig.sortOrder
-    }));
-  }, [urlSearchQuery, categoryQuery, vendorQuery, getInitialSort]);
+    setFilters(getInitialFilters());
+    // Update selectedType based on type query
+    setSelectedType(typeQuery || '');
+  }, [getInitialFilters, typeQuery]);
 
   useEffect(() => {
     let filtered = [...products];
@@ -289,7 +332,7 @@ function ProductsPageContent() {
             aValue = a.sale_price ? parseFloat(a.sale_price) : parseFloat(a.price);
             bValue = b.sale_price ? parseFloat(b.sale_price) : parseFloat(b.price);
             break;
-          case 'newest':
+          case 'created_at':
             aValue = new Date(a.created_at);
             bValue = new Date(b.created_at);
             break;
@@ -318,18 +361,70 @@ function ProductsPageContent() {
     }
   }, [filters.seller, filters.priceRange, filters.inStock]);
 
-  const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: urlSearchQuery, // Keep the search query when clearing other filters
-      category: categoryQuery || undefined, // Keep the category query when clearing other filters
-      sortBy: 'name',
-      sortOrder: 'asc',
+  // Helper function to update URL parameters
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Apply updates
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'undefined') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
     });
-  };
+    
+    // Always remove page when filters change
+    params.delete('page');
+    
+    router.push(`/products?${params.toString()}`);
+  }, [searchParams, router]);
+
+  const handleFilterChange = useCallback((newFilters: Partial<SearchFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    
+    // Update URL parameters for the filters
+    const updates: Record<string, string | null> = {};
+    
+    if (newFilters.category !== undefined) {
+      updates.category = newFilters.category || null;
+    }
+    
+    if (newFilters.priceRange !== undefined) {
+      updates.price_min = newFilters.priceRange ? newFilters.priceRange[0].toString() : null;
+      updates.price_max = newFilters.priceRange ? newFilters.priceRange[1].toString() : null;
+    }
+    
+    if (newFilters.seller !== undefined) {
+      updates.vendor = newFilters.seller && newFilters.seller.length > 0 ? newFilters.seller.join(',') : null;
+    }
+    
+    if (newFilters.inStock !== undefined) {
+      updates.in_stock = newFilters.inStock !== null ? newFilters.inStock.toString() : null;
+    }
+    
+    updateUrlParams(updates);
+  }, [updateUrlParams]);
+
+  const clearFilters = useCallback(() => {
+    // Clear only the sidebar filter properties directly
+    setFilters(prev => ({
+      ...prev,
+      priceRange: undefined,
+      seller: undefined,
+      inStock: undefined,
+      category: undefined, // Clear category filter completely
+    }));
+    
+    // Clear only the sidebar filter URL parameters
+    updateUrlParams({
+      category: null,
+      price_min: null,
+      price_max: null,
+      vendor: null,
+      in_stock: null,
+    });
+  }, [updateUrlParams]);
 
   // Prevent body scroll when mobile filter modal is open
   useEffect(() => {
@@ -480,29 +575,87 @@ function ProductsPageContent() {
     toggleWishlist(wishlistItem);
   };
 
-  // Helper function to get the sortBy value for SortingHeader
+  // Helper function to get the sortBy value for SortingHeader (only shows regular sorting)
   const getSortByValue = () => {
-    if (['trending', 'deals', 'most-viewed', 'best-sellers'].includes(filters.sortBy || '')) {
-      return filters.sortBy || 'name-asc';
-    }
-    return `${filters.sortBy}-${filters.sortOrder}`;
-  };
-
-  // Handler for sort change from SortingHeader
-  const handleSortChange = useCallback((value: string) => {
-    // Check if it's a special sorting algorithm
-    if (['trending', 'deals', 'most-viewed', 'best-sellers'].includes(value)) {
-      setFilters(prev => ({ ...prev, sortBy: value as any, sortOrder: 'desc' }));
-    } else {
-      // Regular sort with format: "field-direction"
-      const [sortBy, sortOrder] = value.split('-');
-      setFilters(prev => ({ ...prev, sortBy: sortBy as any, sortOrder: sortOrder as any }));
+    if (!filters.sortBy) {
+      return '';
     }
     
-    // Reset pagination (fetchProducts will be triggered by useEffect)
+    // Don't show quick filters in the dropdown
+    if (['trending', 'deals', 'most-viewed', 'best-sellers'].includes(filters.sortBy)) {
+      return '';
+    }
+    
+    // Map backend column names back to frontend field names for display
+    const backendToFrontendMapping: Record<string, string> = {
+      'created_at': 'newest',
+      'name': 'name',
+      'price': 'price'
+    };
+    
+    const frontendField = backendToFrontendMapping[filters.sortBy] || filters.sortBy;
+    return `${frontendField}-${filters.sortOrder}`;
+  };
+
+  // Handler for sort change from SortingHeader (only handles regular sorting)
+  const handleSortChange = useCallback((value: string) => {
+    if (value === '' || !value) {
+      // Clear regular sorting but keep type if active
+      if (selectedType) {
+        // Don't set sortBy for type - it will be handled by backend type parameter
+        updateUrlParams({ sort: null });
+      } else {
+        setFilters(prev => ({ 
+          ...prev, 
+          sortBy: undefined, 
+          sortOrder: undefined 
+        }));
+        updateUrlParams({ sort: null });
+      }
+    } else {
+      // Regular sort with format: "field-direction" - convert to backend format
+      const [sortBy, sortOrder] = value.split('-');
+      
+      // Map frontend field names to backend column names
+      const fieldMapping: Record<string, string> = {
+        'newest': 'created_at',
+        'name': 'name',
+        'price': 'price'
+      };
+      
+      const backendSortBy = fieldMapping[sortBy] || sortBy;
+      
+      // Don't clear quick filter - allow both to work together
+      setFilters(prev => ({ ...prev, sortBy: backendSortBy as any, sortOrder: sortOrder as any }));
+      updateUrlParams({ sort: value });
+    }
+    
+    // Reset pagination
     setCurrentPage(1);
     setHasMore(true);
-  }, []);
+  }, [updateUrlParams, selectedType]);
+
+  // Handler for clearing search
+  const handleClearSearch = useCallback(() => {
+    updateUrlParams({ q: null });
+  }, [updateUrlParams]);
+
+  // Handler for type changes (Trending, Deals, Most Viewed, Best Sellers)
+  const handleTypeChange = useCallback((value: string) => {
+    setSelectedType(value);
+    
+    if (value) {
+      // Set type parameter, keep existing sort if any
+      updateUrlParams({ type: value });
+    } else {
+      // Clear type parameter
+      updateUrlParams({ type: null });
+    }
+    
+    // Reset pagination
+    setCurrentPage(1);
+    setHasMore(true);
+  }, [updateUrlParams]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -802,7 +955,52 @@ function ProductsPageContent() {
               sortOptions={sortOptions}
               showAdditionalInfo={false}
               isLoading={loading || searchLoading}
+              searchInput={urlSearchQuery}
+              onClearSearch={handleClearSearch}
+              onResetAll={() => {
+                // Clear only sort, search, and type (NOT filters)
+                setFilters(prev => ({
+                  ...prev,
+                  search: '',
+                  sortBy: undefined,
+                  sortOrder: undefined,
+                }));
+                setSelectedType('');
+                updateUrlParams({
+                  q: null,
+                  sort: null,
+                  type: null,
+                  // Keep filter parameters intact
+                });
+              }}
+              appliedFilters={{
+                priceRange: filters.priceRange,
+                seller: filters.seller,
+                inStock: filters.inStock,
+              }}
             />
+          </div>
+
+          {/* Mobile Quick Filters - Separate Section */}
+          <div className="lg:hidden mb-4">
+            <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+              {quickFilters.map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => handleTypeChange(selectedType === filter.value ? '' : filter.value)}
+                  className={`
+                    flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap
+                    ${selectedType === filter.value
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                    }
+                  `}
+                >
+                  {filter.icon && <span className="mr-1">{filter.icon}</span>}
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Desktop Sorting Header */}
@@ -815,7 +1013,52 @@ function ProductsPageContent() {
               sortOptions={sortOptions}
               showAdditionalInfo={false}
               isLoading={loading || searchLoading}
+              searchInput={urlSearchQuery}
+              onClearSearch={handleClearSearch}
+              onResetAll={() => {
+                // Clear only sort, search, and type (NOT filters)
+                setFilters(prev => ({
+                  ...prev,
+                  search: '',
+                  sortBy: undefined,
+                  sortOrder: undefined,
+                }));
+                setSelectedType('');
+                updateUrlParams({
+                  q: null,
+                  sort: null,
+                  type: null,
+                  // Keep filter parameters intact
+                });
+              }}
+              appliedFilters={{
+                priceRange: filters.priceRange,
+                seller: filters.seller,
+                inStock: filters.inStock,
+              }}
             />
+          </div>
+
+          {/* Desktop Type Filters - Separate Section */}
+          <div className="hidden lg:block mb-6">
+            <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+              {quickFilters.map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => handleTypeChange(selectedType === filter.value ? '' : filter.value)}
+                  className={`
+                    flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap
+                    ${selectedType === filter.value
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                    }
+                  `}
+                >
+                  {filter.icon && <span className="mr-1">{filter.icon}</span>}
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* No results message for search */}

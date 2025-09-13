@@ -217,7 +217,7 @@ export interface SearchFilters {
 	sortBy?:
 		| 'name'
 		| 'price'
-		| 'newest'
+		| 'created_at' // Backend field for newest
 		| 'trending'
 		| 'deals'
 		| 'most-viewed'

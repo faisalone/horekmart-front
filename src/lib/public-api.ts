@@ -36,6 +36,7 @@ class PublicApiClient {
 		category?: string;
 		vendor?: string;
 		featured?: boolean;
+		type?: string; // Add type parameter for trending, deals, etc.
 		sort_by?: string;
 		sort_order?: 'asc' | 'desc';
 		per_page?: number;
