@@ -363,36 +363,6 @@ export interface BulkAction {
 	ids: string[];
 }
 
-// Settings Types
-export interface GeneralSettings {
-	site_name: string;
-	site_description: string;
-	site_logo?: string;
-	site_favicon?: string;
-	admin_email: string;
-	default_currency: string;
-	default_timezone: string;
-	maintenance_mode: boolean;
-}
-
-export interface EmailSettings {
-	smtp_host: string;
-	smtp_port: number;
-	smtp_username: string;
-	smtp_password: string;
-	smtp_encryption: 'tls' | 'ssl' | 'none';
-	from_email: string;
-	from_name: string;
-}
-
-export interface PaymentSettings {
-	stripe_publishable_key?: string;
-	stripe_secret_key?: string;
-	paypal_client_id?: string;
-	paypal_client_secret?: string;
-	payment_methods: ('stripe' | 'paypal' | 'bank_transfer')[];
-}
-
 // Navigation Types
 export interface AdminMenuItem {
 	title: string;
@@ -455,4 +425,45 @@ export interface SocialMediaPostResponse {
 		failed_posts: number;
 		platforms_attempted: string[];
 	};
+}
+
+// Site Settings Types
+export interface SiteSetting {
+	id: number;
+	key: string;
+	value: string | null;
+	type: 'string' | 'text' | 'boolean' | 'integer' | 'json';
+	group: string;
+	description?: string;
+	is_public: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface GroupedSiteSettings {
+	[group: string]: SiteSetting[];
+}
+
+export interface SiteSettingCreateRequest {
+	key: string;
+	value: string | null;
+	type: 'string' | 'text' | 'boolean' | 'integer' | 'json';
+	group: string;
+	description?: string;
+	is_public: boolean;
+}
+
+export interface SiteSettingUpdateRequest {
+	value?: string | null;
+	type?: 'string' | 'text' | 'boolean' | 'integer' | 'json';
+	group?: string;
+	description?: string;
+	is_public?: boolean;
+}
+
+export interface SiteSettingBulkUpdateRequest {
+	settings: Array<{
+		key: string;
+		value: string | null;
+	}>;
 }

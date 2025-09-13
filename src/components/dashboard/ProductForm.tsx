@@ -151,7 +151,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     const lastPlatform = (entries[entries.length - 1]?.platform) || 'facebook';
     // Always ensure exactly one empty row at the end
     return [...nonEmpty, createEmptyEntry(lastPlatform as SocialPlatform)];
-  }, []);
+  }, [createEmptyEntry]);
 
   // Initialize form with product data if editing
   useEffect(() => {
@@ -212,14 +212,14 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
       (sl.youtube || []).forEach((url) => entries.push({ id: crypto.randomUUID(), platform: 'youtube', url }));
       setSocialEntries((prev) => ensureSingleEmptyRow(entries));
     }
-  }, [product, mode]);
+  }, [product, mode, ensureSingleEmptyRow]);
 
   // For create mode, ensure entries reflect default social_links
   useEffect(() => {
     if (!product && mode === 'create') {
       setSocialEntries([createEmptyEntry('facebook')]);
     }
-  }, [product, mode]);
+  }, [product, mode, createEmptyEntry]);
 
   // Keep formData.social_links in sync with dynamic entries
   const syncEntriesToForm = useCallback((entries: SocialEntry[]) => {

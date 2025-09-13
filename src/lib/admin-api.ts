@@ -16,7 +16,6 @@ import {
 	SalesData,
 	TableFilter,
 	BulkAction,
-	GeneralSettings,
 	Category,
 	Variation,
 	VariationValue,
@@ -24,6 +23,11 @@ import {
 	SocialMediaPost,
 	SocialMediaPostResponse,
 	SocialMediaTokenStatus,
+	SiteSetting,
+	GroupedSiteSettings,
+	SiteSettingCreateRequest,
+	SiteSettingUpdateRequest,
+	SiteSettingBulkUpdateRequest,
 } from '@/types/admin';
 
 class AdminApiClient {
@@ -719,24 +723,6 @@ class AdminApiClient {
 		await this.client.delete(`/admin/categories/${id}`);
 	}
 
-	// Settings endpoints
-	async getGeneralSettings(): Promise<GeneralSettings> {
-		const response = await this.client.get<ApiResponse<GeneralSettings>>(
-			'/admin/settings/general'
-		);
-		return response.data.data;
-	}
-
-	async updateGeneralSettings(
-		settings: Partial<GeneralSettings>
-	): Promise<GeneralSettings> {
-		const response = await this.client.put<ApiResponse<GeneralSettings>>(
-			'/admin/settings/general',
-			settings
-		);
-		return response.data.data;
-	}
-
 	// File upload
 	async uploadFile(
 		file: File,
@@ -922,6 +908,53 @@ class AdminApiClient {
 		const response = await this.client.get<{
 			data: SocialMediaTokenStatus;
 		}>('/admin/social/tokens');
+		return response.data.data;
+	}
+
+	// Site Settings API
+	async getSiteSettings(): Promise<GroupedSiteSettings> {
+		const response = await this.client.get<{
+			data: GroupedSiteSettings;
+		}>('/admin/site-settings');
+		return response.data.data;
+	}
+
+	async createSiteSetting(
+		data: SiteSettingCreateRequest
+	): Promise<SiteSetting> {
+		const response = await this.client.post<{
+			data: SiteSetting;
+		}>('/admin/site-settings', data);
+		return response.data.data;
+	}
+
+	async getSiteSetting(id: number): Promise<SiteSetting> {
+		const response = await this.client.get<{
+			data: SiteSetting;
+		}>(`/admin/site-settings/${id}`);
+		return response.data.data;
+	}
+
+	async updateSiteSetting(
+		id: number,
+		data: SiteSettingUpdateRequest
+	): Promise<SiteSetting> {
+		const response = await this.client.put<{
+			data: SiteSetting;
+		}>(`/admin/site-settings/${id}`, data);
+		return response.data.data;
+	}
+
+	async deleteSiteSetting(id: number): Promise<void> {
+		await this.client.delete(`/admin/site-settings/${id}`);
+	}
+
+	async bulkUpdateSiteSettings(
+		data: SiteSettingBulkUpdateRequest
+	): Promise<SiteSetting[]> {
+		const response = await this.client.post<{
+			data: SiteSetting[];
+		}>('/admin/site-settings/bulk-update', data);
 		return response.data.data;
 	}
 }

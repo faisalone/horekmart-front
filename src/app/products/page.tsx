@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Filter } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
@@ -40,7 +40,7 @@ function ProductsPageContent() {
   const sortQuery = searchParams.get('sort') || '';
   
   // Initialize sort based on URL parameter or default
-  const getInitialSort = () => {
+  const getInitialSort = useCallback(() => {
     if (sortQuery && ['trending', 'deals', 'most-viewed', 'best-sellers'].includes(sortQuery)) {
       return { sortBy: sortQuery as SearchFilters['sortBy'], sortOrder: 'desc' as const };
     }
@@ -48,7 +48,7 @@ function ProductsPageContent() {
       return { sortBy: 'newest' as const, sortOrder: 'desc' as const };
     }
     return { sortBy: 'trending' as const, sortOrder: 'desc' as const };
-  };
+  }, [sortQuery]);
   
   const [filters, setFilters] = useState<SearchFilters>({
     search: urlSearchQuery,
@@ -56,6 +56,10 @@ function ProductsPageContent() {
     ...getInitialSort(),
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Ref to prevent duplicate API calls
+  const fetchingRef = useRef(false);
+  const lastFetchParamsRef = useRef<string>('');
 
   // Cart and wishlist contexts
   const { toggleItem: toggleWishlist } = useWishlist();
@@ -109,9 +113,21 @@ function ProductsPageContent() {
 
   useSEO(seoData || fallbackSEO);
 
-  // Function to fetch products with pagination
-  const fetchProducts = async (page: number = 1, reset: boolean = false) => {
+  // Function to fetch products with pagination and duplicate prevention
+  const fetchProducts = useCallback(async (page: number = 1, reset: boolean = false) => {
+    // Create a unique key for this fetch request
+    const fetchKey = `${urlSearchQuery}-${categoryQuery}-${vendorQuery}-${filters.sortBy}-${filters.sortOrder}-${page}-${reset}`;
+    
+    // Prevent duplicate calls with the same parameters
+    if (fetchingRef.current && lastFetchParamsRef.current === fetchKey && page === 1) {
+      console.log('Preventing duplicate fetch with same parameters');
+      return;
+    }
+    
     try {
+      fetchingRef.current = true;
+      lastFetchParamsRef.current = fetchKey;
+      
       if (page === 1) {
         setLoading(true);
       } else {
@@ -125,7 +141,7 @@ function ProductsPageContent() {
         category: categoryQuery || undefined,
         vendor: vendorQuery || undefined,
         sort_by: filters.sortBy || 'name',
-        sort_order: filters.sortOrder || 'asc',
+        sort_order: (filters.sortOrder || 'asc') as 'asc' | 'desc',
       };
 
       const response = await publicApi.getProducts(params);
@@ -168,15 +184,16 @@ function ProductsPageContent() {
       setLoading(false);
       setLoadingMore(false);
       setSearchLoading(false);
+      fetchingRef.current = false;
     }
-  };
+  }, [urlSearchQuery, categoryQuery, vendorQuery, filters.sortBy, filters.sortOrder]);
 
   // Function to load more products
-  const loadMoreProducts = async () => {
+  const loadMoreProducts = useCallback(async () => {
     if (!loadingMore && hasMore && !loading) {
       await fetchProducts(currentPage + 1, false);
     }
-  };
+  }, [loadingMore, hasMore, loading, fetchProducts, currentPage]);
 
   // Sort options for the sorting header
   const sortOptions = [
@@ -191,12 +208,15 @@ function ProductsPageContent() {
     { value: 'price-desc', label: '💎 Price: High to Low' }
   ];
 
+  // Initial data fetch and when URL parameters or sort changes
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch sellers first
-        const sellersData = await publicApi.getVendors();
-        setSellers(sellersData.data);
+        // Fetch sellers first (only if not already loaded)
+        if (sellers.length === 0) {
+          const sellersData = await publicApi.getVendors();
+          setSellers(sellersData.data);
+        }
         
         // Reset pagination and fetch first page
         setCurrentPage(1);
@@ -204,12 +224,14 @@ function ProductsPageContent() {
         await fetchProducts(1, true);
       } catch (error) {
         console.error('Error fetching sellers:', error);
-        setSellers([]);
+        if (sellers.length === 0) {
+          setSellers([]);
+        }
       }
     };
 
     fetchData();
-  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery, fetchProducts]);
 
   // Update filters when URL parameters change
   useEffect(() => {
@@ -221,7 +243,7 @@ function ProductsPageContent() {
       sortBy: sortConfig.sortBy,
       sortOrder: sortConfig.sortOrder
     }));
-  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, getInitialSort]);
 
   useEffect(() => {
     let filtered = [...products];
@@ -346,7 +368,7 @@ function ProductsPageContent() {
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(timeoutId);
     };
-  }, [loadingMore, hasMore, loading, currentPage]);
+  }, [loadingMore, hasMore, loading, loadMoreProducts]);
 
   const uniqueSellers = sellers.filter(seller => seller.is_active);
   
@@ -467,7 +489,7 @@ function ProductsPageContent() {
   };
 
   // Handler for sort change from SortingHeader
-  const handleSortChange = (value: string) => {
+  const handleSortChange = useCallback((value: string) => {
     // Check if it's a special sorting algorithm
     if (['trending', 'deals', 'most-viewed', 'best-sellers'].includes(value)) {
       setFilters(prev => ({ ...prev, sortBy: value as any, sortOrder: 'desc' }));
@@ -477,11 +499,10 @@ function ProductsPageContent() {
       setFilters(prev => ({ ...prev, sortBy: sortBy as any, sortOrder: sortOrder as any }));
     }
     
-    // Reset pagination and refetch with new sort
+    // Reset pagination (fetchProducts will be triggered by useEffect)
     setCurrentPage(1);
     setHasMore(true);
-    fetchProducts(1, true);
-  };
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

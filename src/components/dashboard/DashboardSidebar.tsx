@@ -57,8 +57,8 @@ const menuItems: AdminMenuItem[] = [
     icon: Users,
   },
   {
-    title: 'Settings',
-    href: '/dashboard/settings',
+    title: 'Site Settings',
+    href: '/dashboard/site-settings',
     icon: Settings,
   },
 ];

@@ -25,12 +25,6 @@ export default function FloatingButton({
   const [moved, setMoved] = useState(false);
   const animationFrameRef = React.useRef<number>(0);
 
-  // Mount only on client
-  useEffect(() => {
-    setMounted(true);
-    loadPosition();
-  }, []);
-
   // Get screen size category
   const getScreenSize = () => {
     if (typeof window === 'undefined') return 'desktop';
@@ -57,13 +51,23 @@ export default function FloatingButton({
     }
   }, [type]);
 
+  // Keep position within viewport
+  const constrainPosition = useCallback((x: number, y: number) => {
+    const margin = 8;
+    const buttonSize = 56;
+    return {
+      x: Math.max(margin, Math.min(window.innerWidth - buttonSize - margin, x)),
+      y: Math.max(margin, Math.min(window.innerHeight - buttonSize - margin, y))
+    };
+  }, []);
+
   // Cookie management
-  const savePosition = (pos: { x: number; y: number }) => {
+  const savePosition = useCallback((pos: { x: number; y: number }) => {
     const key = `${type}-button-${getScreenSize()}`;
     document.cookie = `${key}=${JSON.stringify(pos)};path=/;max-age=31536000;SameSite=Lax`;
-  };
+  }, [type]);
 
-  const loadPosition = () => {
+  const loadPosition = useCallback(() => {
     const key = `${type}-button-${getScreenSize()}`;
     const saved = document.cookie
       .split(';')
@@ -80,17 +84,13 @@ export default function FloatingButton({
     }
     
     setPosition(getDefaultPosition());
-  };
+  }, [type, constrainPosition, getDefaultPosition]);
 
-  // Keep position within viewport
-  const constrainPosition = (x: number, y: number) => {
-    const margin = 8;
-    const buttonSize = 56;
-    return {
-      x: Math.max(margin, Math.min(window.innerWidth - buttonSize - margin, x)),
-      y: Math.max(margin, Math.min(window.innerHeight - buttonSize - margin, y))
-    };
-  };
+  // Mount only on client
+  useEffect(() => {
+    setMounted(true);
+    loadPosition();
+  }, [loadPosition]);
 
   // Optimized position update with requestAnimationFrame
   const updatePosition = useCallback((newPos: { x: number; y: number }) => {
@@ -117,7 +117,7 @@ export default function FloatingButton({
     setMoved(true);
     const newPos = constrainPosition(e.clientX - dragStart.x, e.clientY - dragStart.y);
     updatePosition(newPos);
-  }, [isDragging, dragStart, updatePosition]);
+  }, [isDragging, dragStart, updatePosition, constrainPosition]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -129,7 +129,7 @@ export default function FloatingButton({
       }
       if (moved) savePosition(position);
     }
-  }, [isDragging, moved, position]);
+  }, [isDragging, moved, position, savePosition]);
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -146,7 +146,7 @@ export default function FloatingButton({
     const touch = e.touches[0];
     const newPos = constrainPosition(touch.clientX - dragStart.x, touch.clientY - dragStart.y);
     updatePosition(newPos);
-  }, [isDragging, dragStart, updatePosition]);
+  }, [isDragging, dragStart, updatePosition, constrainPosition]);
 
   // Click handler
   const handleClick = () => {
@@ -189,7 +189,7 @@ export default function FloatingButton({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [position]);
+  }, [position, constrainPosition, savePosition]);
 
   // Cleanup animation frames on unmount
   useEffect(() => {

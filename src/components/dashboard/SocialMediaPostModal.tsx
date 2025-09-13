@@ -349,7 +349,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
         document.removeEventListener('keydown', handleEscape);
       };
     }
-  }, [open]);
+  }, [open, handleCloseModal]);
 
   if (!product || !open) return null;
 

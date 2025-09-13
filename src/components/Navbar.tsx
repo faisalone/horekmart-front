@@ -102,7 +102,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Top Header - Modern blue to purple gradient */}
+      {/* Top Header - Theme gradient */}
             <div className="text-white theme-gradient-secondary">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center h-20">
@@ -174,7 +174,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     <ShoppingCart className="h-8 w-8" />
                     {cartState.totalItems > 0 && (
                       <span 
-                        className="absolute -top-3 -right-3 bg-white text-purple-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
+                        className="absolute -top-3 -right-3 bg-white text-theme-primary text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
                       >
                         {cartState.totalItems}
                       </span>
@@ -192,7 +192,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 <button 
                   onClick={handleSellerClick}
                   disabled={loading}
-                  className={`flex items-center space-x-2 border-2 border-white text-white px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 hover:bg-white hover:text-purple-600 cursor-pointer ${
+                  className={`flex items-center space-x-2 border-2 border-white text-white px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 hover:bg-white hover:text-theme-primary cursor-pointer ${
                     loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -264,7 +264,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 <button 
                   onClick={handleSellerClick}
                   disabled={loading}
-                  className={`flex items-center justify-center border-2 border-white text-white p-2.5 rounded-lg transition-all duration-300 hover:bg-white hover:text-purple-600 cursor-pointer ${
+                  className={`flex items-center justify-center border-2 border-white text-white p-2.5 rounded-lg transition-all duration-300 hover:bg-white hover:text-theme-primary cursor-pointer ${
                     loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   title={loading ? 'Loading...' : isAuthenticated ? 'Go to Dashboard' : 'Start Selling'}
@@ -281,7 +281,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     <ShoppingCart className="h-6 w-6" />
                     {cartState.totalItems > 0 && (
                       <span 
-                        className="absolute -top-3 -right-3 bg-white text-purple-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
+                        className="absolute -top-3 -right-3 bg-white text-theme-primary text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
                       >
                         {cartState.totalItems}
                       </span>
@@ -384,7 +384,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
             <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-6 py-4 z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-r from-theme-secondary to-theme-primary rounded-lg flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -448,8 +448,8 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   <div className="grid grid-cols-1 gap-3">
                     {categories.slice(0, 8).map((category, index) => {
                       const hoverColors = [
-                        'hover:bg-purple-50/30 hover:border-purple-200',
-                        'hover:bg-blue-50/30 hover:border-blue-200',
+                        'hover:bg-theme-primary-50/30 hover:border-theme-primary-200',
+                        'hover:bg-theme-secondary-50/30 hover:border-theme-secondary-200',
                         'hover:bg-green-50/30 hover:border-green-200',
                         'hover:bg-orange-50/30 hover:border-orange-200',
                         'hover:bg-red-50/30 hover:border-red-200',
@@ -524,7 +524,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                       <span className="text-xl font-bold text-gray-900 tracking-tight">
                         <AutoFontText>Trendings</AutoFontText>
                       </span>
-                      <p className="text-sm text-gray-600 mt-0.5">What's hot right now</p>
+                      <p className="text-sm text-gray-600 mt-0.5">What&apos;s hot right now</p>
                     </div>
                     <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                       <svg className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -562,7 +562,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   setIsMenuOpen(false);
                 }}
                 disabled={loading}
-                className={`w-full flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 cursor-pointer ${
+                className={`w-full flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-theme-primary to-theme-secondary text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:from-theme-primary-dark hover:to-theme-secondary-dark cursor-pointer ${
                   loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >

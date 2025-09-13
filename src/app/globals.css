@@ -734,6 +734,14 @@ padding: 0.5rem 2.5rem 0.5rem 0.75rem; /* Reduced vertical padding for better fi
 .text-theme-secondary-light { color: var(--theme-secondary-light); }
 .text-theme-secondary-dark { color: var(--theme-secondary-dark); }
 
+/* Hover Text Color Classes */
+.hover\:text-theme-primary:hover { color: var(--theme-primary); }
+.hover\:text-theme-primary-light:hover { color: var(--theme-primary-light); }
+.hover\:text-theme-primary-dark:hover { color: var(--theme-primary-dark); }
+.hover\:text-theme-secondary:hover { color: var(--theme-secondary); }
+.hover\:text-theme-secondary-light:hover { color: var(--theme-secondary-light); }
+.hover\:text-theme-secondary-dark:hover { color: var(--theme-secondary-dark); }
+
 /* Border Color Classes */
 .border-theme-primary { border-color: var(--theme-primary); }
 .border-theme-primary-light { border-color: var(--theme-primary-light); }
