@@ -115,12 +115,13 @@ function ProductsPageContent() {
       return await generateProductsPageSEO({
         searchQuery: urlSearchQuery || undefined,
         categoryQuery: categoryQuery || undefined,
-        type: selectedType || undefined
+        type: selectedType || undefined,
+        products: products.length > 0 ? products : undefined
       });
     };
 
     generateSEOForCurrentPage().then(setSeoData);
-  }, [urlSearchQuery, categoryQuery, selectedType]);
+  }, [urlSearchQuery, categoryQuery, selectedType, products]);
 
   // Use better fallback with site defaults while SEO data loads
   const getFallbackSEO = () => {

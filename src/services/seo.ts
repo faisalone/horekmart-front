@@ -258,6 +258,7 @@ export const generateProductsPageSEO = async (context?: {
 	searchQuery?: string;
 	categoryQuery?: string;
 	type?: string;
+	products?: Product[];
 }): Promise<SEOData> => {
 	const siteConfig = await siteSettingsService.getSiteConfig();
 
@@ -271,9 +272,23 @@ export const generateProductsPageSEO = async (context?: {
 		title = siteConfig.name
 			? `Search: "${context.searchQuery}" - ${siteConfig.name}`
 			: `Search: "${context.searchQuery}"`;
-		description = `Search results for "${context.searchQuery}". ${
-			siteConfig.description || ''
-		}`;
+
+		// Use actual search results descriptions if available
+		if (context?.products && context.products.length > 0) {
+			const searchResultDescriptions = context.products
+				.filter((p) => p.short_description || p.description)
+				.slice(0, 2)
+				.map((p) =>
+					(p.short_description || p.description)?.substring(0, 80)
+				)
+				.join('. ');
+			description = `Search results for "${context.searchQuery}". ${searchResultDescriptions}`;
+		} else {
+			description = `Search results for "${context.searchQuery}". ${
+				siteConfig.description || ''
+			}`;
+		}
+
 		keywords = `${context.searchQuery}, search, ${
 			siteConfig.keywords?.join(', ') || ''
 		}`;
@@ -291,9 +306,23 @@ export const generateProductsPageSEO = async (context?: {
 		title = siteConfig.name
 			? `${categoryName} Products - ${siteConfig.name}`
 			: `${categoryName} Products`;
-		description = `Browse ${categoryName.toLowerCase()} products. ${
-			siteConfig.description || ''
-		}`;
+
+		// Use actual category product descriptions if available
+		if (context?.products && context.products.length > 0) {
+			const categoryProductDescriptions = context.products
+				.filter((p) => p.short_description || p.description)
+				.slice(0, 2)
+				.map((p) =>
+					(p.short_description || p.description)?.substring(0, 80)
+				)
+				.join('. ');
+			description = `Browse ${categoryName.toLowerCase()} products. ${categoryProductDescriptions}`;
+		} else {
+			description = `Browse ${categoryName.toLowerCase()} products. ${
+				siteConfig.description || ''
+			}`;
+		}
+
 		keywords = `${categoryName.toLowerCase()}, products, ${
 			siteConfig.keywords?.join(', ') || ''
 		}`;
@@ -326,7 +355,21 @@ export const generateProductsPageSEO = async (context?: {
 	// Default products page
 	else {
 		title = siteConfig.name ? `Products - ${siteConfig.name}` : 'Products';
-		description = siteConfig.description || '';
+
+		// Use product descriptions if available
+		if (context?.products && context.products.length > 0) {
+			const productDescriptions = context.products
+				.filter((p) => p.short_description || p.description)
+				.slice(0, 3)
+				.map((p) =>
+					(p.short_description || p.description)?.substring(0, 100)
+				)
+				.join('. ');
+			description = productDescriptions || siteConfig.description || '';
+		} else {
+			description = siteConfig.description || '';
+		}
+
 		keywords = siteConfig.keywords?.join(', ') || '';
 		canonicalUrl = siteConfig.url ? `${siteConfig.url}/products` : '';
 	}
