@@ -47,6 +47,9 @@ export async function generateMetadataFromSiteSettings() {
 				process.env.NEXT_PUBLIC_DEFAULT_KEYWORDS?.split(',').filter(
 					Boolean
 				) || [],
+			other: {
+				'fb:app_id': '1062202325995875',
+			},
 		};
 	}
 
@@ -96,6 +99,9 @@ export async function generateMetadataFromSiteSettings() {
 						},
 				  ]
 				: [],
+		},
+		other: {
+			'fb:app_id': '1062202325995875',
 		},
 		twitter: {
 			card: 'summary_large_image' as const,
