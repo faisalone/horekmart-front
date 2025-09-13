@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { adminApi } from '@/lib/admin-api';
 import { Asset } from '@/types/admin';
@@ -288,15 +289,15 @@ export default function AssetsPage() {
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       {/* Asset Preview */}
-                      <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden relative">
                         {asset.url ? (
-                          <img 
+                          <Image 
                             src={asset.url} 
                             alt={asset.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            fill
+                            className="object-cover"
+                            onError={() => {
+                              // Handle error by showing fallback
                             }}
                           />
                         ) : null}
@@ -343,23 +344,42 @@ export default function AssetsPage() {
                           </Button>
                         )}
                         
-                        {/* Copy Path Button */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copyToClipboard(`${asset.path}`, `path-${asset.id}`, 'path')}
-                          className={cn(
-                            "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white transition-all duration-200",
-                            copiedItems.has(`path-${asset.id}`) && "border-green-500/50 text-green-400 bg-green-600/10"
-                          )}
-                          title="Copy Storage Path"
-                        >
-                          {copiedItems.has(`path-${asset.id}`) ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                        </Button>
+                        {/* Copy URL/Path Button */}
+                        {asset.url ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copyToClipboard(asset.url!, `url-${asset.id}`, 'url')}
+                            className={cn(
+                              "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white transition-all duration-200",
+                              copiedItems.has(`url-${asset.id}`) && "border-green-500/50 text-green-400 bg-green-600/10"
+                            )}
+                            title="Copy File URL"
+                          >
+                            {copiedItems.has(`url-${asset.id}`) ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copyToClipboard(`${asset.path}`, `path-${asset.id}`, 'path')}
+                            className={cn(
+                              "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white transition-all duration-200",
+                              copiedItems.has(`path-${asset.id}`) && "border-green-500/50 text-green-400 bg-green-600/10"
+                            )}
+                            title="Copy Storage Path (Private)"
+                          >
+                            {copiedItems.has(`path-${asset.id}`) ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
                         
                         {/* Delete Button */}
                         <Button

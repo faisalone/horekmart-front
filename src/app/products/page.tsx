@@ -279,7 +279,7 @@ function ProductsPageContent() {
     };
 
     fetchData();
-  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery, typeQuery, fetchProducts]);
+  }, [urlSearchQuery, categoryQuery, vendorQuery, sortQuery, typeQuery, fetchProducts, sellers.length]);
 
   // Update filters when URL parameters change
   useEffect(() => {

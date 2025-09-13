@@ -144,7 +144,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
   type SocialPlatform = 'facebook' | 'instagram' | 'youtube';
   type SocialEntry = { id: string; platform: SocialPlatform; url: string };
   const [socialEntries, setSocialEntries] = useState<SocialEntry[]>([]);
-  const createEmptyEntry = (platform: SocialPlatform = 'facebook'): SocialEntry => ({ id: crypto.randomUUID(), platform, url: '' });
+  const createEmptyEntry = useCallback((platform: SocialPlatform = 'facebook'): SocialEntry => ({ id: crypto.randomUUID(), platform, url: '' }), []);
   const ensureSingleEmptyRow = useCallback((entries: SocialEntry[]): SocialEntry[] => {
     if (!entries || entries.length === 0) return [createEmptyEntry('facebook')];
     const nonEmpty = entries.filter(e => e.url.trim() !== '');

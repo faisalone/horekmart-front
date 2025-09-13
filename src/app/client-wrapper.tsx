@@ -9,6 +9,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { Toaster } from 'sonner';
+import { getCachedSiteSettings } from '@/services/siteSettings';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -16,6 +17,8 @@ interface ClientWrapperProps {
 
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const pathname = usePathname();
+  const settings = getCachedSiteSettings();
+  const contactPhone = settings?.contact_phone || "+880 1763 223035";
   
   // Define routes that should not have the main layout (Navbar + Footer)
   const routesWithoutMainLayout = [
@@ -57,7 +60,7 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               <FloatingButton 
                 type="whatsapp"
                 onClick={() => {}}
-                phoneNumber="+880 1763 223035"
+                phoneNumber={contactPhone}
                 message="Hello! I'm interested in your products."
               />
             </div>

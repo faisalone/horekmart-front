@@ -1,69 +1,13 @@
 import { Product, SEOData, SiteConfig } from '@/types';
 
-// Site settings from backend API
-interface SiteSettings {
-	site_name?: string;
-	site_description?: string;
-	site_url?: string;
-	seo_title?: string;
-	seo_description?: string;
-	seo_keywords?: string;
-	seo_og_image?: string;
-	[key: string]: any;
-}
-
-let cachedSiteSettings: SiteSettings | null = null;
-
-/**
- * Fetch site settings from backend API
- */
-const fetchSiteSettings = async (): Promise<SiteSettings> => {
-	if (cachedSiteSettings) {
-		return cachedSiteSettings;
-	}
-
-	try {
-		const response = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/v1/site-settings`
-		);
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-
-		const result = await response.json();
-		if (result.success && result.data) {
-			cachedSiteSettings = result.data;
-			return result.data;
-		}
-
-		throw new Error('Invalid API response format');
-	} catch (error) {
-		console.warn('Failed to fetch site settings from backend:', error);
-		return {};
-	}
-};
+// Import site settings service
+import { siteSettingsService, SiteSettings } from './siteSettings';
 
 /**
  * Site configuration - From backend API with environment fallbacks
  */
 export const getSiteConfig = async (): Promise<SiteConfig> => {
-	const settings = await fetchSiteSettings();
-
-	return {
-		name: settings.site_name || process.env.NEXT_PUBLIC_APP_NAME || '',
-		description:
-			settings.site_description || settings.seo_description || '',
-		url: settings.site_url || process.env.NEXT_PUBLIC_APP_URL || '',
-		ogImage:
-			settings.seo_og_image ||
-			process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE ||
-			'',
-		keywords: settings.seo_keywords
-			? settings.seo_keywords.split(',').map((k) => k.trim())
-			: process.env.NEXT_PUBLIC_DEFAULT_KEYWORDS?.split(',') || [],
-		locale: process.env.NEXT_PUBLIC_LOCALE || 'en_US',
-		type: 'website',
-	};
+	return await siteSettingsService.getSiteConfig();
 };
 
 /**
@@ -72,7 +16,7 @@ export const getSiteConfig = async (): Promise<SiteConfig> => {
 export const generateProductSEO = async (
 	product: Product
 ): Promise<SEOData> => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 	const productImage = getProductImage(product);
 
 	return {
@@ -103,7 +47,7 @@ export const generateCategorySEO = async (
 	categoryName: string,
 	categorySlug: string
 ): Promise<SEOData> => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 
 	const title = siteConfig.name
 		? `${categoryName} - ${siteConfig.name}`
@@ -133,7 +77,7 @@ export const generateCategorySEO = async (
 export const generateCategoryPageSEO = async (
 	category: any
 ): Promise<SEOData> => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 
 	// Build title with category name
 	const title = siteConfig.name
@@ -187,7 +131,7 @@ export const generateCategoryStructuredData = async (
 	category: any,
 	productCount: number = 0
 ) => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 
 	const structuredData: any = {
 		'@context': 'https://schema.org',
@@ -239,7 +183,7 @@ export const generateCategoryStructuredData = async (
 export const generateSearchSEO = async (
 	searchQuery: string
 ): Promise<SEOData> => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 
 	const title = siteConfig.name
 		? `Search: ${searchQuery} - ${siteConfig.name}`
@@ -267,7 +211,7 @@ export const generateSearchSEO = async (
  * Generate default site SEO - ONLY from environment/backend
  */
 export const generateDefaultSEO = async (): Promise<SEOData> => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 
 	return {
 		title: siteConfig.name || '',
@@ -284,7 +228,7 @@ export const generateDefaultSEO = async (): Promise<SEOData> => {
  * Generate SEO data for products page
  */
 export const generateProductsPageSEO = async (): Promise<SEOData> => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 
 	const title = siteConfig.name
 		? `Products - ${siteConfig.name}`
@@ -330,7 +274,7 @@ const getProductImage = (product: Product): string | undefined => {
  * Generate structured data for products (JSON-LD) - ONLY from backend data
  */
 export const generateProductStructuredData = async (product: Product) => {
-	const siteConfig = await getSiteConfig();
+	const siteConfig = await siteSettingsService.getSiteConfig();
 	const productImage = getProductImage(product);
 
 	const structuredData: any = {

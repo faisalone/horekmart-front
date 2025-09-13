@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { adminApi } from '@/lib/admin-api';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,13 @@ interface UploadResult {
   error?: string;
   uploading?: boolean;
   preview?: string;
+  isDuplicate?: boolean;
+  duplicateInfo?: {
+    id: string;
+    name: string;
+    url: string;
+    uploaded_at: string;
+  } | null;
 }
 
 const diskOptions = [
@@ -69,17 +77,30 @@ export default function AssetUploadPage() {
   const [uploadResults, setUploadResults] = useState<UploadResult[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [copiedUrls, setCopiedUrls] = useState<Set<string>>(new Set());
+  
+  // Keep a ref to the current uploadResults for cleanup on unmount
+  const uploadResultsRef = useRef<UploadResult[]>([]);
+  
+  // Update ref whenever uploadResults changes
+  useEffect(() => {
+    uploadResultsRef.current = uploadResults;
+  }, [uploadResults]);
 
-  // Cleanup preview URLs on unmount
+  // Cleanup function for preview URLs
+  const cleanupPreviews = useCallback((items: UploadResult[]) => {
+    items.forEach(item => {
+      if (item.preview) {
+        URL.revokeObjectURL(item.preview);
+      }
+    });
+  }, []);
+
+  // Cleanup preview URLs on unmount only
   useEffect(() => {
     return () => {
-      uploadResults.forEach(item => {
-        if (item.preview) {
-          URL.revokeObjectURL(item.preview);
-        }
-      });
+      cleanupPreviews(uploadResultsRef.current);
     };
-  }, [uploadResults]);
+  }, [cleanupPreviews]); // Include cleanupPreviews dependency
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -95,12 +116,29 @@ export default function AssetUploadPage() {
       toast.success(`${variables.file.name} uploaded successfully!`);
     },
     onError: (error: any, variables) => {
+      const isDuplicate = error.response?.status === 422 && error.response?.data?.error === 'Duplicate file detected';
+      const errorMessage = isDuplicate 
+        ? `Duplicate file: ${error.response.data.message}`
+        : error.message || 'Upload failed';
+      
       setUploadResults(prev => prev.map(item => 
         item.file === variables.file 
-          ? { ...item, error: error.message || 'Upload failed', uploading: false }
+          ? { 
+              ...item, 
+              error: errorMessage, 
+              uploading: false,
+              isDuplicate: isDuplicate,
+              duplicateInfo: isDuplicate ? error.response.data.duplicate_asset : null
+            }
           : item
       ));
-      toast.error(`Failed to upload ${variables.file.name}: ${error.message || 'Unknown error'}`);
+      
+      if (isDuplicate) {
+        const duplicateAsset = error.response.data.duplicate_asset;
+        toast.warning(`Duplicate file detected: "${variables.file.name}" already exists (uploaded on ${duplicateAsset.uploaded_at})`);
+      } else {
+        toast.error(`Failed to upload ${variables.file.name}: ${errorMessage}`);
+      }
     },
   });
 
@@ -115,87 +153,21 @@ export default function AssetUploadPage() {
     });
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    addFiles(files);
-  };
-
-  const addFiles = (newFiles: File[]) => {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf'];
-    
-    const allowedFiles = newFiles.filter(file => {
-      if (!validTypes.includes(file.type)) {
-        return false;
-      }
-      if (file.size > maxSize) {
-        toast.error(`${file.name} is too large (${formatFileSize(file.size)}). Maximum size is 10MB.`);
-        return false;
-      }
-      return true;
-    });
-
-    const rejectedByTypeCount = newFiles.filter(file => !validTypes.includes(file.type)).length;
-    const rejectedBySizeCount = newFiles.filter(file => file.size > maxSize && validTypes.includes(file.type)).length;
-    
-    if (rejectedByTypeCount > 0) {
-      toast.warning(`${rejectedByTypeCount} file(s) rejected. Only images, SVG, and PDF files are allowed.`);
-    }
-    
-    if (rejectedBySizeCount > 0) {
-      toast.error(`${rejectedBySizeCount} file(s) rejected due to size limit (max 10MB).`);
-    }
-
-    if (allowedFiles.length > 0) {
-      toast.success(`${allowedFiles.length} file(s) added for upload`);
-    }
-
-    // If all previous uploads are complete, clear them and start fresh
-    if (allUploadsComplete) {
-      // Clean up previous preview URLs to prevent memory leaks
-      uploadResults.forEach(item => {
-        if (item.preview) {
-          URL.revokeObjectURL(item.preview);
-        }
-      });
-
-      // Start fresh with only new files
-      setFormData(prev => ({
-        ...prev,
-        files: allowedFiles
-      }));
-
-      const newResults: UploadResult[] = allowedFiles.map(file => ({ 
-        file,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
-      }));
-      setUploadResults(newResults);
-    } else {
-      // Add to existing files if uploads are still in progress
-      setFormData(prev => ({
-        ...prev,
-        files: [...prev.files, ...allowedFiles]
-      }));
-
-      const newResults: UploadResult[] = allowedFiles.map(file => ({ 
-        file,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
-      }));
-      setUploadResults(prev => [...prev, ...newResults]);
-    }
-  };
+  // handleFileSelect will be defined later after addFiles is available
 
   const removeFile = (fileToRemove: File) => {
-    // Clean up preview URL to prevent memory leaks
+    // Clean up preview URL for the specific file being removed
     const itemToRemove = uploadResults.find(item => item.file === fileToRemove);
     if (itemToRemove?.preview) {
       URL.revokeObjectURL(itemToRemove.preview);
     }
     
+    // Update form data and results without affecting other files' previews
     setFormData(prev => ({
       ...prev,
       files: prev.files.filter(file => file !== fileToRemove)
     }));
+    
     setUploadResults(prev => prev.filter(item => item.file !== fileToRemove));
     toast.info(`Removed ${fileToRemove.name} from upload queue`);
   };
@@ -210,12 +182,7 @@ export default function AssetUploadPage() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    addFiles(files);
-  }, []);
+  // handleDrop will be defined later after addFiles is available
 
   const handleUpload = async () => {
     if (formData.files.length === 0) {
@@ -257,11 +224,7 @@ export default function AssetUploadPage() {
 
   const handleReset = () => {
     // Clean up all preview URLs to prevent memory leaks
-    uploadResults.forEach(item => {
-      if (item.preview) {
-        URL.revokeObjectURL(item.preview);
-      }
-    });
+    cleanupPreviews(uploadResults);
     
     setFormData({
       disk: 'public',
@@ -280,15 +243,18 @@ export default function AssetUploadPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const copyToClipboard = async (url: string) => {
+  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopiedUrls(prev => new Set([...prev, url]));
-      toast.success('File path copied to clipboard!', { duration: 2000 });
+      await navigator.clipboard.writeText(text);
+      setCopiedUrls(prev => new Set([...prev, text]));
+      const message = text.startsWith('http') 
+        ? 'File URL copied to clipboard!' 
+        : 'Storage path copied to clipboard!';
+      toast.success(message, { duration: 2000 });
       setTimeout(() => {
         setCopiedUrls(prev => {
           const newSet = new Set(prev);
-          newSet.delete(url);
+          newSet.delete(text);
           return newSet;
         });
       }, 2000);
@@ -302,6 +268,81 @@ export default function AssetUploadPage() {
   const successfulUploads = uploadResults.filter(item => item.result).length;
   const failedUploads = uploadResults.filter(item => item.error).length;
   const isUploading = uploadResults.some(item => item.uploading);
+
+  // Define addFiles after allUploadsComplete is available
+  const addFiles = useCallback((newFiles: File[]) => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf'];
+    
+    const allowedFiles = newFiles.filter(file => {
+      if (!validTypes.includes(file.type)) {
+        return false;
+      }
+      if (file.size > maxSize) {
+        toast.error(`${file.name} is too large (${formatFileSize(file.size)}). Maximum size is 10MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    const rejectedByTypeCount = newFiles.filter(file => !validTypes.includes(file.type)).length;
+    const rejectedBySizeCount = newFiles.filter(file => file.size > maxSize && validTypes.includes(file.type)).length;
+    
+    if (rejectedByTypeCount > 0) {
+      toast.warning(`${rejectedByTypeCount} file(s) rejected. Only images, SVG, and PDF files are allowed.`);
+    }
+    
+    if (rejectedBySizeCount > 0) {
+      toast.error(`${rejectedBySizeCount} file(s) rejected due to size limit (max 10MB).`);
+    }
+
+    if (allowedFiles.length > 0) {
+      toast.success(`${allowedFiles.length} file(s) added for upload`);
+    }
+
+    // If all previous uploads are complete, clear them and start fresh
+    if (allUploadsComplete) {
+      // Clean up previous preview URLs to prevent memory leaks
+      cleanupPreviews(uploadResults);
+
+      // Start fresh with only new files
+      setFormData(prev => ({
+        ...prev,
+        files: allowedFiles
+      }));
+
+      const newResults: UploadResult[] = allowedFiles.map(file => ({ 
+        file,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+      }));
+      setUploadResults(newResults);
+    } else {
+      // Add to existing files if uploads are still in progress
+      setFormData(prev => ({
+        ...prev,
+        files: [...prev.files, ...allowedFiles]
+      }));
+
+      const newResults: UploadResult[] = allowedFiles.map(file => ({ 
+        file,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+      }));
+      setUploadResults(prev => [...prev, ...newResults]);
+    }
+  }, [allUploadsComplete, cleanupPreviews, uploadResults]);
+
+  // Define functions that depend on addFiles
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    addFiles(files);
+  }, [addFiles]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    addFiles(files);
+  }, [addFiles]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
@@ -398,7 +439,7 @@ export default function AssetUploadPage() {
               <input
                 type="file"
                 multiple
-                accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.ico"
                 onChange={handleFileSelect}
                 className="hidden"
                 id="file-upload"
@@ -463,11 +504,12 @@ export default function AssetUploadPage() {
                         <div className="flex items-center space-x-3 flex-1 min-w-0">
                           <div className="relative flex-shrink-0">
                             {item.preview ? (
-                              <div className="relative">
-                                <img
+                              <div className="relative w-12 h-12">
+                                <Image
                                   src={item.preview}
                                   alt={item.file.name}
-                                  className="h-12 w-12 object-cover rounded-lg border border-white/20"
+                                  fill
+                                  className="object-cover rounded-lg border border-white/20"
                                 />
                                 {item.uploading && (
                                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
@@ -508,9 +550,14 @@ export default function AssetUploadPage() {
                                 </span>
                               )}
                               {item.error && (
-                                <span className="text-red-400 flex items-center">
+                                <span className={`flex items-center ${item.isDuplicate ? 'text-yellow-400' : 'text-red-400'}`}>
                                   <AlertCircle className="h-3 w-3 mr-1" />
-                                  {item.error}
+                                  {item.isDuplicate ? 'Duplicate' : item.error}
+                                </span>
+                              )}
+                              {item.isDuplicate && item.duplicateInfo && (
+                                <span className="text-xs text-yellow-300">
+                                  Uploaded: {new Date(item.duplicateInfo.uploaded_at).toLocaleDateString()}
                                 </span>
                               )}
                             </div>
@@ -524,13 +571,27 @@ export default function AssetUploadPage() {
                           {item.result && (
                             <>
                               <CheckCircle className="h-4 w-4 text-green-500" />
-                              {item.result?.path && (
+                              {item.result?.url ? (
+                                <Button
+                                  onClick={() => copyToClipboard(item.result.url)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-slate-400 hover:text-green-400 hover:bg-green-500/20"
+                                  title="Copy file URL"
+                                >
+                                  {copiedUrls.has(item.result.url) ? (
+                                    <Check className="h-3 w-3" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              ) : item.result?.path && (
                                 <Button
                                   onClick={() => copyToClipboard(`/${item.result.path}`)}
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 w-7 p-0 text-slate-400 hover:text-green-400 hover:bg-green-500/20"
-                                  title="Copy file path"
+                                  title="Copy storage path (Private)"
                                 >
                                   {copiedUrls.has(`/${item.result.path}`) ? (
                                     <Check className="h-3 w-3" />
@@ -541,8 +602,28 @@ export default function AssetUploadPage() {
                               )}
                             </>
                           )}
-                          {item.error && (
+                          {item.error && !item.isDuplicate && (
                             <AlertCircle className="h-4 w-4 text-red-500" />
+                          )}
+                          {item.isDuplicate && item.duplicateInfo && (
+                            <>
+                              <AlertCircle className="h-4 w-4 text-yellow-500" />
+                              {item.duplicateInfo.url && (
+                                <Button
+                                  onClick={() => copyToClipboard(item.duplicateInfo!.url)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-slate-400 hover:text-yellow-400 hover:bg-yellow-500/20"
+                                  title="Copy existing file URL"
+                                >
+                                  {copiedUrls.has(item.duplicateInfo.url) ? (
+                                    <Check className="h-3 w-3" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              )}
+                            </>
                           )}
                           {!item.uploading && !item.result && !item.error && (
                             <Button

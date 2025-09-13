@@ -13,6 +13,7 @@ interface BannerBlockProps {
   height?: string;
   badge?: string;
   textSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  priority?: boolean;
 }
 
 const BannerBlock = ({
@@ -21,7 +22,8 @@ const BannerBlock = ({
   link,
   className = '',
   height = 'h-48',
-  badge
+  badge,
+  priority = false
 }: BannerBlockProps) => {
   const getBgColor = () => {
     // Use theme primary overlay for better brand consistency
@@ -42,6 +44,7 @@ const BannerBlock = ({
         src={imageUrl}
         alt={title}
         fill
+        priority={priority}
         className="object-cover transition-transform duration-700 group-hover:scale-105"
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
@@ -66,7 +67,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
   const [showResults, setShowResults] = useState(false);
 
   // Reset form
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setSelectedPlatforms([]);
     setCaption('');
     setSelectedImages([]);
@@ -75,7 +76,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
     setCurrentCaptionIndex(0);
     setPostResult(null);
     setShowResults(false);
-  };
+  }, []);
 
   // Clean HTML and format description for social media
   const formatDescriptionForSocialMedia = (htmlDescription: string | null | undefined): string => {
@@ -291,10 +292,10 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
   };
 
   // Handle closing modal
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     onOpenChange(false);
     resetForm();
-  };
+  }, [onOpenChange, resetForm]);
 
   const isPosting = postMutation.isPending;
 
@@ -333,7 +334,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
     if (!open) {
       resetForm();
     }
-  }, [open]);
+  }, [open, resetForm]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -679,16 +680,17 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
                     <button
                       type="button"
                       onClick={() => toggleImageSelection(image)}
-                      className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all relative ${
                         selectedImages.includes(image)
                           ? 'border-blue-500 ring-2 ring-blue-300'
                           : 'border-gray-600 hover:border-gray-500'
                       }`}
                     >
-                      <img
+                      <Image
                         src={image}
                         alt={`Product image ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     </button>
                     {selectedImages.includes(image) && (

@@ -10,6 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/currency';
 import { AutoFontText } from '@/components/AutoFontText';
 import { useCategories } from '@/contexts/CategoriesContext';
+import { getCachedSiteSettings } from '@/services/siteSettings';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface NavbarProps {}
@@ -21,6 +22,8 @@ const Navbar = ({ }: NavbarProps = {}) => {
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'departments' | 'hotItems'>('departments');
+  const [siteLogo, setSiteLogo] = useState<string>('/logo-light.svg'); // Default fallback
+  const [siteName, setSiteName] = useState<string>('');
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -72,6 +75,15 @@ const Navbar = ({ }: NavbarProps = {}) => {
     }
   };
 
+  // Load site settings on mount
+  useEffect(() => {
+    const settings = getCachedSiteSettings();
+    if (settings) {
+      setSiteLogo(settings.site_logo || '/logo-light.svg');
+      setSiteName(settings.site_name || '');
+    }
+  }, []);
+
   // Close mobile search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -88,8 +100,6 @@ const Navbar = ({ }: NavbarProps = {}) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isMobileSearchOpen]);
-
-
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -112,11 +122,16 @@ const Navbar = ({ }: NavbarProps = {}) => {
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
                   <Image 
-                    src="/logo-light.svg" 
-                    alt="HOREKMART" 
+                    src={siteLogo} 
+                    alt={siteName || "HOREKMART"} 
                     width={180} 
                     height={60} 
                     className="h-28 w-auto"
+                    onError={(e) => {
+                      // Fallback to default logo if the dynamic logo fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/logo-light.svg';
+                    }}
                   />
                 </Link>
               </div>
@@ -250,11 +265,16 @@ const Navbar = ({ }: NavbarProps = {}) => {
               {/* Logo - Center */}
               <Link href="/" className="flex items-center flex-1 justify-center">
                 <Image 
-                  src="/logo-light.svg" 
-                  alt="HOREKMART" 
+                  src={siteLogo} 
+                  alt={siteName || "HOREKMART"} 
                   width={150} 
                   height={50} 
                   className="h-24 w-auto"
+                  onError={(e) => {
+                    // Fallback to default logo if the dynamic logo fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/logo-light.svg';
+                  }}
                 />
               </Link>
 

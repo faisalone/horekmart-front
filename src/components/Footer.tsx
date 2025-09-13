@@ -5,9 +5,20 @@ import Image from 'next/image';
 import { Mail, Phone, MapPin, ArrowUp, Shield, Truck, Award, Globe, ChevronRight } from 'lucide-react';
 import { FaSquareXTwitter } from "react-icons/fa6";
 import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
+import { getCachedSiteSettings } from '@/services/siteSettings';
 
 
 const Footer = () => {
+  const settings = getCachedSiteSettings();
+  // Use consistent fallbacks to prevent hydration mismatch
+  const siteLogo = settings?.site_logo || "/logo-light.svg";
+  const siteName = settings?.site_name || "Horekmart";
+  const contactEmail = settings?.contact_email || "";
+  const contactPhone = settings?.contact_phone || "+880 1763 223035";
+  const socialFacebook = settings?.social_facebook || "";
+  const socialTwitter = settings?.social_twitter || "";
+  const socialInstagram = settings?.social_instagram || "";
+
   return (
     <footer className="bg-gray-900 text-white">
       
@@ -24,11 +35,15 @@ const Footer = () => {
           <div className="lg:col-span-2 lg:pr-8 lg:border-r lg:border-gray-700">
             <div className="mb-6 flex flex-col items-center">
               <Image 
-                src="/logo-light.svg" 
-                alt="HOREKMART" 
+                src={siteLogo} 
+                alt={siteName} 
                 width={180} 
                 height={60} 
                 className="mb-4 h-40 w-auto"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/logo-light.svg';
+                }}
               />
               <p className="text-gray-300 text-lg leading-relaxed mb-4">
                 Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
@@ -43,17 +58,15 @@ const Footer = () => {
               <h3 className="text-lg font-semibold mb-6">Shop</h3>
               <ul className="space-y-3">
                 {[
-                  'All Products',
-                  'New Arrivals',
-                  'Best Sellers',
-                  'Sale Items',
-                  'Categories',
-                  'Brands'
+                  { name: 'All Products', href: '/products' },
+                  { name: 'New Arrivals', href: '/products?type=newest-desc' },
+                  { name: 'Best Sellers', href: '/products?type=trending' },
+                  { name: 'Sale Items', href: '/products?type=deals' },
                 ].map((item, index) => (
                   <li key={index}>
-                    <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                    <Link href={item.href} className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
                       <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      {item}
+                      {item.name}
                     </Link>
                   </li>
                 ))}
@@ -65,15 +78,9 @@ const Footer = () => {
               <h3 className="text-lg font-semibold mb-6">Customer Service</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                  <Link href="/help" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
                     <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                     Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
-                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                    Track Your Order
                   </Link>
                 </li>
                 <li>
@@ -83,19 +90,13 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                  <Link href="/help/shipping-policy" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
                     <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                     Shipping Info
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
-                    <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                    Size Guide
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                  <Link href="/contact" className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
                     <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                     Contact Us
                   </Link>
@@ -113,12 +114,12 @@ const Footer = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Phone className="h-8 w-8 mx-auto mb-3 text-blue-400" />
-                <p className="text-white font-medium text-lg">+880 1763 223035</p>
+                <p className="text-white font-medium text-lg">{contactPhone || "+880 1763 223035"}</p>
                 <p className="text-sm text-gray-400 mt-1">24/7 Customer Support</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Mail className="h-8 w-8 mx-auto mb-3 text-green-400" />
-                <p className="text-white font-medium text-lg">business@horekmart.com</p>
+                <p className="text-white font-medium text-lg">{contactEmail || "business@horekmart.com"}</p>
                 <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
@@ -144,20 +145,20 @@ const Footer = () => {
                     Icon: FaFacebook,
                     name: 'Facebook',
                     color: 'hover:bg-blue-600',
-                    url: 'https://facebook.com/horekmart'
+                    url: socialFacebook || 'https://facebook.com/horekmart'
                   },
                   {
                     Icon: FaInstagram,
                     name: 'Instagram',
                     color: 'hover:bg-pink-600',
-                    url: 'https://instagram.com/horekmartshop'
+                    url: socialInstagram || 'https://instagram.com/horekmartshop'
                   },
-                //   {
-                //     Icon: FaSquareXTwitter,
-                //     name: 'X',
-                //     color: 'hover:bg-gray-600',
-                //     url: 'https://x.com/horekmart'
-                //   },
+                  ...(socialTwitter ? [{
+                    Icon: FaSquareXTwitter,
+                    name: 'Twitter/X',
+                    color: 'hover:bg-gray-600',
+                    url: socialTwitter
+                  }] : []),
                   {
                     Icon: FaYoutube,
                     name: 'YouTube',

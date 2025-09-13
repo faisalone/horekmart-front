@@ -16,6 +16,7 @@ import AnimatedElement from '@/components/AnimatedElement';
 import { AnimatedSection, useSequentialAnimation } from '@/lib/animations';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
+import { siteSettingsService } from '@/services/siteSettings';
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -31,6 +32,9 @@ export default function HomePage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        
+        // Initialize site settings on the root page (will cache for session)
+        await siteSettingsService.initialize();
         
         // Fetch products and categories - simplified to just get a large set of products
         const [productsResponse, categoriesData, vendorsResponse] = await Promise.all([
@@ -187,8 +191,9 @@ export default function HomePage() {
                     key={cat.id}
                     title={cat.name}
                     description={cat.description || ''}
-                    imageUrl={cat.image || 'https://placehold.co/400x300?text=Category'}
+                    imageUrl={cat.image_url || cat.image || '/placeholder-product.svg'}
                     link={`/${cat.slug}`}
+                    priority={idx < 3}
                     className={
                       idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
                       idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
