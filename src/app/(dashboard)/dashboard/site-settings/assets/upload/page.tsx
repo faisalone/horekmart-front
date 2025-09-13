@@ -272,7 +272,7 @@ export default function AssetUploadPage() {
   // Define addFiles after allUploadsComplete is available
   const addFiles = useCallback((newFiles: File[]) => {
     const maxSize = 10 * 1024 * 1024; // 10MB
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf'];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf', 'image/x-icon', 'image/vnd.microsoft.icon'];
     
     const allowedFiles = newFiles.filter(file => {
       if (!validTypes.includes(file.type)) {
@@ -289,7 +289,7 @@ export default function AssetUploadPage() {
     const rejectedBySizeCount = newFiles.filter(file => file.size > maxSize && validTypes.includes(file.type)).length;
     
     if (rejectedByTypeCount > 0) {
-      toast.warning(`${rejectedByTypeCount} file(s) rejected. Only images, SVG, and PDF files are allowed.`);
+      toast.warning(`${rejectedByTypeCount} file(s) rejected. Only images, SVG, ICO, and PDF files are allowed.`);
     }
     
     if (rejectedBySizeCount > 0) {
@@ -433,7 +433,7 @@ export default function AssetUploadPage() {
                 {isDragging ? 'Drop files here' : 'Drop files or browse'}
               </h3>
               <p className="text-slate-400 text-sm mb-8">
-                JPG, PNG, GIF, WebP, SVG, PDF up to 10MB each
+                JPG, PNG, GIF, WebP, SVG, ICO, PDF up to 10MB each
               </p>
 
               <input
