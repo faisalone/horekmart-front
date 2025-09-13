@@ -364,10 +364,10 @@ const Navbar = ({ }: NavbarProps = {}) => {
               <Link href="/products" className="text-base text-white hover:opacity-80 transition-colors">
                 All Products
               </Link>
-              <Link href="/products?sort=trendings" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/products?type=trending" className="text-base text-white hover:opacity-80 transition-colors">
                 Trendings
               </Link>
-              <Link href="/products?sort=deals" className="text-base text-white hover:opacity-80 transition-colors">
+              <Link href="/products?type=deals" className="text-base text-white hover:opacity-80 transition-colors">
                 Deals & Offers
               </Link>
             </nav>
@@ -516,7 +516,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   </Link>
 
                   <Link
-                    href="/products?sort=trending"
+                    href="/products?type=trending"
                     className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-orange-200 hover:bg-orange-50/30"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -534,7 +534,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                   </Link>
 
                   <Link
-                    href="/products?sort=deals"
+                    href="/products?type=deals"
                     className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 hover:bg-green-50/30"
                     onClick={() => setIsMenuOpen(false)}
                   >
