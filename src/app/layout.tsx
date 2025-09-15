@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { ClientWrapper } from "@/app/client-wrapper";
 import { GTM_ID, gtmScript, gtmNoscript } from "@/lib/gtm";
+import { META_PIXEL_ID, metaPixelScript, metaPixelNoscript } from "@/lib/meta-pixel";
 import { seoService } from "@/lib/seo";
 
 const inter = Inter({ 
@@ -87,9 +88,23 @@ export default function RootLayout({
           }}
         />
         
+        {/* Meta Pixel Script */}
+        <Script
+          id="meta-pixel-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: metaPixelScript,
+          }}
+        />
+        
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <div dangerouslySetInnerHTML={{ __html: gtmNoscript }} />
+        </noscript>
+        
+        {/* Meta Pixel (noscript) */}
+        <noscript>
+          <div dangerouslySetInnerHTML={{ __html: metaPixelNoscript }} />
         </noscript>
         
         <ClientWrapper>{children}</ClientWrapper>

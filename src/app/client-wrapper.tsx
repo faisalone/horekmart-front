@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FloatingButton from '@/components/FloatingButton';
 import GoogleTagManager from '@/components/GoogleTagManager';
+import MetaPixel from '@/components/MetaPixel';
 import { AdminAuthProvider } from '@/hooks/useAdminAuth';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
@@ -43,6 +44,9 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
           <AdminAuthProvider>
             {/* Google Tag Manager - Track page views */}
             <GoogleTagManager />
+            
+            {/* Meta Pixel - Track page views and events */}
+            <MetaPixel />
             
             <Toaster 
               position="top-center"
