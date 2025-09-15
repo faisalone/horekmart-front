@@ -150,21 +150,6 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 			});
 		}
 
-		// Add thumbnail if it exists and is not already in images (API uses 'thumb' field)
-		if (
-			product &&
-			product.thumb &&
-			!images.some((img) => img.url === product.thumb)
-		) {
-			images.unshift({
-				url: product.thumb,
-				alt: `${product.name} - Main Image`,
-				type: 'thumbnail',
-			});
-		}
-
-		// No additional thumbnail fallback needed since we already handle thumb above
-
 		if (images.length === 0) {
 			images.push({
 				url: '/placeholder-product.svg',
