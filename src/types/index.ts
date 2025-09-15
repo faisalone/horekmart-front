@@ -1,24 +1,3 @@
-export interface SEOData {
-	title?: string;
-	description?: string;
-	keywords?: string;
-	canonicalUrl?: string;
-	ogTitle?: string;
-	ogDescription?: string;
-	ogImage?: string;
-	focusKeyword?: string;
-}
-
-export interface SiteConfig {
-	name: string;
-	description: string;
-	url: string;
-	ogImage?: string;
-	keywords?: string[];
-	locale?: string;
-	type?: string;
-}
-
 export interface ProductImage {
 	id: number;
 	product_id: number;
@@ -44,6 +23,8 @@ export interface Product {
 	sku: string;
 	price: string;
 	sale_price?: string | null;
+	display_price?: string; // Computed price from API
+	has_sale?: boolean;
 	stock_quantity: number;
 	in_stock: boolean;
 	thumb?: string | null; // API uses this field for main image
@@ -60,18 +41,18 @@ export interface Product {
 	is_featured: boolean;
 	weight?: number | string;
 	weight_unit?: 'kg' | 'g' | 'lb' | 'oz';
-	// SEO fields
-	meta_title?: string;
-	meta_description?: string;
-	meta_keywords?: string;
-	canonical_url?: string;
-	og_title?: string;
-	og_description?: string;
-	focus_keyword?: string;
 	created_at: string;
 	updated_at: string;
 	category?: Category;
 	vendor?: Vendor;
+	// SEO fields from API
+	meta_title?: string | null;
+	meta_description?: string | null;
+	meta_keywords?: string | null;
+	canonical_url?: string | null;
+	og_title?: string | null;
+	og_description?: string | null;
+	focus_keyword?: string | null;
 	// Legacy properties for compatibility
 	salePrice?: number;
 	inStock?: boolean;

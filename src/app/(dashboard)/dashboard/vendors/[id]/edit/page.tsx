@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
-import Head from 'next/head';
 import { adminApi } from '@/lib/admin-api';
 import { Vendor } from '@/types/admin';
 import VendorForm from '@/components/dashboard/VendorForm';
@@ -110,12 +109,7 @@ export default function EditVendorPage() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Edit Vendor - Admin Dashboard</title>
-      </Head>
-      
-      <VendorForm
+    <VendorForm
         vendor={vendor}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
@@ -123,6 +117,5 @@ export default function EditVendorPage() {
         mode="edit"
         validationErrors={validationErrors}
       />
-    </>
   );
 }

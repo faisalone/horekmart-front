@@ -18,7 +18,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import { siteSettingsService } from '@/services/siteSettings';
 
-export default function HomePage() {
+export default function HomeClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);

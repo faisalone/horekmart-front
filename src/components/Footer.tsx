@@ -2,22 +2,48 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { Mail, Phone, MapPin, ArrowUp, Shield, Truck, Award, Globe, ChevronRight } from 'lucide-react';
 import { FaSquareXTwitter } from "react-icons/fa6";
 import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
 import { getCachedSiteSettings } from '@/services/siteSettings';
 
+interface SiteSettings {
+  site_logo?: string;
+  site_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: string;
+  address_map_url?: string;
+  company_info?: string;
+  social_facebook?: string;
+  social_twitter?: string;
+  social_instagram?: string;
+  social_youtube?: string;
+}
 
 const Footer = () => {
-  const settings = getCachedSiteSettings();
-  // Use consistent fallbacks to prevent hydration mismatch
-  const siteLogo = settings?.site_logo || "/logo-light.svg";
-  const siteName = settings?.site_name || "Horekmart";
-  const contactEmail = settings?.contact_email || "";
-  const contactPhone = settings?.contact_phone || "+880 1763 223035";
-  const socialFacebook = settings?.social_facebook || "";
-  const socialTwitter = settings?.social_twitter || "";
-  const socialInstagram = settings?.social_instagram || "";
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const cachedSettings = getCachedSiteSettings();
+    setSettings(cachedSettings);
+  }, []);
+
+  // Use static fallbacks for server-side rendering to prevent hydration mismatch
+  const siteLogo = mounted && settings?.site_logo ? settings.site_logo : "/logo-light.svg";
+  const siteName = mounted && settings?.site_name ? settings.site_name : "Your Store";
+  const contactEmail = mounted && settings?.contact_email ? settings.contact_email : "";
+  const contactPhone = mounted && settings?.contact_phone ? settings.contact_phone : "";
+  const address = mounted && settings?.address ? settings.address : "";
+  const addressMapUrl = mounted && settings?.address_map_url ? settings.address_map_url : "";
+  const companyInfo = mounted && settings?.company_info ? settings.company_info : "";
+  const socialFacebook = mounted && settings?.social_facebook ? settings.social_facebook : "";
+  const socialTwitter = mounted && settings?.social_twitter ? settings.social_twitter : "";
+  const socialInstagram = mounted && settings?.social_instagram ? settings.social_instagram : "";
+  const socialYoutube = mounted && settings?.social_youtube ? settings.social_youtube : "";
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -46,7 +72,7 @@ const Footer = () => {
                 }}
               />
               <p className="text-gray-300 text-lg leading-relaxed mb-4">
-                Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide.
+                {companyInfo || "Your trusted global marketplace for quality products. We deliver excellence, reliability, and exceptional customer service worldwide."}
               </p>
             </div>
           </div>
@@ -119,20 +145,26 @@ const Footer = () => {
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <Mail className="h-8 w-8 mx-auto mb-3 text-green-400" />
-                <p className="text-white font-medium text-lg">{contactEmail || "business@horekmart.com"}</p>
+                <p className="text-white font-medium text-lg">{contactEmail || "info@yourstore.com"}</p>
                 <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
               </div>
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <MapPin className="h-8 w-8 mx-auto mb-3 text-orange-400" />
-                <a 
-                  href="https://share.google/vibec3TwvH1D9binK"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white font-medium text-lg hover:text-orange-400 transition-colors duration-200"
-                >
-                  Horekmart HQ
-                </a>
-                <p className="text-sm text-gray-400 mt-1">Alam Market, Koimari Road, Jaldhaka, Nilphamari</p>
+                {addressMapUrl ? (
+                  <a 
+                    href={addressMapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white font-medium text-lg hover:text-orange-400 transition-colors duration-200"
+                  >
+                    {siteName} HQ
+                  </a>
+                ) : (
+                  <p className="text-white font-medium text-lg">
+                    {siteName} HQ
+                  </p>
+                )}
+                <p className="text-sm text-gray-400 mt-1">{address || "123 Main St, City, State 12345"}</p>
               </div>
             </div>
             
@@ -141,33 +173,33 @@ const Footer = () => {
               <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-6">Follow Us</h4>
               <div className="flex justify-center space-x-4">
                 {[
-                  {
+                  ...(socialFacebook ? [{
                     Icon: FaFacebook,
                     name: 'Facebook',
                     color: 'hover:bg-blue-600',
-                    url: socialFacebook || 'https://facebook.com/horekmart'
-                  },
-                  {
+                    url: socialFacebook
+                  }] : []),
+                  ...(socialInstagram ? [{
                     Icon: FaInstagram,
                     name: 'Instagram',
                     color: 'hover:bg-pink-600',
-                    url: socialInstagram || 'https://instagram.com/horekmartshop'
-                  },
+                    url: socialInstagram
+                  }] : []),
                   ...(socialTwitter ? [{
                     Icon: FaSquareXTwitter,
                     name: 'Twitter/X',
                     color: 'hover:bg-gray-600',
                     url: socialTwitter
                   }] : []),
-                  {
+                  ...(socialYoutube ? [{
                     Icon: FaYoutube,
                     name: 'YouTube',
                     color: 'hover:bg-red-600',
-                    url: 'https://youtube.com/@horekmartshop'
-                  }
+                    url: socialYoutube
+                  }] : [])
                 ].map((social, index) => (
                   <a
-                    key={index}
+                    key={`social-${social.name}`}
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -188,7 +220,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-400 mb-4 md:mb-0">
-              <span>© {new Date().getFullYear()} Horekmart. All rights reserved.</span>
+              <span>© 2025 {siteName}. All rights reserved.</span>
             </div>
             
             <div className="flex items-center space-x-6">

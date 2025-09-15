@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
 import { adminApi } from '@/lib/admin-api';
 import { Category } from '@/types/admin';
 import CategoryForm from '@/components/dashboard/CategoryForm';
@@ -56,24 +55,12 @@ export default function AddCategoryPage() {
   };
 
   return (
-    <>
-      <Head>
-        <title>Add New Category | Admin Dashboard</title>
-        <meta name="description" content="Add a new category to organize your products." />
-        <meta property="og:title" content="Add New Category | Admin Dashboard" />
-        <meta property="og:description" content="Add a new category to organize your products." />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Add New Category | Admin Dashboard" />
-        <meta name="twitter:description" content="Add a new category to organize your products." />
-      </Head>
-      <CategoryForm
+    <CategoryForm
         mode="create"
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isLoading={isLoading || createCategoryMutation.isPending}
         validationErrors={validationErrors}
       />
-    </>
   );
 }

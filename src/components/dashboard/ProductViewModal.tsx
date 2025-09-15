@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Head from 'next/head';
+
 import { Product } from '@/types/admin';
 import Badge from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getProductImageUrl, getProductMetaImageUrl } from '@/lib/utils';
+import { getProductImageUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 import RichTextDisplay from '@/components/ui/RichTextDisplay';
 import { 
@@ -127,20 +127,7 @@ export function ProductViewModal({ product, open, onOpenChange }: ProductViewMod
   return (
     <>
       {/* Meta tags for admin product view */}
-      {product && (
-        <Head>
-          <title>{product.name} | Product Details | Admin Dashboard</title>
-          <meta name="description" content={`View details for ${product.name} in the admin dashboard.`} />
-          <meta property="og:title" content={`${product.name} | Product Details | Admin Dashboard`} />
-          <meta property="og:description" content={`View details for ${product.name} in the admin dashboard.`} />
-          <meta property="og:image" content={getProductMetaImageUrl(product)} />
-          <meta property="og:type" content="website" />
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={`${product.name} | Product Details | Admin Dashboard`} />
-          <meta name="twitter:description" content={`View details for ${product.name} in the admin dashboard.`} />
-          <meta name="twitter:image" content={getProductMetaImageUrl(product)} />
-        </Head>
-      )}
+
       <div 
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/30 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}

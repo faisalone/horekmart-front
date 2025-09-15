@@ -121,8 +121,14 @@ export interface Product {
 	weight?: number;
 	weight_unit?: 'kg' | 'g';
 	dimensions?: string;
+	// SEO fields for admin management
 	meta_title?: string;
 	meta_description?: string;
+	meta_keywords?: string;
+	canonical_url?: string;
+	og_title?: string;
+	og_description?: string;
+	focus_keyword?: string;
 	created_at: string;
 	updated_at: string;
 	vendor?: Vendor; // Changed to full Vendor object

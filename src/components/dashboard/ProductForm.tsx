@@ -45,6 +45,7 @@ interface ProductFormData {
   weight?: number | string;
   weight_unit?: 'kg' | 'g';
   dimensions?: string;
+  // SEO fields for admin management
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string;
@@ -85,6 +86,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     weight: undefined,
     weight_unit: 'kg',
     dimensions: '',
+    social_links: { facebook: [], instagram: [], youtube: [] },
     meta_title: '',
     meta_description: '',
     meta_keywords: '',
@@ -92,7 +94,6 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
     og_title: '',
     og_description: '',
     focus_keyword: '',
-  social_links: { facebook: [], instagram: [], youtube: [] },
   });
 
   const [keywordInput, setKeywordInput] = useState('');
@@ -171,14 +172,14 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
         weight: product.weight || undefined,
         weight_unit: product.weight_unit || 'kg',
         dimensions: product.dimensions || '',
+        social_links: product.social_links || { facebook: [], instagram: [], youtube: [] },
         meta_title: product.meta_title || '',
         meta_description: product.meta_description || '',
-        meta_keywords: (product as any).meta_keywords || '',
-        canonical_url: (product as any).canonical_url || '',
-        og_title: (product as any).og_title || '',
-        og_description: (product as any).og_description || '',
-        focus_keyword: (product as any).focus_keyword || '',
-  social_links: product.social_links || { facebook: [], instagram: [], youtube: [] },
+        meta_keywords: product.meta_keywords || '',
+        canonical_url: product.canonical_url || '',
+        og_title: product.og_title || '',
+        og_description: product.og_description || '',
+        focus_keyword: product.focus_keyword || '',
       });
 
       // Set existing images using new images format with UUID and URL
@@ -392,14 +393,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
       }
     }
 
-    // URL validation for canonical_url
-    if (formData.canonical_url && formData.canonical_url.trim()) {
-      try {
-        new URL(formData.canonical_url);
-      } catch {
-        newErrors.canonical_url = 'Canonical URL must be a valid URL';
-      }
-    }
+
 
     // Validate social link URLs if present
     const urlRegex = /^(https?:\/\/)[^\s]+$/i;
@@ -612,14 +606,16 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
 
         {/* SEO & Meta Settings */}
         <Card className="bg-gray-800 border-gray-700">
-          <CardHeader 
-            className="cursor-pointer hover:bg-gray-750 transition-colors"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-          >
-            <div className="flex items-center justify-between">
+          <CardHeader>
+            <div 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
               <div>
                 <CardTitle className="text-white">SEO & Meta Settings</CardTitle>
-                <CardDescription className="text-gray-400">Search engine optimization and meta information</CardDescription>
+                <CardDescription className="text-gray-400">
+                  Search engine optimization and social media settings
+                </CardDescription>
               </div>
               <div className="text-gray-300">
                 {showAdvanced ? (

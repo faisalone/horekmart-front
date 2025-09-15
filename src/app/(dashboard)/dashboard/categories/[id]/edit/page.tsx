@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
-import Head from 'next/head';
 import { adminApi } from '@/lib/admin-api';
 import { Category } from '@/types/admin';
 import CategoryForm from '@/components/dashboard/CategoryForm';
@@ -83,18 +82,7 @@ export default function EditCategoryPage() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Edit {category.name} | Admin Dashboard</title>
-        <meta name="description" content={`Edit category details for ${category.name} in the admin dashboard.`} />
-        <meta property="og:title" content={`Edit ${category.name} | Admin Dashboard`} />
-        <meta property="og:description" content={`Edit category details for ${category.name} in the admin dashboard.`} />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content={`Edit ${category.name} | Admin Dashboard`} />
-        <meta name="twitter:description" content={`Edit category details for ${category.name} in the admin dashboard.`} />
-      </Head>
-      <CategoryForm
+    <CategoryForm
         mode="edit"
         category={category}
         onSubmit={handleSubmit}
@@ -102,6 +90,5 @@ export default function EditCategoryPage() {
         isLoading={isLoading || updateCategoryMutation.isPending}
         validationErrors={validationErrors}
       />
-    </>
   );
 }

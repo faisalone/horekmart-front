@@ -122,6 +122,16 @@ class PublicApiClient {
 		);
 		return response.data;
 	}
+
+	/**
+	 * Get site settings for SEO and configuration
+	 */
+	async getSiteSettings(): Promise<any> {
+		const response = await this.client.get<{ success: boolean; data: any }>(
+			'/v1/site-settings'
+		);
+		return response.data.data;
+	}
 }
 
 export const publicApi = new PublicApiClient();

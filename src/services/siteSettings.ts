@@ -1,21 +1,19 @@
-import { SiteConfig, SEOData } from '@/types';
-
 export interface SiteSettings {
 	site_name?: string;
 	site_description?: string;
 	site_url?: string;
 	site_logo?: string;
 	site_favicon?: string;
-	seo_title?: string;
-	seo_description?: string;
-	seo_keywords?: string;
-	seo_og_image?: string;
 	contact_email?: string;
 	contact_phone?: string;
 	contact_address?: string;
+	address?: string;
+	address_map_url?: string;
+	company_info?: string;
 	social_facebook?: string;
 	social_twitter?: string;
 	social_instagram?: string;
+	social_youtube?: string;
 	business_hours?: string;
 	currency?: string;
 	maintenance_mode?: boolean;
@@ -148,29 +146,6 @@ class SiteSettingsService {
 	}
 
 	/**
-	 * Get site configuration with environment fallbacks
-	 */
-	public async getSiteConfig(): Promise<SiteConfig> {
-		const settings = await this.fetchSiteSettings();
-
-		return {
-			name: settings.site_name || process.env.NEXT_PUBLIC_APP_NAME || '',
-			description:
-				settings.site_description || settings.seo_description || '',
-			url: settings.site_url || process.env.NEXT_PUBLIC_APP_URL || '',
-			ogImage:
-				settings.seo_og_image ||
-				process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE ||
-				'',
-			keywords: settings.seo_keywords
-				? settings.seo_keywords.split(',').map((k) => k.trim())
-				: process.env.NEXT_PUBLIC_DEFAULT_KEYWORDS?.split(',') || [],
-			locale: process.env.NEXT_PUBLIC_LOCALE || 'en_US',
-			type: 'website',
-		};
-	}
-
-	/**
 	 * Clear cached settings (useful for development or logout)
 	 */
 	public clearCache(): void {
@@ -207,11 +182,6 @@ class SiteSettingsService {
 
 // Export singleton instance
 export const siteSettingsService = SiteSettingsService.getInstance();
-
-// Legacy function for backward compatibility
-export const getSiteConfig = async (): Promise<SiteConfig> => {
-	return siteSettingsService.getSiteConfig();
-};
 
 // Export function to get cached settings synchronously
 export const getCachedSiteSettings = (): SiteSettings | null => {

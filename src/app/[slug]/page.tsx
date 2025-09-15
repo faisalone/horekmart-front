@@ -12,11 +12,9 @@ import SortingHeader from '@/components/SortingHeader';
 import CategoryPageSkeleton from '@/components/CategoryPageSkeleton';
 import { ListDropdown } from '@/components/ui/ListDropdown';
 import { publicApi } from '@/lib/public-api';
-import { Product, Category, SEOData } from '@/types';
+import { Product, Category } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
-import { generateCategoryPageSEO, generateCategoryStructuredData } from '@/services/seo';
-import { useSEO } from '@/hooks/useSEO';
 
 interface CategoryPageProps {
 	params: Promise<{ slug: string }>;
@@ -34,16 +32,11 @@ export default function CategoryPage({ }: CategoryPageProps) {
 	const [loading, setLoading] = useState(true);
 	const [sortBy, setSortBy] = useState('featured');
 
-	// SEO state
-	const [seoData, setSeoData] = useState<SEOData | null>(null);
-	const [structuredData, setStructuredData] = useState<any>(null);
-
 	// Cart and wishlist contexts
 	const { toggleItem: toggleWishlist } = useWishlist();
 	const { addToCart: addToCartService } = useProductCheckout();
 
-	// Apply SEO to page - only use backend data
-	useSEO(seoData || { title: '', description: '' });
+
 
 	// Sort options for custom select
 	const sortOptions = [
@@ -79,13 +72,7 @@ export default function CategoryPage({ }: CategoryPageProps) {
 				setProducts(productsResponse.data);
 				setFilteredProducts(productsResponse.data);
 
-				// Generate SEO data for this category
-				const categorySeoData = await generateCategoryPageSEO(currentCategory);
-				setSeoData(categorySeoData);
 
-				// Generate structured data for this category
-				const categoryStructuredData = await generateCategoryStructuredData(currentCategory, productsResponse.data.length);
-				setStructuredData(categoryStructuredData);
 			} catch (error) {
 				console.error('Error fetching category data:', error);
 				setProducts([]);
@@ -189,15 +176,7 @@ export default function CategoryPage({ }: CategoryPageProps) {
 
 	return (
 		<>
-			{/* Structured Data for SEO */}
-			{structuredData && (
-				<script
-					type="application/ld+json"
-					dangerouslySetInnerHTML={{
-						__html: JSON.stringify(structuredData),
-					}}
-				/>
-			)}
+
 			
 			<div className="bg-gray-50 min-h-screen">
 				{/* Compact Hero Section - Mobile Optimized */}

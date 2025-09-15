@@ -1,10 +1,9 @@
-import type { Metadata, Viewport } from "next";
 import { Inter, Quicksand, Noto_Sans_Bengali } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { ClientWrapper } from "@/app/client-wrapper";
-import { generateMetadataFromSiteSettings, generateViewportFromSiteSettings } from "@/lib/metadata";
 import { GTM_ID, gtmScript, gtmNoscript } from "@/lib/gtm";
+import { seoService } from "@/lib/seo";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -25,12 +24,50 @@ const notoSansBengali = Noto_Sans_Bengali({
   weight: ['300', '400', '500', '600', '700']
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  return await generateMetadataFromSiteSettings();
-}
-
-export async function generateViewport(): Promise<Viewport> {
-  return await generateViewportFromSiteSettings();
+export async function generateMetadata() {
+  try {
+    // Generate dynamic metadata using the seo service
+    const metadata = await seoService.generateDefaultMetadata();
+    return metadata;
+  } catch (error) {
+    console.error('Error generating dynamic metadata:', error);
+    
+    // Fallback to static metadata if API fails
+    return {
+      title: {
+        template: '%s | Horekmart',
+        default: 'Horekmart - Your trusted eCommerce platform'
+      },
+      description: 'Your trusted eCommerce platform for quality products',
+      keywords: 'ecommerce,online shopping,electronics,fashion,home goods,quality products',
+      authors: [{ name: 'Horekmart Team' }],
+      openGraph: {
+        title: 'Horekmart - Your trusted eCommerce platform',
+        description: 'Your trusted eCommerce platform for quality products',
+        url: 'http://localhost:3000',
+        siteName: 'Horekmart',
+        locale: 'en_US',
+        type: 'website',
+        images: [
+          {
+            url: 'http://localhost:8000/site-preview.jpg',
+            width: 1200,
+            height: 630,
+            alt: 'Horekmart',
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Horekmart - Your trusted eCommerce platform',
+        description: 'Your trusted eCommerce platform for quality products',
+        images: ['http://localhost:8000/site-preview.jpg'],
+      },
+      other: {
+        'theme-color': '#f22540',
+      },
+    };
+  }
 }
 
 export default function RootLayout({
@@ -40,7 +77,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
+      <body className={`${inter.variable} ${quicksand.variable} ${notoSansBengali.variable} font-sans antialiased`} suppressHydrationWarning>
         {/* Google Tag Manager Script */}
         <Script
           id="gtm-script"
@@ -49,8 +86,7 @@ export default function RootLayout({
             __html: gtmScript,
           }}
         />
-      </head>
-      <body className={`${inter.variable} ${quicksand.variable} ${notoSansBengali.variable} font-sans antialiased`} suppressHydrationWarning>
+        
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <div dangerouslySetInnerHTML={{ __html: gtmNoscript }} />
