@@ -17,6 +17,7 @@ interface SortingHeaderProps {
   searchInput?: string;
   onClearSearch?: () => void;
   onResetAll?: () => void;
+  showClearButton?: boolean;
   appliedFilters?: {
     priceRange?: [number, number];
     seller?: string[];
@@ -38,6 +39,7 @@ const SortingHeader = ({
   searchInput = '',
   onClearSearch,
   onResetAll,
+  showClearButton = true,
   appliedFilters = {}
 }: SortingHeaderProps) => {
   // Enhanced helper function for better readable descriptions
@@ -91,7 +93,7 @@ const SortingHeader = ({
             )}
             
             {/* Modern Reset Button - Clean logic */}
-            {(searchInput?.trim() || sortBy) && (
+            {showClearButton && (searchInput?.trim() || sortBy) && (
               <button
                 onClick={() => {
                   onClearSearch?.();

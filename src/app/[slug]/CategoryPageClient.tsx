@@ -9,7 +9,7 @@ import ProductGrid from '@/components/ProductGrid';
 import AnimatedElement from '@/components/AnimatedElement';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CategoryPageSkeleton from '@/components/CategoryPageSkeleton';
-import { ListDropdown } from '@/components/ui/ListDropdown';
+import SortingHeader from '@/components/SortingHeader';
 import { publicApi } from '@/lib/public-api';
 import { Product, Category } from '@/types';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -33,13 +33,13 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 	const { toggleItem: toggleWishlist } = useWishlist();
 	const { addToCart: addToCartService } = useProductCheckout();
 
-	// Sort options for custom select
+	// Sort options to match ProductsPageClient format
 	const sortOptions = [
-		{ value: 'featured', label: '⭐ Featured Items' },
-		{ value: 'price-low', label: '💰 Price: Low to High' },
-		{ value: 'price-high', label: '💎 Price: High to Low' },
-		{ value: 'name', label: '🔤 Name A-Z' },
-		{ value: 'newest', label: '🆕 Newest First' }
+		{ value: 'featured', label: 'Featured Items' },
+		{ value: 'price-asc', label: 'Price: Low to High' },
+		{ value: 'price-desc', label: 'Price: High to Low' },
+		{ value: 'name-asc', label: 'Name A-Z' },
+		{ value: 'newest-desc', label: 'Newest First' }
 	];
 
 	useEffect(() => {
@@ -78,13 +78,13 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 		// Apply sorting
 		filtered.sort((a, b) => {
 			switch (sortBy) {
-				case 'price-low':
+				case 'price-asc':
 					return parseFloat(a.sale_price || a.price) - parseFloat(b.sale_price || b.price);
-				case 'price-high':
+				case 'price-desc':
 					return parseFloat(b.sale_price || b.price) - parseFloat(a.sale_price || a.price);
-				case 'name':
+				case 'name-asc':
 					return a.name.localeCompare(b.name);
-				case 'newest':
+				case 'newest-desc':
 					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 				case 'featured':
 				default:
@@ -226,34 +226,20 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 				{/* Products Section */}
 				<div className="space-y-6">
 					{/* Sorting Header */}
-					<AnimatedElement animation="fadeIn" delay={200}>
-						<div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-								<div className="flex items-center gap-4">
-									<h2 className="text-xl font-bold text-gray-900">
-										Products
-									</h2>
-									<span className="text-sm text-gray-500">
-										({filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''})
-									</span>
-								</div>
-
-								{/* Sort Dropdown */}
-								<div className="flex items-center gap-3">
-									<span className="text-sm font-medium text-gray-700 hidden sm:block">
-										Sort by:
-									</span>
-									<ListDropdown
-										options={sortOptions}
-										value={sortBy}
-										onValueChange={setSortBy}
-										placeholder="Sort products..."
-										className="w-full sm:w-48"
-									/>
-								</div>
-							</div>
-						</div>
-					</AnimatedElement>
+					<SortingHeader
+						totalProducts={products.length}
+						filteredProducts={filteredProducts.length}
+						sortBy={sortBy}
+						onSortChange={setSortBy}
+						sortOptions={sortOptions}
+						categoryName={category.name}
+						showAdditionalInfo={true}
+						isLoading={loading}
+						searchInput=""
+						onClearSearch={undefined}
+						onResetAll={undefined}
+						showClearButton={false}
+					/>
 
 					{/* Products Grid */}
 					<AnimatedElement animation="fadeIn" delay={300}>
