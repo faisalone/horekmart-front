@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart } from 'lucide-react';
+import { Heart, House, ChevronRight } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import AnimatedElement from '@/components/AnimatedElement';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import SortingHeader from '@/components/SortingHeader';
 import CategoryPageSkeleton from '@/components/CategoryPageSkeleton';
 import { ListDropdown } from '@/components/ui/ListDropdown';
 import { publicApi } from '@/lib/public-api';
@@ -151,7 +150,7 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
 					<h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
-					<p className="text-gray-600 mb-6">The category you're looking for doesn't exist.</p>
+					<p className="text-gray-600 mb-6">The category you&apos;re looking for doesn&apos;t exist.</p>
 					<Link
 						href="/"
 						className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -172,53 +171,57 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 	return (
 		<>
 		<div className="min-h-screen bg-gray-50">
-			<div className="max-w-7xl mx-auto px-4 py-8">
-				{/* Breadcrumb */}
-				<Breadcrumb items={breadcrumbItems} className="mb-6" />
+			{/* Enhanced Category Header */}
+			<AnimatedElement animation="fadeIn" delay={100}>
+				<div className="relative overflow-hidden bg-gradient-to-br from-white via-gray-50 to-gray-100">
+					<div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:py-12 lg:py-16">
+						{/* Background Image Overlay */}
+						{category.image_url && (
+							<div className="absolute inset-0 -z-10 hidden md:block">
+								<div 
+									className="w-full h-full bg-cover bg-center bg-no-repeat opacity-30"
+									style={{
+										backgroundImage: `url("${category.image_url}")`,
+										maskImage: 'linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.3) 15%, rgb(0, 0, 0) 30%, rgb(0, 0, 0) 70%, rgba(0, 0, 0, 0.3) 85%, transparent 100%)'
+									}}
+								/>
+								<div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/40 to-white/60 opacity-40" />
+							</div>
+						)}
 
-				{/* Category Header */}
-				<AnimatedElement animation="fadeIn" delay={100}>
-					<div className="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
-						<div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-							{/* Category Image */}
-							{category.image_url && (
-								<div className="flex-shrink-0">
-									<div className="w-32 h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-theme-secondary/10 to-theme-primary/10 border-4 border-white shadow-lg">
-										<Image
-											src={category.image_url}
-											alt={category.name}
-											width={160}
-											height={160}
-											className="w-full h-full object-cover"
-											priority
-										/>
-									</div>
+						{/* Enhanced Breadcrumb */}
+						<div className="mb-3 md:mb-6">
+							<nav className="flex items-center space-x-2 text-sm mb-0" aria-label="Breadcrumb">
+								<Link href="/" className="flex items-center transition-colors text-gray-500 hover:text-theme-secondary">
+									<House className="w-4 h-4" aria-hidden="true" />
+									<span className="sr-only">Home</span>
+								</Link>
+								<div className="flex items-center space-x-2">
+									<ChevronRight className="w-4 h-4 text-gray-400" aria-hidden="true" />
+									<span className="text-gray-900 font-medium">{category.name}</span>
 								</div>
-							)}
+							</nav>
+						</div>
 
-							{/* Category Info */}
-							<div className="flex-1 space-y-4">
-								<div>
-									<h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-										{category.name}
-									</h1>
-									{category.description && (
-										<p className="text-lg text-gray-600 leading-relaxed">
-											{category.description}
-										</p>
-									)}
-								</div>
-
-								<div className="flex flex-wrap items-center gap-4 pt-4">
-									<div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-theme-secondary/10 to-theme-primary/10 text-theme-secondary-dark rounded-full font-medium">
-										<span className="w-2 h-2 bg-theme-secondary rounded-full mr-2"></span>
-										{filteredProducts.length} Product{filteredProducts.length !== 1 ? 's' : ''} Available
-									</div>
-								</div>
+						{/* Category Title Section */}
+						<div className="max-w-4xl">
+							<div>
+								<h1 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-800 mb-2 md:mb-4 leading-tight tracking-tight">
+									{category.name}
+								</h1>
+								<div className="w-16 md:w-24 h-1 bg-theme-secondary rounded-full" />
 							</div>
 						</div>
 					</div>
-				</AnimatedElement>
+
+					{/* Decorative Elements */}
+					<div className="absolute top-1/2 right-8 transform -translate-y-1/2 w-32 h-32 bg-theme-secondary/20 rounded-full blur-3xl hidden md:block" />
+					<div className="absolute bottom-8 left-8 w-24 h-24 bg-theme-secondary/20 rounded-full blur-2xl hidden md:block" />
+					<div className="absolute bottom-0 left-0 right-0 h-8 md:h-16 bg-gradient-to-t from-gray-50 to-transparent" />
+				</div>
+			</AnimatedElement>
+
+			<div className="max-w-7xl mx-auto px-4 py-8">
 
 				{/* Products Section */}
 				<div className="space-y-6">
