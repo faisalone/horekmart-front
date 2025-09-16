@@ -8,8 +8,11 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/currency';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
+import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
 function CartContent() {
+  // Set page title
+  useSetPageTitle('Cart');
   const { state, updateQuantity, updateVariant, removeItem, clearCart } = useCart();
   const { prepareCartCheckout } = useProductCheckout();
 

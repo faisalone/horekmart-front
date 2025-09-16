@@ -21,6 +21,7 @@ export interface CheckoutSessionData {
 		variant_name?: string;
 		variant_combinations?: Record<string, string>;
 		price: number;
+		original_price?: number; // Original/regular price before discount
 		quantity: number;
 		image: string;
 		category_slug?: string;

@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/currency';
 import { toast } from 'react-hot-toast';
 import { checkoutService, type OrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
 import { shippingCalculator, type ShippingZone } from '@/services/ShippingCalculator';
+import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
 interface OrderData {
   email: string;
@@ -38,6 +39,9 @@ export default function CheckoutPage() {
   const params = useParams();
   const sessionId = params?.sessionId as string;
   
+  // Set page title
+  useSetPageTitle('Checkout');
+  
   const [isValidSession, setIsValidSession] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -53,22 +57,35 @@ export default function CheckoutPage() {
         const sessionData = await checkoutService.getCheckoutSession(sessionId);
         
         // Transform backend session data to frontend format
-        const items = sessionData.items.map(item => ({
-          id: item.product_id.toString(),
-          productSlug: item.product_slug,
-          productName: item.product_name,
-          productImage: item.image,
-          name: item.product_name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-          categorySlug: item.category_slug,
-          variantId: item.variant_id,
-          variantName: item.variant_name,
-          variantOptions: item.variant_combinations,
-          weight: typeof item.weight === 'string' ? parseFloat(item.weight) : (item.weight || 0.1),
-          weightUnit: item.weight_unit || 'kg',
-        }));
+        const items = sessionData.items.map(item => {
+          // Try to find matching cart item to get original price information
+          let originalPrice = item.original_price;
+          if (!originalPrice && !isDirectBuy) {
+            const cartItem = state.items.find(cartItem => 
+              cartItem.productSlug === item.product_slug && 
+              cartItem.variantId?.toString() === item.variant_id?.toString()
+            );
+            originalPrice = cartItem?.originalPrice;
+          }
+
+          return {
+            id: item.product_id.toString(),
+            productSlug: item.product_slug,
+            productName: item.product_name,
+            productImage: item.image,
+            name: item.product_name,
+            price: item.price,
+            originalPrice: originalPrice || undefined,
+            quantity: item.quantity,
+            image: item.image,
+            categorySlug: item.category_slug,
+            variantId: item.variant_id,
+            variantName: item.variant_name,
+            variantOptions: item.variant_combinations,
+            weight: typeof item.weight === 'string' ? parseFloat(item.weight) : (item.weight || 0.1),
+            weightUnit: item.weight_unit || 'kg',
+          };
+        });
         
         setCheckoutItems(items);
         setIsDirectBuy(sessionData.type === 'buy_now');
@@ -624,9 +641,20 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">
-                          {formatCurrency(item.price * item.quantity)}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="font-semibold text-gray-900">
+                            {formatCurrency(item.price * item.quantity)}
+                          </p>
+                          {/* Show original price if it exists and is higher than current price */}
+                          {item.originalPrice && item.originalPrice > item.price && (
+                            <p className="text-sm text-gray-400 line-through">
+                              {formatCurrency(item.originalPrice * item.quantity)}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            {formatCurrency(item.price)} each
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </Link>

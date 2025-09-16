@@ -10,6 +10,7 @@ import { AdminAuthProvider } from '@/hooks/useAdminAuth';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
+import { PageTitleProvider } from '@/contexts/PageTitleContext';
 import { Toaster } from 'sonner';
 import { getCachedSiteSettings } from '@/services/siteSettings';
 
@@ -38,23 +39,24 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
   );
 
   return (
-    <CartProvider>
-      <WishlistProvider>
-        <CategoriesProvider>
-          <AdminAuthProvider>
-            {/* Google Tag Manager - Track page views */}
-            <GoogleTagManager />
-            
-            {/* Meta Pixel - Track page views and events */}
-            <MetaPixel />
-            
-            <Toaster 
-              position="top-center"
-              richColors
-              closeButton
-              expand={false}
-              duration={4000}
-            />
+    <PageTitleProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <CategoriesProvider>
+            <AdminAuthProvider>
+              {/* Google Tag Manager - Track page views */}
+              <GoogleTagManager />
+              
+              {/* Meta Pixel - Track page views and events */}
+              <MetaPixel />
+              
+              <Toaster 
+                position="top-center"
+                richColors
+                closeButton
+                expand={false}
+                duration={4000}
+              />
           {/* Routes without main layout render children directly */}
           {shouldExcludeMainLayout ? (
             <>{children}</>
@@ -73,9 +75,10 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
               />
             </div>
           )}
-          </AdminAuthProvider>
-        </CategoriesProvider>
-      </WishlistProvider>
-    </CartProvider>
+            </AdminAuthProvider>
+          </CategoriesProvider>
+        </WishlistProvider>
+      </CartProvider>
+    </PageTitleProvider>
   );
 }
