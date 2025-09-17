@@ -16,6 +16,9 @@ interface SearchableSelectProps {
   options: SelectOption[]
   disabled?: boolean
   className?: string
+  allowNewOptions?: boolean
+  onAddNewOption?: (newValue: string) => void
+  addNewLabel?: string
 }
 
 export function SearchableSelect({
@@ -25,6 +28,9 @@ export function SearchableSelect({
   options,
   disabled = false,
   className,
+  allowNewOptions = false,
+  onAddNewOption,
+  addNewLabel = "Add new option",
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState("")
@@ -33,6 +39,19 @@ export function SearchableSelect({
   const filteredOptions = options.filter(option =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const showAddNew = allowNewOptions && 
+    searchTerm.trim() && 
+    !options.some(option => option.label.toLowerCase() === searchTerm.toLowerCase()) &&
+    onAddNewOption
+
+  const handleAddNew = () => {
+    if (onAddNewOption && searchTerm.trim()) {
+      onAddNewOption(searchTerm.trim())
+      setIsOpen(false)
+      setSearchTerm("")
+    }
+  }
 
   const selectedOption = options.find(option => option.value === value)
 
@@ -96,21 +115,31 @@ export function SearchableSelect({
             </div>
           </div>
           <div className="max-h-60 overflow-auto p-1">
-            {filteredOptions.length === 0 ? (
+            {filteredOptions.length === 0 && !showAddNew ? (
               <div className="py-2 px-3 text-sm text-gray-400">No options found</div>
             ) : (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleSelect(option)}
-                  className={cn(
-                    "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-700 focus:bg-gray-700 focus:outline-none",
-                    value === option.value ? "bg-gray-700 text-white" : "text-gray-200"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))
+              <>
+                {filteredOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSelect(option)}
+                    className={cn(
+                      "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-700 focus:bg-gray-700 focus:outline-none",
+                      value === option.value ? "bg-gray-700 text-white" : "text-gray-200"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                {showAddNew && (
+                  <button
+                    onClick={handleAddNew}
+                    className="w-full rounded-sm px-3 py-2 text-left text-sm text-blue-400 hover:bg-gray-700 focus:bg-gray-700 focus:outline-none border-t border-gray-600 mt-1 pt-2"
+                  >
+                    + {addNewLabel}: "{searchTerm}"
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

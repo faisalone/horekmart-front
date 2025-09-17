@@ -21,7 +21,10 @@ import {
   Flag,
   AlertCircle,
   FileImage,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface SettingFormData {
@@ -38,20 +41,21 @@ const groupIcons: Record<string, any> = {
   assets: FileImage,
 };
 
-const groupLabels: Record<string, string> = {
-  general: 'General',
-  seo: 'SEO Settings',
-  contact: 'Contact Information',
-  social: 'Social Media',
-  business: 'Business Settings',
-  features: 'Feature Flags',
-  assets: 'Asset Management',
+// Dynamic function to format group names from API data
+const formatGroupLabel = (groupName: string): string => {
+  return groupName
+    .toLowerCase()
+    .split(/[_\-\s]+/) // Split on underscores, hyphens, and spaces
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize first letter of each word
+    .join(' '); // Join with spaces
 };
 
 export default function SiteSettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [formData, setFormData] = useState<SettingFormData>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [settingToDelete, setSettingToDelete] = useState<SiteSetting | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -69,13 +73,39 @@ export default function SiteSettingsPage() {
   const updateMutation = useMutation({
     mutationFn: (data: SiteSettingBulkUpdateRequest) =>
       adminApi.bulkUpdateSiteSettings(data),
-    onSuccess: () => {
+    onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: ['siteSettings'] });
       setHasChanges(false);
-      console.log('Settings updated successfully');
+      toast.success('Settings updated successfully', {
+        description: `${variables.settings.length} setting${variables.settings.length > 1 ? 's' : ''} updated`
+      });
     },
     onError: (error: any) => {
       console.error('Failed to update settings:', error);
+      toast.error('Failed to update settings', {
+        description: error?.response?.data?.message || 'Please try again'
+      });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => adminApi.deleteSiteSetting(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['siteSettings'] });
+      setDeleteModalOpen(false);
+      setSettingToDelete(null);
+      toast.success('Setting deleted successfully', {
+        description: 'The setting has been permanently removed'
+      });
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete setting:', error);
+      toast.error('Failed to delete setting', {
+        description: error?.response?.data?.message || 'Please try again'
+      });
+      setDeleteModalOpen(false);
+      setSettingToDelete(null);
     },
   });
 
@@ -100,10 +130,23 @@ export default function SiteSettingsPage() {
     setFormData(newFormData);
   }, [settings]);
 
-  // Initialize form data when settings load
+  // Initialize form data when settings load or change
   useEffect(() => {
-    if (settings && Object.keys(formData).length === 0) {
-      initializeFormData();
+    if (settings) {
+      // Check if we need to initialize or update form data
+      const currentSettingKeys = Object.values(settings).flat().map((s: SiteSetting) => s.key);
+      const formDataKeys = Object.keys(formData);
+      
+      // Re-initialize if:
+      // 1. Form data is empty, OR
+      // 2. There are new settings that aren't in form data, OR
+      // 3. There are form data keys that don't exist in current settings
+      const hasNewSettings = currentSettingKeys.some(key => !(key in formData));
+      const hasRemovedSettings = formDataKeys.some(key => !currentSettingKeys.includes(key));
+      
+      if (formDataKeys.length === 0 || hasNewSettings || hasRemovedSettings) {
+        initializeFormData();
+      }
     }
   }, [settings, formData, initializeFormData]);
 
@@ -142,53 +185,150 @@ export default function SiteSettingsPage() {
     updateMutation.mutate({ settings: changedSettings });
   };
 
+  const handleDeleteClick = (setting: SiteSetting) => {
+    setSettingToDelete(setting);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (settingToDelete) {
+      deleteMutation.mutate(settingToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSettingToDelete(null);
+  };
+
+  const isImageUrl = (url: string): boolean => {
+    if (!url || typeof url !== 'string') return false;
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i;
+    return imageExtensions.test(url);
+  };
+
   const renderSettingField = (setting: SiteSetting) => {
     const value = formData[setting.key];
+    const stringValue = String(value);
+    const hasImagePreview = setting.type === 'string' && isImageUrl(stringValue);
 
     switch (setting.type) {
       case 'boolean':
         return (
-          <div className="flex items-center space-x-3">
-            <Switch
-              checked={Boolean(value)}
-              onCheckedChange={(checked: boolean) => handleInputChange(setting.key, checked)}
-            />
-            <span className="text-sm font-medium text-white">
-              {value ? 'Enabled' : 'Disabled'}
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={Boolean(value)}
+                onCheckedChange={(checked: boolean) => handleInputChange(setting.key, checked)}
+              />
+              <span className="text-sm font-medium text-white">
+                {value ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeleteClick(setting)}
+              className="h-7 w-7 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              title="Delete setting"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
           </div>
         );
 
       case 'text':
         return (
-          <textarea
-            value={String(value)}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange(setting.key, e.target.value)}
-            placeholder={`Enter ${setting.key.replace(/_/g, ' ')}`}
-            className="w-full px-4 py-3 border border-slate-600 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 min-h-[80px] resize-y transition-colors duration-200"
-          />
+          <div className="relative">
+            <textarea
+              value={String(value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange(setting.key, e.target.value)}
+              placeholder={`Enter ${setting.key.replace(/_/g, ' ')}`}
+              className="w-full px-3 py-2 pr-10 border border-slate-600 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 min-h-[60px] resize-y transition-colors duration-200"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeleteClick(setting)}
+              className="absolute top-1 right-1 h-7 w-7 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              title="Delete setting"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         );
 
       case 'integer':
         return (
-          <input
-            type="number"
-            value={String(value)}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(setting.key, e.target.value)}
-            placeholder={`Enter ${setting.key.replace(/_/g, ' ')}`}
-            className="w-full px-4 py-3 border border-slate-600 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 transition-colors duration-200"
-          />
+          <div className="relative">
+            <input
+              type="number"
+              value={String(value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(setting.key, e.target.value)}
+              placeholder={`Enter ${setting.key.replace(/_/g, ' ')}`}
+              className="w-full px-3 py-2 pr-10 border border-slate-600 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 transition-colors duration-200"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeleteClick(setting)}
+              className="absolute top-1/2 right-1 -translate-y-1/2 h-7 w-7 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              title="Delete setting"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         );
 
       default:
         return (
-          <input
-            type="text"
-            value={String(value)}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(setting.key, e.target.value)}
-            placeholder={`Enter ${setting.key.replace(/_/g, ' ')}`}
-            className="w-full px-4 py-3 border border-slate-600 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 transition-colors duration-200"
-          />
+          <div className="space-y-2">
+            <div className="relative">
+              <input
+                type="text"
+                value={String(value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(setting.key, e.target.value)}
+                placeholder={`Enter ${setting.key.replace(/_/g, ' ')}`}
+                className="w-full px-3 py-2 pr-10 border border-slate-600 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 transition-colors duration-200"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteClick(setting)}
+                className="absolute top-1/2 right-1 -translate-y-1/2 h-7 w-7 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                title="Delete setting"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+            {hasImagePreview && stringValue && (
+              <div className="flex items-center space-x-3 p-2 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                <div className="relative w-16 h-16 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
+                  <img
+                    src={stringValue}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onLoad={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.nextElementSibling?.classList.add('opacity-0');
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.classList.add('opacity-0');
+                      target.nextElementSibling?.classList.remove('opacity-0');
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-slate-400 bg-slate-700">
+                    <FileImage className="h-6 w-6" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-300">Image Preview</p>
+                  <p className="text-xs text-slate-500 truncate mt-1">{stringValue}</p>
+                </div>
+              </div>
+            )}
+          </div>
         );
     }
   };
@@ -199,26 +339,28 @@ export default function SiteSettingsPage() {
     return (
       <div className="space-y-8">
 
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {groupSettings.map((setting) => (
             <Card key={setting.id} className="bg-slate-900/80 border-slate-700 backdrop-blur-sm hover:bg-slate-900/90 transition-all duration-200">
-              <CardContent className="p-6">
-                <div className="space-y-4">
+              <CardContent className="p-4">
+                <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <label className="block text-base font-semibold text-white mb-2">
-                        {setting.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </label>
-                      {setting.description && (
-                        <p className="text-sm text-slate-300 mb-4">
-                          {setting.description}
-                        </p>
-                      )}
+                      <div className="flex items-baseline space-x-2 mb-2">
+                        <label className="text-sm font-semibold text-white">
+                          {setting.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </label>
+                        {setting.description && (
+                          <span className="text-xs text-slate-400">
+                            • {setting.description}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-3 ml-4">
+                    <div className="flex items-center space-x-2 ml-3">
                       <span 
                         className={cn(
-                          'inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium border',
+                          'inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium border',
                           setting.is_public 
                             ? 'bg-green-600/20 text-green-400 border-green-500/30' 
                             : 'bg-slate-600/20 text-slate-300 border-slate-500/30'
@@ -226,12 +368,12 @@ export default function SiteSettingsPage() {
                       >
                         {setting.is_public ? 'Public' : 'Private'}
                       </span>
-                      <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                      <span className="inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30">
                         {setting.type}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4">
+                  <div>
                     {renderSettingField(setting)}
                   </div>
                 </div>
@@ -319,6 +461,13 @@ export default function SiteSettingsPage() {
   const availableGroups = Object.keys(settings).filter(group => settings[group].length > 0);
   const allTabs = [...availableGroups, 'assets']; // Add assets as a separate tab
 
+  // Automatically switch to the correct tab if current activeTab doesn't exist in availableGroups
+  useEffect(() => {
+    if (availableGroups.length > 0 && !availableGroups.includes(activeTab)) {
+      setActiveTab(availableGroups[0]);
+    }
+  }, [availableGroups, activeTab]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="max-w-7xl mx-auto p-8 space-y-8">
@@ -363,7 +512,34 @@ export default function SiteSettingsPage() {
         {/* Settings Tabs */}
         <div className="space-y-8">
           <div className="bg-slate-900/50 p-2 rounded-xl border border-slate-700/50 backdrop-blur-sm">
-            <div className="flex flex-wrap gap-2">
+            <div 
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 cursor-grab active:cursor-grabbing"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
+              onMouseDown={(e) => {
+                const container = e.currentTarget as HTMLDivElement;
+                const startX = e.pageX - container.offsetLeft;
+                const scrollLeft = container.scrollLeft;
+                
+                const handleMouseMove = (moveEvent: MouseEvent) => {
+                  const x = moveEvent.pageX - container.offsetLeft;
+                  const walk = (x - startX) * 2;
+                  container.scrollLeft = scrollLeft - walk;
+                };
+                
+                const handleMouseUp = () => {
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                  container.style.cursor = 'grab';
+                };
+                
+                container.style.cursor = 'grabbing';
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            >
               {allTabs.map((group) => {
                 const Icon = groupIcons[group] || SettingsIcon;
                 const isAssets = group === 'assets';
@@ -372,11 +548,11 @@ export default function SiteSettingsPage() {
                   return (
                     <Link key={group} href="/dashboard/site-settings/assets">
                       <button
-                        className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-800"
+                        className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-800 flex-shrink-0"
                       >
                         <Icon className="h-5 w-5" />
                         <span className="whitespace-nowrap">
-                          {groupLabels[group] || group}
+                          {formatGroupLabel(group)}
                         </span>
                       </button>
                     </Link>
@@ -388,7 +564,7 @@ export default function SiteSettingsPage() {
                     key={group}
                     onClick={() => setActiveTab(group)}
                     className={cn(
-                      "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                      "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex-shrink-0",
                       activeTab === group
                         ? "bg-blue-600 shadow-lg text-white"
                         : "text-slate-300 hover:text-white hover:bg-slate-800"
@@ -396,7 +572,7 @@ export default function SiteSettingsPage() {
                   >
                     <Icon className="h-5 w-5" />
                     <span className="whitespace-nowrap">
-                      {groupLabels[group] || group}
+                      {formatGroupLabel(group)}
                     </span>
                   </button>
                 );
@@ -418,6 +594,58 @@ export default function SiteSettingsPage() {
             })}
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteModalOpen && settingToDelete && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-800 rounded-lg border border-slate-700 max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-red-500/20 rounded-full">
+                    <AlertTriangle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Delete Setting</h3>
+                    <p className="text-sm text-slate-400">This action cannot be undone</p>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-slate-300">
+                    Are you sure you want to delete the setting "
+                    <span className="font-semibold text-white">
+                      {settingToDelete.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                    "?
+                  </p>
+                  <div className="mt-3 p-3 bg-slate-900/50 rounded border border-slate-600">
+                    <p className="text-sm text-slate-400">
+                      <span className="font-medium">Current value:</span> {settingToDelete.value || '(empty)'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteCancel}
+                    disabled={deleteMutation.isPending}
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDeleteConfirm}
+                    disabled={deleteMutation.isPending}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete Setting'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

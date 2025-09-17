@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/admin-api';
-import { SiteSettingCreateRequest } from '@/types/admin';
+import { SiteSettingCreateRequest, GroupedSiteSettings } from '@/types/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/Switch';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { ArrowLeft, Plus, Save } from 'lucide-react';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 const settingTypes = [
   { value: 'string', label: 'String' },
@@ -19,18 +21,33 @@ const settingTypes = [
   { value: 'json', label: 'JSON' },
 ];
 
-const settingGroups = [
-  { value: 'general', label: 'General' },
-  { value: 'seo', label: 'SEO Settings' },
-  { value: 'contact', label: 'Contact Information' },
-  { value: 'social', label: 'Social Media' },
-  { value: 'business', label: 'Business Settings' },
-  { value: 'features', label: 'Feature Flags' },
+// Dynamic function to format group names consistently
+const formatGroupLabel = (groupName: string): string => {
+  return groupName
+    .toLowerCase()
+    .split(/[_\-\s]+/) // Split on underscores, hyphens, and spaces
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize first letter of each word
+    .join(' '); // Join with spaces
+};
+
+const defaultSettingGroups = [
+  { value: 'general', label: formatGroupLabel('general') },
+  { value: 'seo', label: formatGroupLabel('seo') },
+  { value: 'contact', label: formatGroupLabel('contact') },
+  { value: 'social', label: formatGroupLabel('social') },
+  { value: 'business', label: formatGroupLabel('business') },
+  { value: 'features', label: formatGroupLabel('features') },
 ];
 
 export default function AddSiteSettingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Fetch existing site settings to get dynamic groups
+  const { data: settings } = useQuery<GroupedSiteSettings>({
+    queryKey: ['siteSettings'],
+    queryFn: () => adminApi.getSiteSettings(),
+  });
 
   const [formData, setFormData] = useState<SiteSettingCreateRequest>({
     key: '',
@@ -41,17 +58,41 @@ export default function AddSiteSettingPage() {
     is_public: false,
   });
 
+  // Track newly created groups locally
+  const [newGroups, setNewGroups] = useState<Array<{value: string, label: string}>>([]);
+
+  // Combine default groups with existing groups from settings and newly created ones
+  const settingGroups = React.useMemo(() => {
+    const existingGroups = settings ? Object.keys(settings).map(group => ({
+      value: group,
+      label: formatGroupLabel(group)
+    })) : [];
+    
+    // Merge default groups with existing groups and newly created groups, removing duplicates
+    const allGroups = [...defaultSettingGroups, ...existingGroups, ...newGroups];
+    const uniqueGroups = allGroups.filter((group, index, self) => 
+      index === self.findIndex(g => g.value === group.value)
+    );
+    
+    return uniqueGroups;
+  }, [settings, newGroups]);
+
   const createMutation = useMutation({
     mutationFn: (data: SiteSettingCreateRequest) =>
       adminApi.createSiteSetting(data),
-    onSuccess: () => {
+    onSuccess: (response: any) => {
       queryClient.invalidateQueries({ queryKey: ['siteSettings'] });
+      const settingData = response.data || response;
+      toast.success('Setting created successfully', {
+        description: `${settingData.key} has been added to ${formatGroupLabel(settingData.group)} group`
+      });
       router.push('/dashboard/site-settings');
-      // TODO: Add success toast
     },
     onError: (error: any) => {
       console.error('Failed to create setting:', error);
-      // TODO: Add error toast
+      toast.error('Failed to create setting', {
+        description: error?.response?.data?.message || 'Please try again'
+      });
     },
   });
 
@@ -190,17 +231,27 @@ export default function AddSiteSettingPage() {
               {/* Group */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-200">Setting Group</label>
-                <select
+                <SearchableSelect
                   value={formData.group}
-                  onChange={(e) => handleInputChange('group', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-600 bg-gray-700/50 text-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {settingGroups.map((group) => (
-                    <option key={group.value} value={group.value} className="bg-gray-700 text-gray-200">
-                      {group.label}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, group: String(value) }))}
+                  options={settingGroups}
+                  placeholder="Select a group or add new"
+                  allowNewOptions={true}
+                  onAddNewOption={(newGroup) => {
+                    // Add to local new groups list
+                    const newGroupValue = newGroup.toLowerCase().replace(/\s+/g, '_');
+                    const newGroupOption = {
+                      value: newGroupValue,
+                      label: formatGroupLabel(newGroupValue)
+                    };
+                    setNewGroups(prev => [...prev, newGroupOption]);
+                    // Set as selected group
+                    setFormData(prev => ({ ...prev, group: newGroupOption.value }));
+                  }}
+                />
+                <p className="text-xs text-gray-400">
+                  Choose from existing groups or create a new one
+                </p>
               </div>
 
               {/* Value */}
