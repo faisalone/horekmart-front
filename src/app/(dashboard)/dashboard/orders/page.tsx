@@ -18,8 +18,14 @@ import { Order, TableFilter } from '@/types/admin';
 import { PaginatedResponse } from '@/types/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CustomSelect } from '@/components/ui/select-custom';
 import Filters from '@/components/dashboard/Filters';
 import { ordersFilterConfig, updateFilterConfigOptions } from '@/config/adminFilters';
 import {
@@ -114,22 +120,31 @@ export default function OrdersPage() {
   });
 
   // Fetch vendors for filter options
-  const { data: vendorsData } = useQuery({
+  const { data: vendorsData, error: vendorsError, isLoading: vendorsLoading } = useQuery({
     queryKey: ['vendors'],
     queryFn: () => adminApi.getVendors({ per_page: 100 }),
   });
 
-  // Update vendor options in filter config
-  React.useEffect(() => {
+  // Create dynamic filter config with vendors
+  const filterConfig = React.useMemo(() => {
+    let config = { ...ordersFilterConfig };
+
+    // Add vendors to vendor filter
     if (vendorsData?.data) {
-      updateFilterConfigOptions(ordersFilterConfig, 'vendor_id',
+      config = updateFilterConfigOptions(
+        config,
+        'vendor_id',
         vendorsData.data.map((vendor: any) => ({
           value: vendor.id.toString(),
-          label: vendor.business_name || vendor.user.name,
+          label: vendor.business_name || vendor.name,
         }))
       );
     }
-  }, [vendorsData]);
+
+    return config;
+  }, [vendorsData?.data]);
+
+
 
   // Update order status
   const updateOrderMutation = useMutation({
@@ -242,6 +257,8 @@ export default function OrdersPage() {
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
   };
+
+
 
   const handleUpdateStatus = (status: string | number) => {
     if (selectedOrder && typeof status === 'string') {
@@ -371,40 +388,16 @@ export default function OrdersPage() {
         </Card>
       </div>
 
-      {/* Search and Quick Filters */}
-      <Card className="border border-gray-700 bg-gray-800/50 backdrop-blur">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by order ID, customer name, or email..."
-                  value={filters.search || ''}
-                  onChange={(e) => handleFiltersChange({ search: e.target.value })}
-                  className="pl-10 bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <CustomSelect
-                value={filters.status || ''}
-                onValueChange={(value) => handleFiltersChange({ status: value as string })}
-                options={[
-                  { value: '', label: 'All Status' },
-                  { value: 'pending', label: 'Pending' },
-                  { value: 'processing', label: 'Processing' },
-                  { value: 'shipped', label: 'Shipped' },
-                  { value: 'delivered', label: 'Delivered' },
-                  { value: 'cancelled', label: 'Cancelled' },
-                  { value: 'refunded', label: 'Refunded' },
-                ]}
-                className="w-48 bg-gray-700/50 border-gray-600 text-white"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters */}
+      <Filters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+        config={filterConfig}
+        isLoading={isFetching}
+        resultCount={data?.meta?.total}
+        searchQuery={filters.search}
+      />
 
       {/* Orders Table */}
       <Card className="border border-gray-700 bg-gray-800/50 backdrop-blur">
@@ -655,19 +648,22 @@ export default function OrdersPage() {
               <div className="bg-gray-700/50 p-4 rounded-lg border border-gray-600">
                 <h3 className="font-semibold mb-3 text-white">Update Status</h3>
                 <div className="flex gap-2">
-                  <CustomSelect
-                    value={selectedOrder.status}
+                  <Select 
+                    value={selectedOrder.status} 
                     onValueChange={handleUpdateStatus}
-                    options={[
-                      { value: 'pending', label: 'Pending' },
-                      { value: 'processing', label: 'Processing' },
-                      { value: 'shipped', label: 'Shipped' },
-                      { value: 'delivered', label: 'Delivered' },
-                      { value: 'cancelled', label: 'Cancelled' },
-                      { value: 'refunded', label: 'Refunded' },
-                    ]}
-                    className="w-48 bg-gray-600/50 border-gray-500 text-white"
-                  />
+                  >
+                    <SelectTrigger className="w-48 bg-gray-800 border-gray-700 text-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { checkoutService } from '@/services/CheckoutService';
-import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
 function CheckoutRedirectContent() {
   const router = useRouter();

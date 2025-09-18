@@ -81,7 +81,10 @@ export function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-hidden">
+        <div className="fixed inset-0 z-[9999]" onClick={() => setIsOpen(false)} />
+      )}
+      {isOpen && (
+        <div className="absolute z-[30] w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-hidden">
           {options.length > 5 && (
             <div className="p-2 border-b border-gray-600">
               <input

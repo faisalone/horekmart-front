@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CustomSelect } from '@/components/ui/select-custom';
 import {
   Select,
   SelectContent,
@@ -163,10 +162,10 @@ function Filters<T extends Record<string, any>>({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0 bg-gray-800 border-gray-700">
-                  <Command className="bg-gray-800">
+                  <Command className="bg-gray-800 [&_.cmdk-input-wrapper]:border-gray-600 [&_.cmdk-input]:text-gray-200 [&_.cmdk-input]:placeholder-gray-400 [&_svg]:text-gray-400">
                     <CommandInput 
                       placeholder={`Search ${field.label?.toLowerCase()}...`} 
-                      className="bg-gray-800 border-gray-700 text-gray-200"
+                      className="border-gray-600 text-gray-200 placeholder-gray-400 [&>svg]:!text-gray-400 [&_.cmdk-input]:!text-gray-200 [&_.cmdk-input]:!border-gray-600"
                     />
                     <CommandEmpty className="text-gray-400">No {field.label?.toLowerCase()} found.</CommandEmpty>
                     <CommandGroup className="max-h-60 overflow-auto dropdown-scroll">

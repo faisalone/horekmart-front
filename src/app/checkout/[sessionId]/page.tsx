@@ -3,14 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CreditCard, MapPin, Phone, Mail, Lock, Edit3, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Edit3, X, Loader2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 import { toast } from 'react-hot-toast';
 import { checkoutService, type FormOrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
-import { shippingCalculator, type ShippingZone } from '@/services/ShippingCalculator';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
@@ -588,7 +587,8 @@ export default function CheckoutPage() {
                         }))}
                         placeholder={loadingCities ? 'Loading cities...' : 'Search and select city'}
                         disabled={loadingCities}
-                        className={errors.city && errors.city.length ? 'border-red-500' : ''}
+                        error={!!(errors.city && errors.city.length)}
+                        theme="light"
                       />
                       {renderErrorList(errors.city)}
                     </div>
@@ -614,7 +614,8 @@ export default function CheckoutPage() {
                           'Search and select zone'
                         }
                         disabled={loadingZones || !formData.cityId}
-                        className={errors.zone && errors.zone.length ? 'border-red-500' : ''}
+                        error={!!(errors.zone && errors.zone.length)}
+                        theme="light"
                       />
                       {renderErrorList(errors.zone)}
                     </div>
