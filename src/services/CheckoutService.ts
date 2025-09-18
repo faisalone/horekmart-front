@@ -41,10 +41,11 @@ export interface OrderData {
 	shipping_address: {
 		address: string;
 		city: string;
-		zip_code: string;
+		city_id?: number;
+		zone?: string;
+		zone_id?: number;
 		country: string;
 	};
-	shipping_method: ShippingZone;
 	payment_method: 'bkash' | 'nagad' | 'pay_later';
 	discount_code?: string;
 	notes?: string;
@@ -155,6 +156,43 @@ class CheckoutService {
 		}
 
 		return discount.value;
+	}
+
+	// Shipping API methods
+	async getCities(): Promise<
+		Array<{ id: number; name: string; zones_count?: number }>
+	> {
+		const response = await apiClient.get('/v1/shipping/cities');
+		return response.data.data;
+	}
+
+	async getZonesByCity(
+		cityId: number
+	): Promise<
+		Array<{
+			id: number;
+			name: string;
+			city_id: number;
+			areas_count?: number;
+		}>
+	> {
+		const response = await apiClient.get(
+			`/v1/shipping/cities/${cityId}/zones`
+		);
+		return response.data.data;
+	}
+
+	async calculateShippingPrice(
+		sessionId: string,
+		cityId: number,
+		zoneId: number
+	): Promise<{ price: number; discount: number; promo_discount: number }> {
+		const response = await apiClient.post('/v1/shipping/price', {
+			session_id: sessionId,
+			recipient_city: cityId,
+			recipient_zone: zoneId,
+		});
+		return response.data.data.data;
 	}
 }
 

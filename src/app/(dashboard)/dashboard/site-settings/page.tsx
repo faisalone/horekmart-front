@@ -150,6 +150,15 @@ export default function SiteSettingsPage() {
     }
   }, [settings, formData, initializeFormData]);
 
+  // Automatically switch to the correct tab if current activeTab doesn't exist in availableGroups
+  const availableGroups = settings ? Object.keys(settings).filter(group => settings[group].length > 0) : [];
+  
+  useEffect(() => {
+    if (availableGroups.length > 0 && !availableGroups.includes(activeTab)) {
+      setActiveTab(availableGroups[0]);
+    }
+  }, [availableGroups, activeTab]);
+
   const handleInputChange = (key: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
@@ -458,15 +467,7 @@ export default function SiteSettingsPage() {
 
   if (!settings) return null;
 
-  const availableGroups = Object.keys(settings).filter(group => settings[group].length > 0);
   const allTabs = [...availableGroups, 'assets']; // Add assets as a separate tab
-
-  // Automatically switch to the correct tab if current activeTab doesn't exist in availableGroups
-  useEffect(() => {
-    if (availableGroups.length > 0 && !availableGroups.includes(activeTab)) {
-      setActiveTab(availableGroups[0]);
-    }
-  }, [availableGroups, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

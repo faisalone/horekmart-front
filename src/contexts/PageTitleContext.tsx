@@ -45,16 +45,25 @@ export function usePageTitle() {
   return context;
 }
 
-// Custom hook for easier usage - automatically cleans up on unmount
+// Custom hook for easier usage - sets page title with Next.js compatibility
 export function useSetPageTitle(title: string | null) {
   const { setPageTitle } = usePageTitle();
   
   useEffect(() => {
-    setPageTitle(title);
-    
-    // Cleanup: reset to null when component unmounts
-    return () => {
-      setPageTitle(null);
-    };
+    if (title) {
+      // Set title immediately
+      setPageTitle(title);
+      
+      // Also set directly for immediate effect
+      const fullTitle = `${title} - Horekmart`;
+      document.title = fullTitle;
+      
+      // Use requestAnimationFrame to handle any DOM timing issues
+      requestAnimationFrame(() => {
+        document.title = fullTitle;
+      });
+    }
   }, [title, setPageTitle]);
+  
+  // No cleanup to avoid race conditions during navigation
 }

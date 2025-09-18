@@ -80,21 +80,21 @@ export function SearchableSelect({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
-          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 text-sm shadow-sm",
-          "bg-gray-800 border-gray-700 text-gray-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
-          "disabled:cursor-not-allowed disabled:opacity-50",
+          "flex w-full items-center justify-between whitespace-nowrap rounded-lg border px-4 py-3 text-sm",
+          "bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
+          "hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
           "[&>span]:line-clamp-1"
         )}
       >
-        <span className={selectedOption ? "text-gray-200" : "text-gray-400"}>
+        <span className={selectedOption ? "text-gray-900" : "text-gray-500"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className="h-4 w-4 text-gray-400" />
+        <ChevronDown className="h-4 w-4 text-gray-500" />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-gray-800 border-gray-700 shadow-lg">
-          <div className="p-2 border-b border-gray-700">
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-white border-gray-200 shadow-lg">
+          <div className="p-2 border-b border-gray-200">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -102,12 +102,12 @@ export function SearchableSelect({
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-sm bg-gray-900 border border-gray-600 pl-8 pr-8 py-1.5 text-sm text-gray-200 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-sm bg-white border border-gray-300 pl-8 pr-8 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -116,7 +116,7 @@ export function SearchableSelect({
           </div>
           <div className="max-h-60 overflow-auto p-1">
             {filteredOptions.length === 0 && !showAddNew ? (
-              <div className="py-2 px-3 text-sm text-gray-400">No options found</div>
+              <div className="py-2 px-3 text-sm text-gray-500">No options found</div>
             ) : (
               <>
                 {filteredOptions.map((option) => (
@@ -124,8 +124,8 @@ export function SearchableSelect({
                     key={option.value}
                     onClick={() => handleSelect(option)}
                     className={cn(
-                      "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-700 focus:bg-gray-700 focus:outline-none",
-                      value === option.value ? "bg-gray-700 text-white" : "text-gray-200"
+                      "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none",
+                      value === option.value ? "bg-blue-50 text-blue-700" : "text-gray-900"
                     )}
                   >
                     {option.label}
@@ -134,7 +134,7 @@ export function SearchableSelect({
                 {showAddNew && (
                   <button
                     onClick={handleAddNew}
-                    className="w-full rounded-sm px-3 py-2 text-left text-sm text-blue-400 hover:bg-gray-700 focus:bg-gray-700 focus:outline-none border-t border-gray-600 mt-1 pt-2"
+                    className="w-full rounded-sm px-3 py-2 text-left text-sm text-blue-600 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-t border-gray-200 mt-1 pt-2"
                   >
                     + {addNewLabel}: "{searchTerm}"
                   </button>

@@ -12,6 +12,20 @@ import { toast } from 'react-hot-toast';
 import { checkoutService, type OrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
 import { shippingCalculator, type ShippingZone } from '@/services/ShippingCalculator';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+
+interface City {
+  id: number;
+  name: string;
+  zones_count?: number;
+}
+
+interface Zone {
+  id: number;
+  name: string;
+  city_id: number;
+  areas_count?: number;
+}
 
 interface OrderData {
   email: string;
@@ -20,18 +34,20 @@ interface OrderData {
   phone: string;
   address: string;
   city: string;
-  state: string;
-  zipCode: string;
+  cityId: number | null;
+  zone: string;
+  zoneId: number | null;
   country: string;
   paymentMethod: 'bkash' | 'nagad' | 'pay_later';
   cardNumber: string;
   expiryDate: string;
   cvv: string;
   cardName: string;
-  shippingMethod: ShippingZone;
   saveInfo: boolean;
   agreeTerms: boolean;
 }
+
+
 
 export default function CheckoutPage() {
   const { state, clearCart } = useCart();
@@ -39,7 +55,7 @@ export default function CheckoutPage() {
   const params = useParams();
   const sessionId = params?.sessionId as string;
   
-  // Set page title
+  // Set page title using improved context
   useSetPageTitle('Checkout');
   
   const [isValidSession, setIsValidSession] = useState(false);
@@ -49,7 +65,34 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string>('');
   const [checkoutItems, setCheckoutItems] = useState<any[]>([]);
   const [isDirectBuy, setIsDirectBuy] = useState(false);
+  
+  // Location data
+  const [cities, setCities] = useState<City[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingZones, setLoadingZones] = useState(false);
+  
+  // Shipping calculation
+  const [shippingFee, setShippingFee] = useState(0);
+  const [calculatingShipping, setCalculatingShipping] = useState(false);
 
+  // Load cities on mount
+  useEffect(() => {
+    const loadCities = async () => {
+      setLoadingCities(true);
+      try {
+        const citiesData = await checkoutService.getCities();
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    
+    loadCities();
+  }, []);
+  
   // Validate session on mount
   useEffect(() => {
     const validateSession = async () => {
@@ -105,7 +148,7 @@ export default function CheckoutPage() {
     } else {
       router.replace('/cart');
     }
-  }, [sessionId, router]);
+  }, [sessionId, router, isDirectBuy, state.items]);
 
   const [formData, setFormData] = useState<OrderData>({
     email: '',
@@ -114,15 +157,15 @@ export default function CheckoutPage() {
     phone: '',
     address: '',
     city: '',
-    state: '',
-    zipCode: '',
+    cityId: null,
+    zone: '',
+    zoneId: null,
     country: 'Bangladesh',
     paymentMethod: 'bkash',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
     cardName: '',
-    shippingMethod: 'outside_dhaka_nilphamari',
     saveInfo: false,
     agreeTerms: false,
   });
@@ -139,13 +182,78 @@ export default function CheckoutPage() {
   } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
 
-  const handleInputChange = (field: keyof OrderData, value: string) => {
+  const handleInputChange = (field: keyof OrderData, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
+  
+  // Handle city selection
+  const handleCityChange = async (cityId: number, cityName: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      cityId, 
+      city: cityName, 
+      zoneId: null, 
+      zone: '' 
+    }));
+    
+    // Clear zones and shipping fee
+    setZones([]);
+    setShippingFee(0);
+    
+    // Load zones for selected city
+    setLoadingZones(true);
+    try {
+      const zonesData = await checkoutService.getZonesByCity(cityId);
+      setZones(zonesData);
+    } catch (error) {
+      console.error('Error loading zones:', error);
+    } finally {
+      setLoadingZones(false);
+    }
+  };
+  
+  // Handle zone selection and calculate shipping
+  const handleZoneChange = async (zoneId: number, zoneName: string) => {
+    // Update form data
+    setFormData(prev => {
+      const newFormData = { ...prev, zoneId, zone: zoneName };
+      
+      // Calculate shipping price with the current cityId
+      if (prev.cityId && sessionId) {
+        console.log('Calculating shipping for:', { cityId: prev.cityId, zoneId, sessionId });
+        calculateShipping(prev.cityId, zoneId, sessionId);
+      } else {
+        console.log('Missing data for shipping calculation:', { cityId: prev.cityId, sessionId });
+      }
+      
+      return newFormData;
+    });
+  };
+  
+  // Separate shipping calculation function
+  const calculateShipping = async (cityId: number, zoneId: number, sessionId: string) => {
+    setCalculatingShipping(true);
+    try {
+      console.log('Calculating shipping for:', { cityId, zoneId, sessionId });
+      
+      const shippingData = await checkoutService.calculateShippingPrice(sessionId, cityId, zoneId);
+      console.log('Shipping API response:', shippingData);
+      
+      const shippingPrice = shippingData.price || 0;
+      console.log('Setting shipping fee to:', shippingPrice);
+      setShippingFee(shippingPrice);
+    } catch (error) {
+      console.error('Error calculating shipping:', error);
+    } finally {
+      setCalculatingShipping(false);
+    }
+  };
+  
+
 
   // Mock discount codes for demo
   const validDiscountCodes = {
@@ -194,7 +302,8 @@ export default function CheckoutPage() {
     if (!formData.phone) newErrors.phone = 'Phone number is required';
     if (!formData.firstName) newErrors.firstName = 'Full name is required';
     if (!formData.address) newErrors.address = 'Address is required';
-    if (!formData.city) newErrors.city = 'City is required';
+    if (!formData.cityId) newErrors.city = 'Please select a city';
+    if (!formData.zoneId) newErrors.zone = 'Please select a zone';
 
     // Terms agreement
     if (!formData.agreeTerms) {
@@ -227,10 +336,11 @@ export default function CheckoutPage() {
         shipping_address: {
           address: formData.address,
           city: formData.city,
-          zip_code: formData.zipCode,
+          city_id: formData.cityId || undefined,
+          zone: formData.zone,
+          zone_id: formData.zoneId || undefined,
           country: formData.country,
         },
-        shipping_method: formData.shippingMethod,
         payment_method: formData.paymentMethod,
         discount_code: appliedDiscount?.code,
         notes: undefined,
@@ -268,10 +378,7 @@ export default function CheckoutPage() {
 
   // Calculate totals with server-side pricing (no subtotal calculation here since backend will handle it)
   const subtotal = checkoutItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const getShippingCost = () => {
-    return checkoutService.getShippingCost(formData.shippingMethod, checkoutItems);
-  };
-  const shipping = getShippingCost();
+  const shipping = shippingFee; // Use calculated shipping fee from API
   
   // Calculate discount amount using the service
   const discountAmount = appliedDiscount 
@@ -360,12 +467,14 @@ export default function CheckoutPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
-            <Link href="/cart">
-              <Button variant="outline" className="flex items-center gap-2 text-gray-800 border-gray-400">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Cart
-              </Button>
-            </Link>
+            {!isDirectBuy && (
+              <Link href="/cart">
+                <Button variant="outline" className="flex items-center gap-2 text-gray-800 border-gray-400">
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Cart
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -443,71 +552,61 @@ export default function CheckoutPage() {
                     {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City
+                        City *
                       </label>
-                      <input
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
-                          errors.city ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="City"
+                      <SearchableSelect
+                        value={formData.cityId || ''}
+                        onValueChange={(value: string | number) => {
+                          const cityId = typeof value === 'string' ? parseInt(value) : value;
+                          const city = cities.find(c => c.id === cityId);
+                          if (city) {
+                            handleCityChange(cityId, city.name);
+                          }
+                        }}
+                        options={cities.map(city => ({
+                          value: city.id,
+                          label: city.name
+                        }))}
+                        placeholder={loadingCities ? 'Loading cities...' : 'Search and select city'}
+                        disabled={loadingCities}
+                        className={errors.city ? 'border-red-500' : ''}
                       />
                       {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Postal code
+                        Zone *
                       </label>
-                      <input
-                        type="text"
-                        value={formData.zipCode}
-                        onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
-                          errors.zipCode ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Postal code"
+                      <SearchableSelect
+                        value={formData.zoneId || ''}
+                        onValueChange={(value: string | number) => {
+                          const zoneId = typeof value === 'string' ? parseInt(value) : value;
+                          const zone = zones.find(z => z.id === zoneId);
+                          if (zone) {
+                            handleZoneChange(zoneId, zone.name);
+                          }
+                        }}
+                        options={zones.map(zone => ({
+                          value: zone.id,
+                          label: zone.name
+                        }))}
+                        placeholder={
+                          loadingZones ? 'Loading zones...' : 
+                          !formData.cityId ? 'Select city first' : 
+                          'Search and select zone'
+                        }
+                        disabled={loadingZones || !formData.cityId}
+                        className={errors.zone ? 'border-red-500' : ''}
                       />
-                      {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
+                      {errors.zone && <p className="text-red-500 text-sm mt-1">{errors.zone}</p>}
                     </div>
                   </div>
-                </div>
-              </div>
+                  
 
-              {/* Shipping method */}
-              <div className="bg-white rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping method</h2>
-                <div className="space-y-3">
-                  {checkoutService.getShippingOptions(checkoutItems).map((option) => (
-                    <div 
-                      key={option.zone}
-                      onClick={() => handleInputChange('shippingMethod', option.zone)}
-                      className={`border rounded-lg cursor-pointer transition-colors ${
-                        formData.shippingMethod === option.zone 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : 'border-gray-400 hover:border-gray-500'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between p-4">
-                        <div className="flex-1">
-                          <span className="text-gray-900 font-medium">{option.name}</span>
-                          <p className="text-sm text-gray-600 mt-1">{option.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className={`font-semibold text-lg ${
-                            formData.shippingMethod === option.zone ? 'text-blue-600' : 'text-gray-900'
-                          }`}>
-                            {formatCurrency(option.cost)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -706,7 +805,16 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">{formatCurrency(shipping)}</span>
+                  <span className="font-medium flex items-center gap-1">
+                    {calculatingShipping ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Calculating...
+                      </>
+                    ) : (
+                      formatCurrency(shipping)
+                    )}
+                  </span>
                 </div>
                 {appliedDiscount && (
                   <div className="flex justify-between text-sm">
