@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CreditCard, MapPin, Phone, Mail, Lock, CheckCircle, Edit3, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, MapPin, Phone, Mail, Lock, Edit3, X, Loader2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 import { toast } from 'react-hot-toast';
-import { checkoutService, type OrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
+import { checkoutService, type FormOrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
 import { shippingCalculator, type ShippingZone } from '@/services/ShippingCalculator';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -29,16 +29,12 @@ interface Zone {
 
 interface OrderData {
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   phone: string;
   address: string;
-  city: string;
   cityId: number | null;
-  zone: string;
   zoneId: number | null;
-  country: string;
-  paymentMethod: 'bkash' | 'nagad' | 'pay_later';
+  paymentMethod: 'bkash' | 'nagad' | 'pay_later' | '';
   cardNumber: string;
   expiryDate: string;
   cvv: string;
@@ -46,6 +42,20 @@ interface OrderData {
   saveInfo: boolean;
   agreeTerms: boolean;
 }
+
+type FormField = 'phone' | 'name' | 'address' | 'city' | 'zone' | 'paymentMethod';
+type FieldErrors = Partial<Record<FormField, string[]>>;
+
+const renderErrorList = (messages?: string[]) => {
+  if (!messages || messages.length === 0) return null;
+  return (
+    <div className="mt-1 space-y-0.5">
+      {messages.map((msg, idx) => (
+        <p key={idx} className="text-red-500 text-sm">{msg}</p>
+      ))}
+    </div>
+  );
+};
 
 
 
@@ -61,8 +71,7 @@ export default function CheckoutPage() {
   const [isValidSession, setIsValidSession] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderId, setOrderId] = useState<string>('');
+  // Removed inline order-complete page in favor of redirect-only
   const [checkoutItems, setCheckoutItems] = useState<any[]>([]);
   const [isDirectBuy, setIsDirectBuy] = useState(false);
   
@@ -152,16 +161,12 @@ export default function CheckoutPage() {
 
   const [formData, setFormData] = useState<OrderData>({
     email: '',
-    firstName: '',
-    lastName: '',
+    name: '',
     phone: '',
     address: '',
-    city: '',
     cityId: null,
-    zone: '',
     zoneId: null,
-    country: 'Bangladesh',
-    paymentMethod: 'bkash',
+    paymentMethod: '',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -170,7 +175,7 @@ export default function CheckoutPage() {
     agreeTerms: false,
   });
 
-  const [errors, setErrors] = useState<Partial<OrderData>>({});
+  const [errors, setErrors] = useState<FieldErrors>({});
   
   // Discount code state
   const [discountCode, setDiscountCode] = useState('');
@@ -185,8 +190,9 @@ export default function CheckoutPage() {
   const handleInputChange = (field: keyof OrderData, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+    if (['phone','name','address','paymentMethod'].includes(field as string)) {
+      const f = field as FormField;
+      if (errors[f]) setErrors(prev => ({ ...prev, [f]: undefined }));
     }
   };
   
@@ -199,6 +205,8 @@ export default function CheckoutPage() {
       zoneId: null, 
       zone: '' 
     }));
+    // Clear city/zone related errors on change
+  setErrors(prev => ({ ...prev, city: undefined, zone: undefined }));
     
     // Clear zones and shipping fee
     setZones([]);
@@ -221,6 +229,8 @@ export default function CheckoutPage() {
     // Update form data
     setFormData(prev => {
       const newFormData = { ...prev, zoneId, zone: zoneName };
+      // Clear zone error on change
+  setErrors(p => ({ ...p, zone: undefined }));
       
       // Calculate shipping price with the current cityId
       if (prev.cityId && sessionId) {
@@ -296,14 +306,15 @@ export default function CheckoutPage() {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<OrderData> = {};
+    const newErrors: FieldErrors = {};
 
     // Required fields
-    if (!formData.phone) newErrors.phone = 'Phone number is required';
-    if (!formData.firstName) newErrors.firstName = 'Full name is required';
-    if (!formData.address) newErrors.address = 'Address is required';
-    if (!formData.cityId) newErrors.city = 'Please select a city';
-    if (!formData.zoneId) newErrors.zone = 'Please select a zone';
+  if (!formData.phone) newErrors.phone = ['Phone number is required'];
+  if (!formData.name) newErrors.name = ['Full name is required'];
+  if (!formData.address) newErrors.address = ['Address is required'];
+  if (!formData.cityId) newErrors.city = ['Please select a city'];
+  if (!formData.zoneId) newErrors.zone = ['Please select a zone'];
+  if (!formData.paymentMethod) newErrors.paymentMethod = ['Please select a payment method'];
 
     // Terms agreement
     if (!formData.agreeTerms) {
@@ -322,6 +333,20 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Ensure shipping fee has been calculated; backend requires shipping_amount
+    if (!formData.cityId || !formData.zoneId) {
+      toast.error('Please select city and zone to calculate shipping.');
+      return;
+    }
+    if (calculatingShipping) {
+      toast.error('Please wait until shipping is calculated.');
+      return;
+    }
+    if (Number.isNaN(shippingFee)) {
+      toast.error('Invalid shipping amount. Please reselect your zone.');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -330,44 +355,61 @@ export default function CheckoutPage() {
         session_id: sessionId,
         customer: {
           email: formData.email || undefined,
-          name: formData.firstName,
+          name: formData.name,
           phone: formData.phone,
         },
-        shipping_address: {
-          address: formData.address,
-          city: formData.city,
-          city_id: formData.cityId || undefined,
-          zone: formData.zone,
-          zone_id: formData.zoneId || undefined,
-          country: formData.country,
-        },
+        address: formData.address,
+        city_id: formData.cityId!,
+        zone_id: formData.zoneId!,
         payment_method: formData.paymentMethod,
+        shipping_amount: shippingFee,
         discount_code: appliedDiscount?.code,
         notes: undefined,
       };
 
-      const response = await checkoutService.createOrder(orderData);
-      
-      // Order created successfully
-      setOrderId(response.order.order_number);
-      setOrderComplete(true);
+    const response = await checkoutService.createOrder(orderData);
+    const ordNum = response.order.order_number;
       
       // Clear cart if not direct buy
       if (!isDirectBuy) {
         clearCart();
       }
       
-      toast.success('Order created successfully!');
+  toast.success('Order created successfully!');
+  // Navigate directly to persistent order confirmation page
+  router.replace(`/checkout/confirmed/${ordNum}`);
       
     } catch (error: any) {
       console.error('Error creating order:', error);
-      
-      let errorMessage = 'Failed to create order. Please try again.';
-      if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      // Laravel validation errors (422)
+      if (error.response?.status === 422 && error.response.data?.errors) {
+        const be: Record<string, string[]> = error.response.data.errors;
+        const mapped: FieldErrors = {};
+        if (be['customer.name']) mapped.name = be['customer.name'];
+        if (be['customer.phone']) mapped.phone = be['customer.phone'];
+        if (be['address']) mapped.address = be['address'];
+        if (be['city_id']) mapped.city = be['city_id'];
+        if (be['zone_id']) mapped.zone = be['zone_id'];
+        if (be['payment_method']) mapped.paymentMethod = be['payment_method'];
+        if (be['shipping_amount']) mapped.zone = [ ...(mapped.zone || []), ...be['shipping_amount'] ];
+        if (be['session_id']) {
+          toast.error(be['session_id'][0]);
+        }
+        setErrors(mapped);
+        // Scroll to first error field
+        const firstField = ['phone','name','address','city','zone']
+          .find(k => (mapped as any)[k] && (mapped as any)[k].length > 0);
+        if (firstField) {
+          // Optional: could focus specific input if we add refs
+          console.log('First error at field:', firstField);
+        }
+      } else {
+        let errorMessage = 'Failed to create order. Please try again.';
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        }
+        toast.error(errorMessage);
       }
-      
-      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -434,31 +476,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (orderComplete) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
-          <p className="text-gray-600 mb-6">
-            Your order has been successfully placed.
-          </p>
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-600">Order ID</p>
-            <p className="font-mono font-semibold text-gray-900">{orderId}</p>
-          </div>
-          <div className="space-y-3">
-            <Link href="/products">
-              <Button className="w-full">Continue Shopping</Button>
-            </Link>
-            <Link href="/">
-              <Button variant="outline" className="w-full">Go to Home</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Inline confirmation page removed; we redirect on success
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -499,7 +517,7 @@ export default function CheckoutPage() {
                       }`}
                       placeholder="01*****-119"
                     />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                    {renderErrorList(errors.phone)}
 					<p className="text-xs text-gray-500 mt-2">
 					  We may require your phone number for confirmations and delivery updates. Follow our
 					  <a
@@ -526,14 +544,14 @@ export default function CheckoutPage() {
                     </label>
                     <input
                       type="text"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-300'
+                        errors.name ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Full Name"
                     />
-                    {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                    {renderErrorList(errors.name)}
                   </div>
                   
                   <div>
@@ -549,14 +567,12 @@ export default function CheckoutPage() {
                       }`}
                       placeholder="Address"
                     />
-                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+                    {renderErrorList(errors.address)}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
                       <SearchableSelect
                         value={formData.cityId || ''}
                         onValueChange={(value: string | number) => {
@@ -572,15 +588,13 @@ export default function CheckoutPage() {
                         }))}
                         placeholder={loadingCities ? 'Loading cities...' : 'Search and select city'}
                         disabled={loadingCities}
-                        className={errors.city ? 'border-red-500' : ''}
+                        className={errors.city && errors.city.length ? 'border-red-500' : ''}
                       />
-                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                      {renderErrorList(errors.city)}
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Zone *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Zone</label>
                       <SearchableSelect
                         value={formData.zoneId || ''}
                         onValueChange={(value: string | number) => {
@@ -600,9 +614,9 @@ export default function CheckoutPage() {
                           'Search and select zone'
                         }
                         disabled={loadingZones || !formData.cityId}
-                        className={errors.zone ? 'border-red-500' : ''}
+                        className={errors.zone && errors.zone.length ? 'border-red-500' : ''}
                       />
-                      {errors.zone && <p className="text-red-500 text-sm mt-1">{errors.zone}</p>}
+                      {renderErrorList(errors.zone)}
                     </div>
                   </div>
                   
@@ -612,8 +626,10 @@ export default function CheckoutPage() {
 
               {/* Payment */}
               <div className="bg-white rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment</h2>
-                <p className="text-sm text-gray-600 mb-4">All transactions are secure and encrypted.</p>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-semibold text-gray-900">Payment <span className="text-red-500">*</span></h2>
+                </div>
+                <p className="text-sm text-gray-600 mb-4 flex items-center gap-2"><Lock className="w-4 h-4" /> All transactions are secure and encrypted.</p>
                 
                 <div className="space-y-3">
                   {/* bKash */}
@@ -677,9 +693,7 @@ export default function CheckoutPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-8 bg-blue-600 rounded text-white text-xs font-bold flex items-center justify-center">
-                          COD
-                        </div>
+                        <div className="w-12 h-8 bg-blue-600 rounded text-white text-xs font-bold flex items-center justify-center">COD</div>
                         <span className="font-medium text-gray-900">Cash on Delivery</span>
                       </div>
                       {formData.paymentMethod === 'pay_later' && (
@@ -690,6 +704,7 @@ export default function CheckoutPage() {
                     </div>
                     <p className="text-sm text-gray-600 mt-2">Pay when you receive your order</p>
                   </div>
+                  {renderErrorList(errors.paymentMethod)}
                 </div>
               </div>
 
@@ -861,7 +876,7 @@ export default function CheckoutPage() {
               {/* Pay Now Button */}
               <Button
                 onClick={handleSubmit}
-                disabled={isProcessing || !formData.agreeTerms}
+                disabled={isProcessing || !formData.agreeTerms || !formData.paymentMethod}
                 className="w-full py-4 mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-colors"
               >
                 {isProcessing ? (
@@ -874,8 +889,8 @@ export default function CheckoutPage() {
                 )}
               </Button>
               
-              <p className="text-xs text-gray-500 text-center mt-2">
-                🔒 Your payment information is secure and encrypted
+              <p className="text-xs text-gray-500 text-center mt-2 flex items-center justify-center gap-1">
+                <Lock className="w-3 h-3" /> Your payment information is secure and encrypted
               </p>
             </div>
           </div>

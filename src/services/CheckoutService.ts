@@ -31,6 +31,26 @@ export interface CheckoutSessionData {
 	created_at: string;
 }
 
+// Frontend form data type (allows empty payment_method during form filling)
+export interface FormOrderData {
+	session_id: string;
+	customer: {
+		email?: string;
+		name: string;
+		phone: string;
+	};
+	// Flattened shipping fields
+	address: string;
+	city_id: number;
+	zone_id: number;
+	payment_method: 'bkash' | 'nagad' | 'pay_later' | '';
+	// Required by backend: used to compute total and stored in shippings table
+	shipping_amount: number;
+	discount_code?: string;
+	notes?: string;
+}
+
+// Backend API payload type (strict payment_method)
 export interface OrderData {
 	session_id: string;
 	customer: {
@@ -38,15 +58,13 @@ export interface OrderData {
 		name: string;
 		phone: string;
 	};
-	shipping_address: {
-		address: string;
-		city: string;
-		city_id?: number;
-		zone?: string;
-		zone_id?: number;
-		country: string;
-	};
+	// Flattened shipping fields
+	address: string;
+	city_id: number;
+	zone_id: number;
 	payment_method: 'bkash' | 'nagad' | 'pay_later';
+	// Required by backend: used to compute total and stored in shippings table
+	shipping_amount: number;
 	discount_code?: string;
 	notes?: string;
 }
@@ -82,7 +100,18 @@ class CheckoutService {
 		return response.data;
 	}
 
-	async createOrder(orderData: OrderData): Promise<OrderResponse> {
+	async createOrder(formData: FormOrderData): Promise<OrderResponse> {
+		// Validate payment method before sending to backend
+		if (!formData.payment_method) {
+			throw new Error('Payment method is required');
+		}
+
+		// Convert to strict backend payload
+		const orderData: OrderData = {
+			...formData,
+			payment_method: formData.payment_method,
+		};
+
 		const response = await apiClient.post('/v1/orders', orderData);
 		return response.data;
 	}
@@ -166,9 +195,7 @@ class CheckoutService {
 		return response.data.data;
 	}
 
-	async getZonesByCity(
-		cityId: number
-	): Promise<
+	async getZonesByCity(cityId: number): Promise<
 		Array<{
 			id: number;
 			name: string;

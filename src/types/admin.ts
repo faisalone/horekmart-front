@@ -208,10 +208,8 @@ export interface Category {
 }
 
 export interface Order {
-	id: string;
+	id: number;
 	order_number: string;
-	customer_id: string;
-	vendor_id: string;
 	status:
 		| 'pending'
 		| 'processing'
@@ -222,18 +220,33 @@ export interface Order {
 	payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
 	payment_method?: string;
 	subtotal: number;
-	tax_amount: number;
-	shipping_amount: number;
 	discount_amount: number;
 	total_amount: number;
-	currency: string;
-	items: OrderItem[];
-	shipping_address: OrderShippingAddress;
-	billing_address: OrderBillingAddress;
+	items?: OrderItem[];
+	shipping?: {
+		address: string;
+		city_id: number | null;
+		zone_id: number | null;
+		shipping_amount: number;
+		status: string;
+		consignment_id?: string | null;
+		city?: {
+			id: number;
+			name: string;
+		} | null;
+		zone?: {
+			id: number;
+			name: string;
+		} | null;
+	};
 	created_at: string;
 	updated_at: string;
-	customer?: Pick<Customer, 'id' | 'name' | 'email'>;
-	vendor?: Pick<Vendor, 'id' | 'business_name'>;
+	customer?: {
+		id: number;
+		name: string;
+		phone: string;
+	};
+	items_count?: number;
 }
 
 export interface OrderItem {

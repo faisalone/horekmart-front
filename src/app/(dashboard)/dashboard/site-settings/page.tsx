@@ -613,11 +613,11 @@ export default function SiteSettingsPage() {
                 
                 <div className="mb-6">
                   <p className="text-slate-300">
-                    Are you sure you want to delete the setting "
+                    Are you sure you want to delete the setting &quot;
                     <span className="font-semibold text-white">
                       {settingToDelete.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
-                    "?
+                    &quot;?
                   </p>
                   <div className="mt-3 p-3 bg-slate-900/50 rounded border border-slate-600">
                     <p className="text-sm text-slate-400">

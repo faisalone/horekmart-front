@@ -136,7 +136,7 @@ export function SearchableSelect({
                     onClick={handleAddNew}
                     className="w-full rounded-sm px-3 py-2 text-left text-sm text-blue-600 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-t border-gray-200 mt-1 pt-2"
                   >
-                    + {addNewLabel}: "{searchTerm}"
+                    + {addNewLabel}: &quot;{searchTerm}&quot;
                   </button>
                 )}
               </>

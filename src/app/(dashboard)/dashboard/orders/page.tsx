@@ -142,11 +142,11 @@ export default function OrdersPage() {
   });
 
   const columns = [
-    columnHelper.accessor('id', {
-      header: 'Order ID',
+    columnHelper.accessor('order_number', {
+      header: 'Order Number',
       cell: (info) => (
         <div className="font-medium">
-          #{info.getValue()}
+          {info.getValue()}
         </div>
       ),
     }),
@@ -157,7 +157,7 @@ export default function OrdersPage() {
         return (
           <div>
             <div className="font-medium">{customer?.name || 'N/A'}</div>
-            <div className="text-sm text-gray-500">{customer?.email || 'N/A'}</div>
+            <div className="text-sm text-gray-500">{customer?.phone || 'N/A'}</div>
           </div>
         );
       },
@@ -245,7 +245,7 @@ export default function OrdersPage() {
 
   const handleUpdateStatus = (status: string | number) => {
     if (selectedOrder && typeof status === 'string') {
-      updateOrderMutation.mutate({ orderId: selectedOrder.id, status: status as Order['status'] });
+      updateOrderMutation.mutate({ orderId: selectedOrder.id.toString(), status: status as Order['status'] });
     }
   };
 
@@ -520,7 +520,7 @@ export default function OrdersPage() {
           <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-700">
             <div className="p-6 border-b border-gray-700 bg-gray-800/50">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">Order #{selectedOrder.id}</h2>
+                <h2 className="text-xl font-bold text-white">{selectedOrder.order_number}</h2>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -575,25 +575,57 @@ export default function OrdersPage() {
                       <div className="text-white font-medium">{selectedOrder.customer?.name || 'N/A'}</div>
                     </div>
                     <div>
-                      <span className="text-gray-300">Email:</span>
-                      <div className="text-white font-medium">{selectedOrder.customer?.email || 'N/A'}</div>
+                      <span className="text-gray-300">Customer ID:</span>
+                      <div className="text-white font-medium">#{selectedOrder.customer?.id || 'N/A'}</div>
                     </div>
                     <div>
                       <span className="text-gray-300">Phone:</span>
-                      <div className="text-white font-medium">{selectedOrder.billing_address?.phone || 'N/A'}</div>
+                      <div className="text-white font-medium">{selectedOrder.customer?.phone || 'N/A'}</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Shipping Address */}
+              {/* Shipping Details */}
               <div className="bg-gray-700/50 p-4 rounded-lg border border-gray-600">
-                <h3 className="font-semibold mb-3 text-white">Shipping Address</h3>
-                <div className="text-sm text-gray-300">
-                  <div className="font-medium text-white">{selectedOrder.customer?.name || 'N/A'}</div>
-                  <div>{selectedOrder.shipping_address?.address}</div>
-                  <div>{selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.zip_code}</div>
-                  <div>{selectedOrder.shipping_address?.country}</div>
+                <h3 className="font-semibold mb-3 text-white">Shipping Details</h3>
+                <div className="text-sm text-gray-300 space-y-2">
+                  {selectedOrder.shipping ? (
+                    <>
+                      <div>
+                        <span className="text-gray-400">Address:</span>
+                        <span className="text-white ml-2">{selectedOrder.shipping.address}</span>
+                      </div>
+                      {selectedOrder.shipping.city && (
+                        <div>
+                          <span className="text-gray-400">City:</span>
+                          <span className="text-white ml-2">{selectedOrder.shipping.city.name}</span>
+                        </div>
+                      )}
+                      {selectedOrder.shipping.zone && (
+                        <div>
+                          <span className="text-gray-400">Zone:</span>
+                          <span className="text-white ml-2">{selectedOrder.shipping.zone.name}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-gray-400">Shipping Amount:</span>
+                        <span className="text-white ml-2">{formatCurrency(selectedOrder.shipping.shipping_amount)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Status:</span>
+                        <span className="text-white ml-2 capitalize">{selectedOrder.shipping.status}</span>
+                      </div>
+                      {selectedOrder.shipping.consignment_id && (
+                        <div>
+                          <span className="text-gray-400">Consignment ID:</span>
+                          <span className="text-white ml-2 font-mono">{selectedOrder.shipping.consignment_id}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-gray-400">No shipping information available</p>
+                  )}
                 </div>
               </div>
 
@@ -601,7 +633,7 @@ export default function OrdersPage() {
               <div className="bg-gray-700/50 p-4 rounded-lg border border-gray-600">
                 <h3 className="font-semibold mb-3 text-white">Order Items</h3>
                 <div className="space-y-2">
-                  {selectedOrder.items.map((item, index) => (
+                  {selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center p-3 bg-gray-600/50 rounded border border-gray-500">
                       <div>
                         <div className="font-medium text-white">{item.product?.name || item.product_name || `Product ${item.product_id}`}</div>
@@ -613,7 +645,9 @@ export default function OrdersPage() {
                         {formatCurrency(item.total)}
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-gray-400">No items found</p>
+                  )}
                 </div>
               </div>
 
