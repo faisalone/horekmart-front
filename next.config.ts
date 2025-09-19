@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
 			},
 			{
 				protocol: 'https',
-				hostname: 'o6.eilm.io',
+				hostname: 'app.horekmart.com',
 				port: '',
 				pathname: '/**',
 			},
