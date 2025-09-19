@@ -1,0 +1,131 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  PRODUCTION_DOMAIN: horekmart.com
+  PRODUCTION_PATH: /var/www/horekmart.com
+  PM2_APP_NAME: horekmart-production
+
+jobs:
+  # Test and Build Job
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linter
+      run: npm run lint
+      
+    - name: Build application
+      run: npm run build
+      env:
+        NEXT_PUBLIC_API_URL: https://o6.eilm.io/api
+        NEXT_PUBLIC_APP_URL: https://horekmart.com
+        NODE_ENV: production
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: |
+          .next/
+          package.json
+          package-lock.json
+          next.config.ts
+        retention-days: 1
+
+  # Deploy Job (only on main branch)
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-files
+        
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Deploy to production server
+      run: |
+        # Create deployment script
+        cat > deploy.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        echo "🚀 Starting deployment to production..."
+        
+        # Navigate to production directory
+        cd ${{ env.PRODUCTION_PATH }}
+        
+        # Pull latest changes
+        echo "📥 Pulling latest changes..."
+        git pull origin main
+        
+        # Install dependencies
+        echo "📦 Installing dependencies..."
+        npm ci --production=false
+        
+        # Build application
+        echo "🔨 Building production application..."
+        npm run build
+        
+        # Restart PM2 application
+        echo "🔄 Restarting application..."
+        pm2 restart ${{ env.PM2_APP_NAME }} || pm2 start npm --name "${{ env.PM2_APP_NAME }}" -- start
+        
+        # Health check
+        echo "🏥 Performing health check..."
+        sleep 5
+        pm2 status ${{ env.PM2_APP_NAME }}
+        
+        # Test if site is responding
+        curl -f https://${{ env.PRODUCTION_DOMAIN }} > /dev/null
+        
+        echo "✅ Deployment completed successfully!"
+        EOF
+        
+        # Make script executable and run it on server
+        chmod +x deploy.sh
+        scp deploy.sh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "bash /tmp/deploy.sh"
+        
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ ${{ job.status }} == 'success' ]; then
+          echo "✅ Deployment to https://${{ env.PRODUCTION_DOMAIN }} completed successfully!"
+        else
+          echo "❌ Deployment failed!"
+          exit 1
+        fi
