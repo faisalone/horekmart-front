@@ -5,6 +5,8 @@ import { ClientWrapper } from "@/app/client-wrapper";
 import { GTM_ID, gtmScript, gtmNoscript } from "@/lib/gtm";
 import { META_PIXEL_ID, metaPixelScript, metaPixelNoscript } from "@/lib/meta-pixel";
 import { seoService } from "@/lib/seo";
+import { structuredDataService } from "@/lib/structured-data";
+import StructuredData from "@/components/StructuredData";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -78,6 +80,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Global Structured Data */}
+        <StructuredData data={structuredDataService.generateWebsiteStructuredData()} />
+        <StructuredData data={structuredDataService.generateOrganizationStructuredData()} />
+      </head>
       <body className={`${inter.variable} ${quicksand.variable} ${notoSansBengali.variable} font-sans antialiased`} suppressHydrationWarning>
         {/* Google Tag Manager Script */}
         <Script

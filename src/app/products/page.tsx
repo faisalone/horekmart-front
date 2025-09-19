@@ -1,5 +1,7 @@
 import { seoService } from '@/lib/seo';
 import { publicApi } from '@/lib/public-api';
+import { structuredDataService } from '@/lib/structured-data';
+import StructuredData from '@/components/StructuredData';
 import ProductsPageClient from './ProductsPageClient';
 
 interface ProductsPageProps {
@@ -69,6 +71,30 @@ export async function generateMetadata({ searchParams }: ProductsPageProps) {
   }
 }
 
-export default function ProductsPage(props: ProductsPageProps) {
-  return <ProductsPageClient />;
+export default async function ProductsPage(props: ProductsPageProps) {
+  const resolvedSearchParams = await props.searchParams;
+  
+  // Generate search results structured data if there's a search query
+  let searchStructuredData = null;
+  if (resolvedSearchParams.q) {
+    try {
+      const searchResults = await publicApi.getProducts({ 
+        search: resolvedSearchParams.q,
+        per_page: 10 
+      });
+      searchStructuredData = await structuredDataService.generateSearchResultsStructuredData(
+        resolvedSearchParams.q, 
+        searchResults.data
+      );
+    } catch (error) {
+      console.error('Error generating search structured data:', error);
+    }
+  }
+
+  return (
+    <>
+      {searchStructuredData && <StructuredData data={searchStructuredData} />}
+      <ProductsPageClient />
+    </>
+  );
 }

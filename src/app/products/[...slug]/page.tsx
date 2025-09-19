@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { publicApi } from '@/lib/public-api';
 import { seoService } from '@/lib/seo';
+import { structuredDataService } from '@/lib/structured-data';
+import StructuredData from '@/components/StructuredData';
 import ProductPageClient from './ProductPageClient';
 
 interface ProductPageProps {
@@ -37,7 +39,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }
 
     // Pass the product data to the client component
-    return <ProductPageClient product={product} />;
+    return (
+      <>
+        <StructuredData data={structuredDataService.generateProductStructuredData(product)} />
+        <ProductPageClient product={product} />
+      </>
+    );
   } catch (error) {
     console.error('Error fetching product:', error);
     notFound();

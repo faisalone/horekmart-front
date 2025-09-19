@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { publicApi } from '@/lib/public-api';
 import { seoService } from '@/lib/seo';
+import { structuredDataService } from '@/lib/structured-data';
+import StructuredData from '@/components/StructuredData';
 import CategoryPageClient from './CategoryPageClient';
 
 interface CategoryPageProps {
@@ -44,7 +46,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 		}
 
 		// Pass the category data to the client component
-		return <CategoryPageClient category={category} slug={slug} />;
+		return (
+			<>
+				<StructuredData data={structuredDataService.generateCategoryStructuredData(category)} />
+				<CategoryPageClient category={category} slug={slug} />
+			</>
+		);
 	} catch (error) {
 		console.error('Error fetching category:', error);
 		// If server-side fetch fails, let client handle it to prevent hydration mismatch
