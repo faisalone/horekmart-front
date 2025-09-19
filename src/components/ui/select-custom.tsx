@@ -56,11 +56,24 @@ export function CustomSelect({
     setSearchTerm("")
   }
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false)
+      setSearchTerm("")
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      if (!disabled) {
+        event.preventDefault()
+        setIsOpen(!isOpen)
+      }
+    }
+  }
+
   return (
     <div ref={dropdownRef} className="relative">
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
         className={cn(
           "w-full px-3 py-2 text-left bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed",
@@ -81,10 +94,10 @@ export function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[9999]" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}
       {isOpen && (
-        <div className="absolute z-[30] w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-hidden">
+        <div className="absolute z-50 w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-hidden">
           {options.length > 5 && (
             <div className="p-2 border-b border-gray-600">
               <input
@@ -92,6 +105,15 @@ export function CustomSelect({
                 placeholder="Search options..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsOpen(false)
+                    setSearchTerm("")
+                  }
+                  e.stopPropagation()
+                }}
+                autoFocus
                 className="w-full px-3 py-2 text-sm bg-gray-600 border border-gray-500 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -107,10 +129,14 @@ export function CustomSelect({
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => handleSelect(option)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleSelect(option)
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={cn(
                     "w-full px-3 py-2.5 text-left text-sm transition-colors duration-150",
-                    "border-l-2 border-transparent hover:border-blue-500",
+                    "border-l-2 border-transparent hover:border-blue-500 cursor-pointer",
                     value === option.value 
                       ? "bg-blue-600 text-white border-l-blue-400" 
                       : "text-gray-200 hover:bg-gray-600 hover:text-white"

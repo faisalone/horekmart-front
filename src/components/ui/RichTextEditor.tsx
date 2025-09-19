@@ -51,7 +51,10 @@ const RichTextEditor = ({
 }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Disable StarterKit's built-in Link extension to avoid duplicates
+        link: false,
+      }),
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
