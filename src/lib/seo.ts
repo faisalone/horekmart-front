@@ -198,7 +198,7 @@ class SEOService {
 	async generateCategoryMetadata(category: Category): Promise<Metadata> {
 		const settings = await this.getSiteSettings();
 
-		const categoryPath = `/products/${category.slug}`;
+		const categoryPath = `/${category.slug}`;
 		const title = `${category.name} | ${settings.site_name}`;
 		const description =
 			category.description ||
