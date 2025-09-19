@@ -30,9 +30,7 @@ class SiteSettingsService {
 	private initialized = false;
 
 	private constructor() {
-		// Load settings from sessionStorage on initialization
-		this.loadFromSession();
-		// Auto-initialize if not in SSR
+		// Auto-initialize if not in SSR (no sessionStorage to prevent hydration mismatch)
 		if (typeof window !== 'undefined') {
 			this.autoInitialize();
 		}
@@ -46,49 +44,21 @@ class SiteSettingsService {
 	}
 
 	/**
-	 * Load settings from sessionStorage
+	 * Load settings from sessionStorage (DISABLED to prevent hydration mismatch)
 	 */
 	private loadFromSession(): void {
-		// Only try to access sessionStorage in browser environment
-		if (
-			typeof window === 'undefined' ||
-			typeof sessionStorage === 'undefined'
-		) {
-			return;
-		}
-
-		try {
-			const stored = sessionStorage.getItem(this.STORAGE_KEY);
-			if (stored) {
-				this.settings = JSON.parse(stored);
-			}
-		} catch (error) {
-			console.warn('Failed to load site settings from session:', error);
-		}
+		// SessionStorage disabled to prevent React hydration error #418
+		// Settings will be fetched fresh each time instead
+		return;
 	}
 
 	/**
-	 * Save settings to sessionStorage
+	 * Save settings to memory only (sessionStorage disabled to prevent hydration mismatch)
 	 */
 	private saveToSession(settings: SiteSettings): void {
-		// Only try to access sessionStorage in browser environment
-		if (
-			typeof window === 'undefined' ||
-			typeof sessionStorage === 'undefined'
-		) {
-			// Just store in memory for server-side rendering
-			this.settings = settings;
-			this.notifySubscribers();
-			return;
-		}
-
-		try {
-			sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
-			this.settings = settings;
-			this.notifySubscribers();
-		} catch (error) {
-			console.warn('Failed to save site settings to session:', error);
-		}
+		// Store in memory only - no sessionStorage to prevent hydration mismatch
+		this.settings = settings;
+		this.notifySubscribers();
 	}
 
 	/**
@@ -224,11 +194,7 @@ class SiteSettingsService {
 		this.settings = null;
 		this.loadingPromise = null;
 		this.initialized = false;
-		try {
-			sessionStorage.removeItem(this.STORAGE_KEY);
-		} catch (error) {
-			console.warn('Failed to clear site settings cache:', error);
-		}
+		// SessionStorage disabled to prevent hydration mismatch
 		this.notifySubscribers();
 	}
 
@@ -260,11 +226,7 @@ class SiteSettingsService {
 		this.settings = null;
 		this.loadingPromise = null;
 		this.initialized = false;
-		try {
-			sessionStorage.removeItem(this.STORAGE_KEY);
-		} catch (error) {
-			console.warn('Failed to clear session storage:', error);
-		}
+		// SessionStorage disabled to prevent hydration mismatch
 		return this.fetchSiteSettings();
 	}
 
