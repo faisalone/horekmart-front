@@ -27,6 +27,7 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 	const [products, setProducts] = useState<Product[]>([]);
 	const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [isHydrated, setIsHydrated] = useState(false);
 	const [sortBy, setSortBy] = useState('featured');
 
 	// Cart and wishlist contexts
@@ -41,6 +42,11 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 		{ value: 'name-asc', label: 'Name A-Z' },
 		{ value: 'newest-desc', label: 'Newest First' }
 	];
+
+	// Handle hydration
+	useEffect(() => {
+		setIsHydrated(true);
+	}, []);
 
 	useEffect(() => {
 		const fetchProducts = async () => {
@@ -66,10 +72,11 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 			}
 		};
 
-		if (slug && initialCategory) {
+		// Only fetch after hydration to prevent SSR/client mismatch
+		if (isHydrated && slug && initialCategory) {
 			fetchProducts();
 		}
-	}, [slug, initialCategory]);
+	}, [slug, initialCategory, isHydrated]);
 
 	// Filter and sort products
 	useEffect(() => {
@@ -141,7 +148,7 @@ export default function CategoryPageClient({ category: initialCategory, slug }: 
 		toggleWishlist(wishlistItem);
 	};
 
-	if (loading) {
+	if (loading || !isHydrated) {
 		return <CategoryPageSkeleton />;
 	}
 

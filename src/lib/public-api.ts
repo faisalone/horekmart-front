@@ -20,11 +20,15 @@ class PublicApiClient {
 	constructor() {
 		this.client = axios.create({
 			baseURL:
-				process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+				process.env.NEXT_PUBLIC_API_URL,
 			headers: {
 				'Content-Type': 'application/json',
 				Accept: 'application/json',
 			},
+			// Add timeout for server-side requests to prevent hanging
+			timeout: 15000,
+			// Configure for server-side rendering compatibility
+			validateStatus: (status) => status < 500, // Don't throw for 4xx errors
 		});
 	}
 

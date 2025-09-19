@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: CategoryPageProps) {
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
+	const resolvedParams = await params;
+	const slug = resolvedParams.slug;
+	
 	try {
-		const resolvedParams = await params;
-		const slug = resolvedParams.slug;
-
 		// Fetch categories to find the current one
 		const categories = await publicApi.getCategories();
 		const category = categories.find((cat) => cat.slug === slug);
@@ -47,6 +47,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 		return <CategoryPageClient category={category} slug={slug} />;
 	} catch (error) {
 		console.error('Error fetching category:', error);
+		// If server-side fetch fails, let client handle it to prevent hydration mismatch
 		notFound();
 	}
 }
