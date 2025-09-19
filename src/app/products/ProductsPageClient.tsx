@@ -254,7 +254,7 @@ function ProductsPageContent() {
     // Apply category filter
     if (filters.category) {
       filtered = filtered.filter(product => 
-        product.category?.name.toLowerCase() === filters.category!.toLowerCase()
+        product.category?.slug === filters.category
       );
     }
 
@@ -671,9 +671,9 @@ function ProductsPageContent() {
                       <input
                         type="radio"
                         name="mobile-category"
-                        value={category.name}
-                        checked={filters.category === category.name}
-                        onChange={() => handleFilterChange({ category: category.name })}
+                        value={category.slug}
+                        checked={filters.category === category.slug}
+                        onChange={() => handleFilterChange({ category: category.slug })}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
                       <span className="ml-3 text-gray-700">{category.name}</span>
@@ -812,9 +812,9 @@ function ProductsPageContent() {
                       <input
                         type="radio"
                         name="desktop-category"
-                        value={category.name}
-                        checked={filters.category === category.name}
-                        onChange={() => handleFilterChange({ category: category.name })}
+                        value={category.slug}
+                        checked={filters.category === category.slug}
+                        onChange={() => handleFilterChange({ category: category.slug })}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
                       <span className="ml-2 text-sm text-gray-700">{category.name}</span>
