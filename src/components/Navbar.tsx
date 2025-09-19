@@ -10,7 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/currency';
 import { AutoFontText } from '@/components/AutoFontText';
 import { useCategories } from '@/contexts/CategoriesContext';
-import { getCachedSiteSettings } from '@/services/siteSettings';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface NavbarProps {}
@@ -22,10 +22,11 @@ const Navbar = ({ }: NavbarProps = {}) => {
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'departments' | 'hotItems'>('departments');
-  const [siteLogo, setSiteLogo] = useState<string>('/logo-light.svg'); // Default fallback
-  const [siteName, setSiteName] = useState<string>('');
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const departmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use site settings hook for reactive updates
+  const { siteLogo = '/logo-light.svg', siteName = '', settings } = useSiteSettings();
   
   // Use categories context
   const { parentCategories: categories, loading: categoriesLoading } = useCategories();
@@ -75,14 +76,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
     }
   };
 
-  // Load site settings on mount
-  useEffect(() => {
-    const settings = getCachedSiteSettings();
-    if (settings) {
-      setSiteLogo(settings.site_logo || '/logo-light.svg');
-      setSiteName(settings.site_name || '');
-    }
-  }, []);
+  // Site settings are now handled reactively by the useSiteSettings hook
 
   // Close mobile search when clicking outside
   useEffect(() => {

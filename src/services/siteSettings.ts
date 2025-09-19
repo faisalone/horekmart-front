@@ -26,10 +26,16 @@ class SiteSettingsService {
 	private readonly STORAGE_KEY = 'site_settings';
 	private settings: SiteSettings | null = null;
 	private loadingPromise: Promise<SiteSettings> | null = null;
+	private subscribers: ((settings: SiteSettings | null) => void)[] = [];
+	private initialized = false;
 
 	private constructor() {
 		// Load settings from sessionStorage on initialization
 		this.loadFromSession();
+		// Auto-initialize if not in SSR
+		if (typeof window !== 'undefined') {
+			this.autoInitialize();
+		}
 	}
 
 	public static getInstance(): SiteSettingsService {
@@ -72,12 +78,14 @@ class SiteSettingsService {
 		) {
 			// Just store in memory for server-side rendering
 			this.settings = settings;
+			this.notifySubscribers();
 			return;
 		}
 
 		try {
 			sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
 			this.settings = settings;
+			this.notifySubscribers();
 		} catch (error) {
 			console.warn('Failed to save site settings to session:', error);
 		}
@@ -115,7 +123,16 @@ class SiteSettingsService {
 	private async performFetch(): Promise<SiteSettings> {
 		try {
 			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/v1/site-settings`
+				`${process.env.NEXT_PUBLIC_API_URL}/v1/site-settings`,
+				{
+					method: 'GET',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json',
+					},
+					// Add cache headers to improve response time
+					cache: 'default',
+				}
 			);
 
 			if (!response.ok) {
@@ -124,16 +141,24 @@ class SiteSettingsService {
 
 			const result = await response.json();
 			if (result.success && result.data) {
-				this.saveToSession(result.data);
-				return result.data;
+				// Ensure we have a valid object
+				const settingsData =
+					typeof result.data === 'object' && result.data !== null
+						? result.data
+						: {};
+				this.saveToSession(settingsData);
+				return settingsData;
 			}
 
 			throw new Error('Invalid API response format');
 		} catch (error) {
 			console.warn('Failed to fetch site settings from backend:', error);
-			// Return empty object as fallback
+			// Don't save empty fallback to session storage on API error
+			// This allows retry on next page load
 			const fallback = {};
-			this.saveToSession(fallback);
+			// Only store in memory, not session storage
+			this.settings = fallback;
+			this.notifySubscribers();
 			return fallback;
 		}
 	}
@@ -146,16 +171,65 @@ class SiteSettingsService {
 	}
 
 	/**
+	 * Auto-initialize in browser environment (non-blocking)
+	 */
+	private autoInitialize(): void {
+		if (!this.initialized && !this.settings) {
+			this.initialized = true;
+			console.log('🚀 Site settings service: Auto-initializing...');
+			// Start fetching in background without waiting
+			this.fetchSiteSettings()
+				.then((settings) => {
+					console.log(
+						'✅ Site settings loaded successfully:',
+						Object.keys(settings).length,
+						'settings'
+					);
+				})
+				.catch((error) => {
+					console.warn('❌ Auto-initialization failed:', error);
+					this.initialized = false; // Allow retry
+				});
+		}
+	}
+
+	/**
+	 * Subscribe to settings changes
+	 */
+	public subscribe(
+		callback: (settings: SiteSettings | null) => void
+	): () => void {
+		this.subscribers.push(callback);
+		// Immediately call with current settings
+		callback(this.settings);
+
+		return () => {
+			this.subscribers = this.subscribers.filter(
+				(sub) => sub !== callback
+			);
+		};
+	}
+
+	/**
+	 * Notify subscribers of settings changes
+	 */
+	private notifySubscribers(): void {
+		this.subscribers.forEach((callback) => callback(this.settings));
+	}
+
+	/**
 	 * Clear cached settings (useful for development or logout)
 	 */
 	public clearCache(): void {
 		this.settings = null;
 		this.loadingPromise = null;
+		this.initialized = false;
 		try {
 			sessionStorage.removeItem(this.STORAGE_KEY);
 		} catch (error) {
 			console.warn('Failed to clear site settings cache:', error);
 		}
+		this.notifySubscribers();
 	}
 
 	/**
@@ -177,6 +251,32 @@ class SiteSettingsService {
 	 */
 	public isLoaded(): boolean {
 		return this.settings !== null;
+	}
+
+	/**
+	 * Force refresh settings from API (ignores cache)
+	 */
+	public async refresh(): Promise<SiteSettings> {
+		this.settings = null;
+		this.loadingPromise = null;
+		this.initialized = false;
+		try {
+			sessionStorage.removeItem(this.STORAGE_KEY);
+		} catch (error) {
+			console.warn('Failed to clear session storage:', error);
+		}
+		return this.fetchSiteSettings();
+	}
+
+	/**
+	 * Preload settings if not already loaded (non-blocking)
+	 */
+	public preload(): void {
+		if (!this.settings && !this.loadingPromise) {
+			this.fetchSiteSettings().catch((error) => {
+				console.warn('Preload failed:', error);
+			});
+		}
 	}
 }
 

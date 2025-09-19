@@ -33,8 +33,7 @@ export default function HomeClient() {
       try {
         setLoading(true);
         
-        // Initialize site settings on the root page (will cache for session)
-        await siteSettingsService.initialize();
+        // Site settings now auto-initialize in the service
         
         // Fetch products and categories - simplified to just get a large set of products
         const [productsResponse, categoriesData, vendorsResponse] = await Promise.all([

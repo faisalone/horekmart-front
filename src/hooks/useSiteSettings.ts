@@ -11,28 +11,25 @@ export function useSiteSettings() {
 		// Initialize with cached settings if available
 		return siteSettingsService.getCachedSettings();
 	});
+	const [isLoading, setIsLoading] = useState(() => {
+		// Consider loading if settings are not yet available
+		return !siteSettingsService.getCachedSettings();
+	});
 
 	useEffect(() => {
-		// Only read from cache, don't trigger API calls
-		// The homepage should handle initialization
-		const cached = siteSettingsService.getCachedSettings();
-		if (cached && !settings) {
-			setSettings(cached);
-		}
+		// Subscribe to settings changes
+		const unsubscribe = siteSettingsService.subscribe((newSettings) => {
+			setSettings(newSettings);
+			setIsLoading(!newSettings);
+		});
 
-		// Set up interval to check for updates from other sources
-		const interval = setInterval(() => {
-			const currentCached = siteSettingsService.getCachedSettings();
-			if (currentCached && currentCached !== settings) {
-				setSettings(currentCached);
-			}
-		}, 1000); // Check every second
-
-		return () => clearInterval(interval);
-	}, [settings]);
+		// Cleanup subscription on unmount
+		return unsubscribe;
+	}, []);
 
 	return {
 		settings,
+		isLoading,
 		siteLogo: settings?.site_logo,
 		siteName: settings?.site_name,
 		siteDescription: settings?.site_description,

@@ -14,7 +14,7 @@ interface FloatingButtonProps {
 export default function FloatingButton({
   type,
   onClick,
-  phoneNumber = '+880 1763 223035',
+  phoneNumber,
   message = 'Hello! I need assistance.',
   className = ''
 }: FloatingButtonProps) {
@@ -152,7 +152,7 @@ export default function FloatingButton({
   const handleClick = () => {
     if (moved) return;
     
-    if (type === 'whatsapp') {
+    if (type === 'whatsapp' && phoneNumber) {
       const formattedPhone = phoneNumber.replace(/[\s-()]/g, '');
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, '_blank');
@@ -202,8 +202,11 @@ export default function FloatingButton({
 
   if (!mounted) return null;
 
-  // Button styling
+  // Don't render WhatsApp button if no phone number is provided
   const isWhatsApp = type === 'whatsapp';
+  if (isWhatsApp && !phoneNumber) return null;
+
+  // Button styling
   const bgColor = isWhatsApp ? 'bg-[#25D366] hover:bg-[#128C7E]' : 'bg-blue-600 hover:bg-blue-700';
   const visibility = type === 'filter' ? 'lg:hidden' : '';
 

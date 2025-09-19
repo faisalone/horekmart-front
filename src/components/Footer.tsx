@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Mail, Phone, MapPin, ArrowUp, Shield, Truck, Award, Globe, ChevronRight } from 'lucide-react';
 import { FaSquareXTwitter } from "react-icons/fa6";
 import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
-import { getCachedSiteSettings } from '@/services/siteSettings';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface SiteSettings {
   site_logo?: string;
@@ -23,20 +23,22 @@ interface SiteSettings {
 }
 
 const Footer = () => {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Use reactive site settings hook
+  const {
+    siteLogo = "/logo-light.svg",
+    siteName = "Your Store",
+    contactEmail,
+    contactPhone,
+    settings
+  } = useSiteSettings();
 
   useEffect(() => {
     setMounted(true);
-    const cachedSettings = getCachedSiteSettings();
-    setSettings(cachedSettings);
   }, []);
 
   // Use static fallbacks for server-side rendering to prevent hydration mismatch
-  const siteLogo = mounted && settings?.site_logo ? settings.site_logo : "/logo-light.svg";
-  const siteName = mounted && settings?.site_name ? settings.site_name : "Your Store";
-  const contactEmail = mounted && settings?.contact_email ? settings.contact_email : "";
-  const contactPhone = mounted && settings?.contact_phone ? settings.contact_phone : "";
   const address = mounted && settings?.address ? settings.address : "";
   const addressMapUrl = mounted && settings?.address_map_url ? settings.address_map_url : "";
   const companyInfo = mounted && settings?.company_info ? settings.company_info : "";
@@ -138,16 +140,20 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-6 text-center">Contact & Support</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              <div className="text-center bg-gray-800 rounded-lg p-6">
-                <Phone className="h-8 w-8 mx-auto mb-3 text-blue-400" />
-                <p className="text-white font-medium text-lg">{contactPhone || "+880 1763 223035"}</p>
-                <p className="text-sm text-gray-400 mt-1">24/7 Customer Support</p>
-              </div>
-              <div className="text-center bg-gray-800 rounded-lg p-6">
-                <Mail className="h-8 w-8 mx-auto mb-3 text-green-400" />
-                <p className="text-white font-medium text-lg">{contactEmail || "info@yourstore.com"}</p>
-                <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
-              </div>
+              {contactPhone && (
+                <div className="text-center bg-gray-800 rounded-lg p-6">
+                  <Phone className="h-8 w-8 mx-auto mb-3 text-blue-400" />
+                  <p className="text-white font-medium text-lg">{contactPhone}</p>
+                  <p className="text-sm text-gray-400 mt-1">24/7 Customer Support</p>
+                </div>
+              )}
+              {contactEmail && (
+                <div className="text-center bg-gray-800 rounded-lg p-6">
+                  <Mail className="h-8 w-8 mx-auto mb-3 text-green-400" />
+                  <p className="text-white font-medium text-lg">{contactEmail}</p>
+                  <p className="text-sm text-gray-400 mt-1">Response within 1 hour</p>
+                </div>
+              )}
               <div className="text-center bg-gray-800 rounded-lg p-6">
                 <MapPin className="h-8 w-8 mx-auto mb-3 text-orange-400" />
                 {addressMapUrl ? (

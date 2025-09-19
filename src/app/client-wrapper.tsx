@@ -12,7 +12,9 @@ import { WishlistProvider } from '@/contexts/WishlistContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { PageTitleProvider } from '@/contexts/PageTitleContext';
 import { Toaster } from 'sonner';
-import { getCachedSiteSettings } from '@/services/siteSettings';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { siteSettingsService } from '@/services/siteSettings';
+import { useEffect } from 'react';
 
 interface ClientWrapperProps {
   children: React.ReactNode;
@@ -20,8 +22,12 @@ interface ClientWrapperProps {
 
 export function ClientWrapper({ children }: ClientWrapperProps) {
   const pathname = usePathname();
-  const settings = getCachedSiteSettings();
-  const contactPhone = settings?.contact_phone || "+880 1763 223035";
+  const { contactPhone } = useSiteSettings();
+
+  // Ensure settings are preloaded early in the app lifecycle
+  useEffect(() => {
+    siteSettingsService.preload();
+  }, []);
   
   // Define routes that should not have the main layout (Navbar + Footer)
   const routesWithoutMainLayout = [
