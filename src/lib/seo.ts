@@ -18,10 +18,34 @@ class SEOService {
 
 	/**
 	 * Get cached site settings or fetch them
+	 * Handles build-time gracefully when backend isn't available
 	 */
 	private async getSiteSettings(): Promise<SiteSettings> {
 		if (!this.siteSettings) {
-			this.siteSettings = await publicApi.getSiteSettings();
+			try {
+				this.siteSettings = await publicApi.getSiteSettings();
+			} catch (error) {
+				// During build time or when backend is unavailable, use fallback settings
+				console.warn(
+					'Failed to fetch site settings for SEO, using fallbacks:',
+					error
+				);
+				this.siteSettings = {
+					site_name: 'Horekmart',
+					site_description:
+						'Your trusted eCommerce platform for quality products',
+					site_url:
+						process.env.NEXT_PUBLIC_SITE_URL ||
+						'http://localhost:3000',
+					site_logo: '/logo-light.svg',
+					keywords:
+						'ecommerce,online shopping,electronics,fashion,home goods,quality products',
+					og_image:
+						process.env.NEXT_PUBLIC_SITE_URL +
+							'/site-preview.jpg' ||
+						'http://localhost:3000/site-preview.jpg',
+				};
+			}
 		}
 		return this.siteSettings!;
 	}
