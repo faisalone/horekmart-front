@@ -943,7 +943,7 @@ function ProductsPageContent() {
 
           {/* Mobile Quick Filters - Separate Section */}
           <div className="lg:hidden mb-4">
-            <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide pb-2">
               {quickFilters.map((filter) => (
                 <button
                   key={filter.value}
@@ -1001,7 +1001,7 @@ function ProductsPageContent() {
 
           {/* Desktop Type Filters - Separate Section */}
           <div className="hidden lg:block mb-6">
-            <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide pb-2">
               {quickFilters.map((filter) => (
                 <button
                   key={filter.value}
