@@ -27,30 +27,39 @@ export default function Breadcrumb({ items, className = '', theme = 'light' }: B
     : 'text-gray-900 font-medium';
 
   return (
-    <nav className={`flex items-center space-x-2 text-sm ${className}`} aria-label="Breadcrumb">
-      <Link 
-        href="/" 
-        className={`flex items-center transition-colors ${homeClass}`}
+    <div className={`w-full ${className}`}>
+      <nav 
+        className="flex items-center space-x-2 text-sm overflow-x-auto scrollbar-hide pb-1" 
+        aria-label="Breadcrumb"
+        style={{ 
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
       >
-        <Home className="w-4 h-4" />
-        <span className="sr-only">Home</span>
-      </Link>
-      
-      {items.map((item, index) => (
-        <div key={index} className="flex items-center space-x-2">
-          <ChevronRight className={`w-4 h-4 ${separatorClass}`} />
-          {item.href ? (
-            <Link 
-              href={item.href}
-              className={`transition-colors ${linkClass}`}
-            >
-              {item.label}
-            </Link>
-          ) : (
-            <span className={activeClass}>{item.label}</span>
-          )}
-        </div>
-      ))}
-    </nav>
+        <Link 
+          href="/" 
+          className={`flex items-center transition-colors flex-shrink-0 ${homeClass}`}
+        >
+          <Home className="w-4 h-4" />
+          <span className="sr-only">Home</span>
+        </Link>
+        
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center space-x-2 flex-shrink-0">
+            <ChevronRight className={`w-4 h-4 ${separatorClass}`} />
+            {item.href ? (
+              <Link 
+                href={item.href}
+                className={`transition-colors whitespace-nowrap ${linkClass}`}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span className={`whitespace-nowrap ${activeClass}`}>{item.label}</span>
+            )}
+          </div>
+        ))}
+      </nav>
+    </div>
   );
 }

@@ -323,7 +323,7 @@ export default function HomeClient() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?type=newest-desc" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+              <Link href="/products?sort=newest-desc" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
                 See All New Arrivals <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
