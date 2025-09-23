@@ -9,15 +9,9 @@ const config: Config = {
 	theme: {
 		extend: {
 			fontFamily: {
-				inter: [
-					'var(--font-inter)',
-					'Inter',
-					'system-ui',
-					'sans-serif',
-				],
-				quicksand: [
-					'var(--font-quicksand)',
-					'Quicksand',
+				roboto: [
+					'var(--font-roboto)',
+					'Roboto',
 					'system-ui',
 					'sans-serif',
 				],
@@ -28,8 +22,8 @@ const config: Config = {
 					'sans-serif',
 				],
 				sans: [
-					'var(--font-quicksand)',
-					'Quicksand',
+					'var(--font-roboto)',
+					'Roboto',
 					'var(--font-noto-bengali)',
 					'Noto Sans Bengali',
 					'system-ui',

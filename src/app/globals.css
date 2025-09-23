@@ -33,8 +33,17 @@
   --theme-secondary-light: #2196f3;
   --theme-secondary-dark: #005a9b;
   
+  /* Font Variables */
+  --font-roboto: 'Roboto', system-ui, sans-serif;
   /* Bengali Font Variables */
   --font-noto-bengali: 'Noto Sans Bengali', sans-serif;
+}
+
+/* Explicit font loading for Roboto */
+body {
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  background: #ffffff;
+  color: #171717;
 }
 
 /* Specific scrollbar styling for dropdown menus */
@@ -281,11 +290,6 @@
 }
 
 /* Remove dark mode for eCommerce site - always use light theme */
-body {
-  background: #ffffff;
-  color: #171717;
-  font-family: var(--font-quicksand), 'Quicksand', system-ui, sans-serif;
-}
 
 /* Global button cursor styles */
 button,

@@ -1,4 +1,4 @@
-import { Inter, Quicksand, Noto_Sans_Bengali } from "next/font/google";
+import { Roboto, Noto_Sans_Bengali } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { ClientWrapper } from "@/app/client-wrapper";
@@ -8,16 +8,11 @@ import { seoService } from "@/lib/seo";
 import { structuredDataService } from "@/lib/structured-data";
 import StructuredData from "@/components/StructuredData";
 
-const inter = Inter({ 
+const roboto = Roboto({ 
   subsets: ["latin"],
   display: 'swap',
-  variable: '--font-inter'
-});
-
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  display: 'swap',
-  variable: '--font-quicksand'
+  variable: '--font-roboto',
+  weight: ['400', '500', '700']
 });
 
 const notoSansBengali = Noto_Sans_Bengali({
@@ -85,7 +80,7 @@ export default function RootLayout({
         <StructuredData data={structuredDataService.generateWebsiteStructuredData()} />
         <StructuredData data={structuredDataService.generateOrganizationStructuredData()} />
       </head>
-      <body className={`${inter.variable} ${quicksand.variable} ${notoSansBengali.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${roboto.variable} ${notoSansBengali.variable} font-sans antialiased`} suppressHydrationWarning>
         {/* Google Tag Manager Script */}
         <Script
           id="gtm-script"

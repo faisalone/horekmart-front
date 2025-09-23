@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, Menu, X, ChevronDown, Store } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, ChevronDown, Store, Package, TrendingUp, Tag, Sparkles, ThumbsUp, Layers } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/currency';
@@ -327,8 +327,8 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 onMouseLeave={handleDepartmentsMouseLeave}
                 className="flex items-center space-x-2 text-white px-4 py-2 rounded cursor-pointer transition-colors hover:bg-theme-primary-dark/50"
               >
-                <Menu className="h-4 w-4" />
-                <span className="text-base font-medium">
+                <Layers className="h-4 w-4" />
+                <span className="text-base font-bold">
                   <AutoFontText>Departments</AutoFontText>
                 </span>
                 <ChevronDown className="h-3 w-3" />
@@ -375,14 +375,25 @@ const Navbar = ({ }: NavbarProps = {}) => {
 
             {/* Main Navigation Menu - Centered */}
             <nav className="flex items-center space-x-8">
-              <Link href="/products" className="text-base text-white hover:opacity-80 transition-colors">
-                All Products
+              <Link href="/products" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
+                <Package className="h-4 w-4" />
+                <span>All Products</span>
               </Link>
-              <Link href="/products?type=trending" className="text-base text-white hover:opacity-80 transition-colors">
-                Trendings
+              <Link href="/products?type=trending" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
+                <TrendingUp className="h-4 w-4" />
+                <span>Trendings</span>
               </Link>
-              <Link href="/products?type=deals" className="text-base text-white hover:opacity-80 transition-colors">
-                Deals & Offers
+              <Link href="/products?type=deals" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
+                <Tag className="h-4 w-4" />
+                <span>Deals & Offers</span>
+              </Link>
+			  <Link href="/products?sort=newest-desc" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
+                <Sparkles className="h-4 w-4" />
+                <span>New Arrivals</span>
+              </Link>
+			  <Link href="/products?type=best-sellers" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
+                <ThumbsUp className="h-4 w-4" />
+                <span>Best Sellers</span>
               </Link>
             </nav>
           </div>
@@ -516,17 +527,16 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div>
-                      <span className="text-xl font-bold text-gray-900 tracking-tight">
-                        <AutoFontText>All Products</AutoFontText>
-                      </span>
-                      <p className="text-sm text-gray-600 mt-0.5">Browse everything</p>
+                    <div className="flex items-center space-x-3">
+                      <Package className="h-6 w-6 text-blue-600" />
+                      <div>
+                        <span className="text-xl font-bold text-gray-900 tracking-tight">
+                          <AutoFontText>All Products</AutoFontText>
+                        </span>
+                        <p className="text-sm text-gray-600 mt-0.5">Browse everything</p>
+                      </div>
                     </div>
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors rotate-[-90deg]" />
                   </Link>
 
                   <Link
@@ -534,17 +544,16 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-orange-200 hover:bg-orange-50/30"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div>
-                      <span className="text-xl font-bold text-gray-900 tracking-tight">
-                        <AutoFontText>Trendings</AutoFontText>
-                      </span>
-                      <p className="text-sm text-gray-600 mt-0.5">What&apos;s hot right now</p>
+                    <div className="flex items-center space-x-3">
+                      <TrendingUp className="h-6 w-6 text-orange-600" />
+                      <div>
+                        <span className="text-xl font-bold text-gray-900 tracking-tight">
+                          <AutoFontText>Trendings</AutoFontText>
+                        </span>
+                        <p className="text-sm text-gray-600 mt-0.5">What&apos;s hot right now</p>
+                      </div>
                     </div>
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors rotate-[-90deg]" />
                   </Link>
 
                   <Link
@@ -552,17 +561,16 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     className="group flex items-center justify-between px-6 py-5 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 hover:bg-green-50/30"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div>
-                      <span className="text-xl font-bold text-gray-900 tracking-tight">
-                        <AutoFontText>Deals & Offers</AutoFontText>
-                      </span>
-                      <p className="text-sm text-gray-600 mt-0.5">Save more today</p>
+                    <div className="flex items-center space-x-3">
+                      <Tag className="h-6 w-6 text-green-600" />
+                      <div>
+                        <span className="text-xl font-bold text-gray-900 tracking-tight">
+                          <AutoFontText>Deals & Offers</AutoFontText>
+                        </span>
+                        <p className="text-sm text-gray-600 mt-0.5">Save more today</p>
+                      </div>
                     </div>
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors rotate-[-90deg]" />
                   </Link>
                 </div>
               </div>
@@ -586,9 +594,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                     {loading ? 'Loading...' : isAuthenticated ? 'Go to Dashboard' : 'Start Selling'}
                   </AutoFontText>
                 </span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                <ChevronDown className="w-5 h-5 rotate-[-90deg]" />
               </button>
             </div>
           </div>
