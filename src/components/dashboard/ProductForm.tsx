@@ -951,12 +951,20 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
                     ]}
                   />
                 </div>
-                <div className="flex items-center">
+                
+                {/* Featured Product - Clean Switch */}
+                <div className="flex items-center justify-between py-3 px-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Featured Product
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Highlight this product in featured sections
+                    </div>
+                  </div>
                   <Switch
                     checked={formData.is_featured}
                     onCheckedChange={(checked) => handleInputChange('is_featured', checked)}
-                    label="Featured Product"
-                    description="Mark this product as featured to highlight it on your store"
                     size="md"
                   />
                 </div>

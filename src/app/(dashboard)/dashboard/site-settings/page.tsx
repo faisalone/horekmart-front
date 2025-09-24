@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { adminApi } from '@/lib/admin-api';
 import { SiteSetting, GroupedSiteSettings, SiteSettingBulkUpdateRequest } from '@/types/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -151,7 +152,9 @@ export default function SiteSettingsPage() {
   }, [settings, formData, initializeFormData]);
 
   // Automatically switch to the correct tab if current activeTab doesn't exist in availableGroups
-  const availableGroups = settings ? Object.keys(settings).filter(group => settings[group].length > 0) : [];
+  const availableGroups = useMemo(() => {
+    return settings ? Object.keys(settings).filter(group => settings[group].length > 0) : [];
+  }, [settings]);
   
   useEffect(() => {
     if (availableGroups.length > 0 && !availableGroups.includes(activeTab)) {
@@ -313,9 +316,11 @@ export default function SiteSettingsPage() {
             {hasImagePreview && stringValue && (
               <div className="flex items-center space-x-3 p-2 bg-slate-800/50 rounded-lg border border-slate-600/50">
                 <div className="relative w-16 h-16 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
-                  <img
+                  <Image
                     src={stringValue}
                     alt="Preview"
+                    width={64}
+                    height={64}
                     className="w-full h-full object-cover"
                     onLoad={(e) => {
                       const target = e.target as HTMLImageElement;

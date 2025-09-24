@@ -125,7 +125,7 @@ export function SearchableSelect({
       const idx = filteredOptions.findIndex(o => o.value === selectedOption?.value)
       setActiveIndex(idx >= 0 ? idx : (filteredOptions.length > 0 ? 0 : -1))
     }
-  }, [isOpen, selectedOption])
+  }, [isOpen, selectedOption, filteredOptions])
 
   // Save scroll position when dropdown closes
   React.useEffect(() => {
@@ -134,7 +134,46 @@ export function SearchableSelect({
     }
   }, [isOpen])
 
+  // Handle wheel events to allow page scrolling when mouse is outside dropdown
   React.useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      if (isOpen && dropdownRef.current && optionsContainerRef.current) {
+        const dropdown = dropdownRef.current
+        const optionsContainer = optionsContainerRef.current
+        const target = event.target as Element
+        
+        // Check if the wheel event is happening inside the dropdown
+        const isInsideDropdown = dropdown.contains(target)
+        
+        if (isInsideDropdown) {
+          // If inside dropdown, check if it's specifically in the options container
+          const isInsideOptions = optionsContainer.contains(target) || target === optionsContainer
+          
+          if (isInsideOptions) {
+            // When scrolling in the options container, always prevent page scroll
+            // Let the dropdown handle its own scrolling
+            event.preventDefault()
+            event.stopPropagation()
+            
+            // Manually handle dropdown scrolling
+            const { scrollTop, scrollHeight, clientHeight } = optionsContainer
+            const maxScroll = scrollHeight - clientHeight
+            
+            if (maxScroll > 0) {
+              // Calculate new scroll position
+              const newScrollTop = Math.max(0, Math.min(maxScroll, scrollTop + event.deltaY))
+              optionsContainer.scrollTop = newScrollTop
+            }
+          } else {
+            // Inside dropdown but not in options (search area) - prevent page scroll
+            event.preventDefault()
+            event.stopPropagation()
+          }
+        }
+        // If outside dropdown, allow normal page scrolling (don't prevent)
+      }
+    }
+
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false)
@@ -142,9 +181,16 @@ export function SearchableSelect({
       }
     }
 
+    if (isOpen) {
+      document.addEventListener('wheel', handleWheel, { passive: false })
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    
+    return () => {
+      document.removeEventListener('wheel', handleWheel)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   // Roving active option: ensure active option stays in view on keyboard nav
   React.useEffect(() => {
@@ -210,12 +256,12 @@ export function SearchableSelect({
 
     const clearButton = cn('absolute right-2 top-1/2 -translate-y-1/2', 'text-gray-400 hover:text-gray-600 data-[color-scheme=dark]:hover:text-gray-300')
 
-    const optionsContainer = 'max-h-60 overflow-auto p-1'
+    const optionsContainer = 'max-h-60 overflow-y-auto overflow-x-hidden p-1 pb-3'
 
     const noOptions = cn('py-2 px-3 text-sm', 'text-gray-500 data-[color-scheme=dark]:text-gray-400')
 
     const option = cn(
-      'w-full rounded-sm px-3 py-2 text-left text-sm focus:outline-none',
+      'w-full rounded-sm px-3 py-2 mb-1 text-left text-sm focus:outline-none',
       'hover:bg-gray-100 focus:bg-gray-100 data-[color-scheme=dark]:hover:bg-gray-700 data-[color-scheme=dark]:focus:bg-gray-700'
     )
 
@@ -245,7 +291,7 @@ export function SearchableSelect({
       unselectedOption,
       addNewOption,
     }
-  }, [theme, error, selectedOption])
+  }, [selectedOption])
 
   // styles derived above
 
