@@ -77,7 +77,14 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
             type="button"
             variant="destructive"
             size="sm"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onDelete();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
             className={cn(
               "h-7 w-7 p-0 transition-all duration-200",
               "bg-red-500 hover:bg-red-600 text-white shadow-md",

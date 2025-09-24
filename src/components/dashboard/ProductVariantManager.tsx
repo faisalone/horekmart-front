@@ -324,9 +324,9 @@ export default function ProductVariantManager({
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="text-white flex flex-wrap items-center gap-2">
               <Package className="w-5 h-5" />
               Product Variants
             </CardTitle>
@@ -351,7 +351,7 @@ export default function ProductVariantManager({
               type="button"
               onClick={() => setIsAddingVariant(true)}
               disabled={disabled || !productId}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+              className="w-full justify-center bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed sm:w-auto"
               title={!productId ? "Save the product first to add variants" : "Add a new product variant"}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -462,12 +462,12 @@ export default function ProductVariantManager({
                 </div>
 
                 {/* Form Actions */}
-                <div className="flex items-center justify-end space-x-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={resetForm}
-                    className="border-gray-500 text-gray-300 hover:bg-gray-600"
+                    className="w-full border-gray-500 text-gray-300 hover:bg-gray-600 sm:w-auto"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Cancel
@@ -476,7 +476,7 @@ export default function ProductVariantManager({
                     type="button"
                     onClick={handleSubmit}
                     disabled={createVariantMutation.isPending || updateVariantMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     {createVariantMutation.isPending || updateVariantMutation.isPending ? 
@@ -500,14 +500,14 @@ export default function ProductVariantManager({
                   {editingVariantId === variant.id ? (
                     // Inline Edit Form
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <h5 className="text-white font-medium">Edit Variant</h5>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={resetForm}
-                          className="border-gray-500 text-gray-300 hover:bg-gray-600"
+                          className="w-full border-gray-500 text-gray-300 hover:bg-gray-600 sm:w-auto"
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -604,12 +604,12 @@ export default function ProductVariantManager({
                       </div>
 
                       {/* Edit Form Actions */}
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={resetForm}
-                          className="border-gray-500 text-gray-300 hover:bg-gray-600"
+                          className="w-full border-gray-500 text-gray-300 hover:bg-gray-600 sm:w-auto"
                         >
                           <X className="w-4 h-4 mr-2" />
                           Cancel
@@ -618,7 +618,7 @@ export default function ProductVariantManager({
                           type="button"
                           onClick={handleSubmit}
                           disabled={updateVariantMutation.isPending}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto"
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {updateVariantMutation.isPending ? 'Updating...' : 'Update Variant'}
@@ -627,34 +627,32 @@ export default function ProductVariantManager({
                     </div>
                   ) : (
                     // Normal Display
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <p className="text-white font-medium">{variant.sku}</p>
-                            <p className="text-gray-400 text-sm">
-                              {formatVariantDisplay(variant)}
-                            </p>
-                          </div>
-                          <div className="text-gray-300">
-                            <p className="text-sm">
-                              Price: {variant.price_override ? `$${variant.price_override}` : 'Inherits product price'}
-                            </p>
-                            <p className="text-sm">
-                              Offer Price: {variant.offer_price_override ? `$${variant.offer_price_override}` : 'Inherits product sale price'}
-                            </p>
-                            <p className="text-sm">Quantity: {variant.quantity}</p>
-                          </div>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-6 flex-1">
+                        <div>
+                          <p className="text-white font-medium">{variant.sku}</p>
+                          <p className="text-gray-400 text-sm">
+                            {formatVariantDisplay(variant)}
+                          </p>
+                        </div>
+                        <div className="text-gray-300 space-y-1 md:text-right">
+                          <p className="text-sm">
+                            Price: {variant.price_override ? `$${variant.price_override}` : 'Inherits product price'}
+                          </p>
+                          <p className="text-sm">
+                            Offer Price: {variant.offer_price_override ? `$${variant.offer_price_override}` : 'Inherits product sale price'}
+                          </p>
+                          <p className="text-sm">Quantity: {variant.quantity}</p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto md:flex-nowrap">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(variant)}
                           disabled={disabled}
-                          className="border-gray-500 text-gray-300 hover:bg-gray-600"
+                          className="w-full border-gray-500 text-gray-300 hover:bg-gray-600 sm:w-auto"
                         >
                           <Edit2 className="w-4 h-4" />
                         </Button>
@@ -664,7 +662,7 @@ export default function ProductVariantManager({
                           size="sm"
                           onClick={() => handleDelete(variant.id)}
                           disabled={disabled || deleteVariantMutation.isPending}
-                          className="border-red-500 text-red-400 hover:bg-red-600 hover:text-white"
+                          className="w-full border-red-500 text-red-400 hover:bg-red-600 hover:text-white sm:w-auto"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

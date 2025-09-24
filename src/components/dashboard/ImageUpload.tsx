@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { DraggableItem } from '@/components/ui/DraggableItem';
+import { Switch } from '@/components/ui/Switch';
+import { applyWatermark, batchApplyWatermark } from '@/utils/watermark';
 
 export interface UploadedImage {
   id?: number | string; // Allow both number and string for UUIDs
@@ -31,6 +33,9 @@ interface ImageUploadProps {
   uploading?: boolean;
   productId?: string | number;
   allowReorder?: boolean;
+  enableWatermark?: boolean;
+  onWatermarkChange?: (enabled: boolean) => void;
+  logoWatermark?: string | null;
 }
 
 export function ImageUpload({ 
@@ -43,10 +48,18 @@ export function ImageUpload({
   disabled = false,
   uploading = false,
   productId,
-  allowReorder = true
+  allowReorder = true,
+  enableWatermark = false,
+  onWatermarkChange,
+  logoWatermark = null
 }: ImageUploadProps) {
   const [deletingImageId, setDeletingImageId] = useState<number | string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessingWatermark, setIsProcessingWatermark] = useState(false);
+  const [watermarkProgress, setWatermarkProgress] = useState(0);
+  const [watermarkPreviews, setWatermarkPreviews] = useState<Record<string, string>>({});
+  const [previewLoading, setPreviewLoading] = useState<Record<string, boolean>>({});
+  const processedImagesRef = useRef<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Modern drag-and-drop hook
@@ -55,6 +68,104 @@ export function ImageUpload({
     onReorder: onImagesChange,
     disabled: disabled || uploading
   });
+
+  // Generate watermark preview for an image
+  const generateWatermarkPreview = useCallback(async (image: UploadedImage) => {
+    if (!image.file) return;
+    
+    const imageKey = image.id?.toString() || image.preview;
+    
+    // Prevent duplicate processing
+    setPreviewLoading(prev => {
+      if (prev[imageKey]) return prev;
+      return { ...prev, [imageKey]: true };
+    });
+    
+    try {
+      const watermarkedFile = await applyWatermark(
+        image.file,
+        logoWatermark,
+        { opacity: 0.1, position: 'center', size: 35 }
+      );
+      
+      const previewUrl = URL.createObjectURL(watermarkedFile);
+      
+      // Ensure we don't overwrite existing previews
+      setWatermarkPreviews(prev => {
+        if (prev[imageKey]) {
+          // Clean up the new URL since we already have one
+          URL.revokeObjectURL(previewUrl);
+          return prev;
+        }
+        return { ...prev, [imageKey]: previewUrl };
+      });
+    } catch (error) {
+      console.error('Failed to generate watermark preview:', error);
+    } finally {
+      setPreviewLoading(prev => ({ ...prev, [imageKey]: false }));
+    }
+  }, [logoWatermark]);
+
+  // Clean up watermark previews when component unmounts
+  useEffect(() => {
+    return () => {
+      // Only cleanup on component unmount
+      setWatermarkPreviews(prevPreviews => {
+        Object.values(prevPreviews).forEach(url => {
+          if (url.startsWith('blob:')) {
+            try {
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              // Ignore errors for already revoked URLs
+            }
+          }
+        });
+        return {};
+      });
+    };
+  }, []); // Empty dependency array - only run on unmount
+
+  // Generate watermark previews when watermark is enabled and images change
+  useEffect(() => {
+    if (!enableWatermark) return;
+    
+    images.forEach(image => {
+      if (image.file && !image.isExisting) {
+        const imageKey = image.id?.toString() || image.preview;
+        
+        // Only process if we haven't already processed this image and don't have a preview
+        if (!processedImagesRef.current.has(imageKey) && !watermarkPreviews[imageKey] && !previewLoading[imageKey]) {
+          processedImagesRef.current.add(imageKey);
+          generateWatermarkPreview(image);
+        }
+      }
+    });
+  }, [enableWatermark, images, generateWatermarkPreview, watermarkPreviews, previewLoading]);
+
+  // Clear watermark previews when watermark is disabled
+  useEffect(() => {
+    if (!enableWatermark) {
+      // Clean up all existing previews safely
+      setWatermarkPreviews(prev => {
+        Object.values(prev).forEach(url => {
+          if (url && url.startsWith('blob:')) {
+            try {
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              // Ignore errors for already revoked URLs
+            }
+          }
+        });
+        return {};
+      });
+      
+      // Clear loading states
+      setPreviewLoading({});
+      
+      // Clear processed images tracker
+      processedImagesRef.current.clear();
+    }
+  }, [enableWatermark]);
 
 
 
@@ -115,24 +226,45 @@ export function ImageUpload({
     previousImagesRef.current = currentImages;
   }, [images, uploading, dragAndDrop.isDragging]);
 
-  // Simple image removal handler
+  // Optimized image removal handler
   const handleRemoveImage = useCallback((index: number) => {
-    if (disabled || uploading || dragAndDrop.isDragging) return;
+    if (disabled || uploading) return;
     
     const image = images[index];
+    const imageKey = image.id?.toString() || image.preview;
     
-    // Revoke blob URL if it's a new upload
-    if (image.preview?.startsWith('blob:') && !image.isExisting && !uploading && !dragAndDrop.isDragging) {
-      setTimeout(() => URL.revokeObjectURL(image.preview), 100);
-    }
+    // Batch state updates for better performance
+    const cleanup = () => {
+      // Clean up watermark preview
+      if (watermarkPreviews[imageKey]) {
+        try { URL.revokeObjectURL(watermarkPreviews[imageKey]); } catch {}
+      }
+      
+      // Clean up blob URL for new uploads
+      if (image.preview?.startsWith('blob:') && !image.isExisting) {
+        setTimeout(() => {
+          try { URL.revokeObjectURL(image.preview); } catch {}
+        }, 100);
+      }
+    };
     
-    // Remove from array and update sort order
-    const newImages = images
-      .filter((_, i) => i !== index)
-      .map((img, idx) => ({ ...img, sort_order: idx }));
+    // Update all states in batch
+    setWatermarkPreviews(prev => {
+      const { [imageKey]: removed, ...rest } = prev;
+      return rest;
+    });
     
-    onImagesChange(newImages);
-  }, [images, onImagesChange, disabled, uploading, dragAndDrop.isDragging]);
+    setPreviewLoading(prev => {
+      const { [imageKey]: removed, ...rest } = prev;
+      return rest;
+    });
+    
+    processedImagesRef.current.delete(imageKey);
+    cleanup();
+    
+    // Update images array
+    onImagesChange(images.filter((_, i) => i !== index));
+  }, [images, onImagesChange, disabled, uploading, watermarkPreviews]);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (disabled || uploading) return;
@@ -157,19 +289,74 @@ export function ImageUpload({
 
     // Process new images
     if (acceptedFiles.length > 0) {
-      const newImages = acceptedFiles.map((file, index) => ({
-        id: `temp-${Date.now()}-${index}`,
-        file,
-        preview: URL.createObjectURL(file),
-        alt_text: '',
-        sort_order: images.length + index,
-        isExisting: false
-      }));
+      setIsUploading(true);
+      
+      if (enableWatermark) {
+        setIsProcessingWatermark(true);
+        setWatermarkProgress(0);
+        
+        // Apply watermark to images
+        (async () => {
+          try {
+            const watermarkedFiles = await batchApplyWatermark(
+              acceptedFiles,
+              logoWatermark,
+              { opacity: 0.1, position: 'center', size: 35 },
+              setWatermarkProgress
+            );
+              
+            const newImages = watermarkedFiles.map((file, index) => ({
+              id: `temp-${Date.now()}-${index}`,
+              file,
+              preview: URL.createObjectURL(file),
+              alt_text: '',
+              sort_order: images.length + index,
+              isExisting: false
+            }));
 
-      onImagesChange([...images, ...newImages]);
-      toast.success(acceptedFiles.length === 1 ? 'Image added' : `${acceptedFiles.length} images added`);
+            onImagesChange([...images, ...newImages]);
+            toast.success(
+              acceptedFiles.length === 1 
+                ? 'Image added with watermark' 
+                : `${acceptedFiles.length} images added with watermark`
+            );
+          } catch (error) {
+            console.error('Watermark error:', error);
+            toast.error('Failed to apply watermark, images added without watermark');
+            
+            // Fallback: add images without watermark
+            const newImages = acceptedFiles.map((file, index) => ({
+              id: `temp-${Date.now()}-${index}`,
+              file,
+              preview: URL.createObjectURL(file),
+              alt_text: '',
+              sort_order: images.length + index,
+              isExisting: false
+            }));
+            onImagesChange([...images, ...newImages]);
+          } finally {
+            setIsProcessingWatermark(false);
+            setWatermarkProgress(0);
+            setIsUploading(false);
+          }
+        })();
+      } else {
+        // Add images without watermark
+        const newImages = acceptedFiles.map((file, index) => ({
+          id: `temp-${Date.now()}-${index}`,
+          file,
+          preview: URL.createObjectURL(file),
+          alt_text: '',
+          sort_order: images.length + index,
+          isExisting: false
+        }));
+
+        onImagesChange([...images, ...newImages]);
+        toast.success(acceptedFiles.length === 1 ? 'Image added' : `${acceptedFiles.length} images added`);
+        setIsUploading(false);
+      }
     }
-  }, [images, onImagesChange, disabled, uploading, maxFiles, maxSize]);
+  }, [images, onImagesChange, disabled, uploading, maxFiles, maxSize, enableWatermark, logoWatermark]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -180,7 +367,7 @@ export function ImageUpload({
     },
     maxFiles: maxFiles - images.length,
     maxSize: maxSize * 1024 * 1024,
-    disabled: disabled || uploading || images.length >= maxFiles,
+    disabled: disabled || uploading || isProcessingWatermark || images.length >= maxFiles,
     noClick: true, // We'll handle clicks manually
     multiple: true,
     noDrag: false, // Allow drag for upload
@@ -218,32 +405,7 @@ export function ImageUpload({
     event.target.value = '';
   };
 
-  const removeImage = async (index: number) => {
-    if (disabled || uploading || dragAndDrop.isDragging) return;
-    
-    const image = images[index];
-    
-    // With the new ordering system, we just remove from local state
-    // The backend will handle deletion when orderedImages doesn't include the UUID
-    
-    // For new uploads, revoke the blob URL to prevent memory leaks
-    // But only if we're not actively uploading or reordering to avoid premature cleanup
-    if (image.preview && image.preview.startsWith('blob:') && !uploading && !dragAndDrop.isDragging) {
-      // Add a small delay to ensure React state updates are complete
-      setTimeout(() => {
-        try {
-          URL.revokeObjectURL(image.preview);
-        } catch (error) {
-          // Ignore errors for already revoked URLs
-          console.debug('Blob URL already revoked or invalid:', image.preview);
-        }
-      }, 50);
-    }
-    
-    // Remove from local state
-    const newImages = images.filter((_, i) => i !== index);
-    onImagesChange(newImages);
-  };
+
 
   // Old drag handlers removed - now using modern drag hook
 
@@ -252,7 +414,7 @@ export function ImageUpload({
     return image.preview;
   };
 
-  const canAddMore = images.length < maxFiles && !disabled && !uploading;
+  const canAddMore = images.length < maxFiles && !disabled && !uploading && !isProcessingWatermark;
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -266,6 +428,46 @@ export function ImageUpload({
         style={{ display: 'none' }}
       />
 
+      {/* Watermark Control */}
+      {onWatermarkChange && (
+        <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Add Watermark
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Apply company logo to all uploaded images (preview available)
+            </div>
+          </div>
+          <Switch
+            checked={enableWatermark}
+            onCheckedChange={onWatermarkChange}
+            disabled={disabled || uploading || isProcessingWatermark}
+            size="md"
+          />
+        </div>
+      )}
+
+      {/* Processing Progress */}
+      {isProcessingWatermark && (
+        <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Applying watermarks...
+            </span>
+            <span className="text-sm text-blue-700 dark:text-blue-300">
+              {Math.round(watermarkProgress)}%
+            </span>
+          </div>
+          <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+            <div 
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${watermarkProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Upload Area */}
       {canAddMore && (
         <div
@@ -275,7 +477,7 @@ export function ImageUpload({
             isDragActive 
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
               : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500',
-            disabled && 'opacity-50 cursor-not-allowed'
+            (disabled || isProcessingWatermark) && 'opacity-50 cursor-not-allowed'
           )}
           onClick={handleFileInputClick}
         >
@@ -285,6 +487,7 @@ export function ImageUpload({
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             or drag & drop files here
+            {enableWatermark && ' (watermark will be applied)'}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Max {maxFiles} images, up to {maxSize}MB each (JPEG, PNG, WebP)
@@ -299,10 +502,10 @@ export function ImageUpload({
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Product Images ({images.length}/{maxFiles})
             </h4>
-            {uploading && (
+            {(uploading || isProcessingWatermark) && (
               <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Uploading...
+                {isProcessingWatermark ? 'Processing watermarks...' : 'Uploading...'}
               </div>
             )}
           </div>
@@ -314,16 +517,22 @@ export function ImageUpload({
               const isDeleting = deletingImageId === image.id;
               const dragStyles = dragAndDrop.getDragStyles(index);
               
-              // Generate unique key
-              const imageKey = image.id != null 
+              // Generate unique key for React
+              const reactKey = image.id != null 
                 ? `img-${image.id}` 
                 : image.preview 
                   ? `preview-${image.preview}-${index}` 
                   : `file-${image.file?.name || 'unknown'}-${index}`;
               
+              // Determine which image to show - watermark preview or original
+              const imageKey = image.id?.toString() || image.preview;
+              const showWatermarkPreview = enableWatermark && !image.isExisting && watermarkPreviews[imageKey];
+              const isGeneratingPreview = previewLoading[imageKey];
+              const displaySrc = showWatermarkPreview ? watermarkPreviews[imageKey] : imageSrc;
+              
               return (
                 <DraggableItem
-                  key={imageKey}
+                  key={reactKey}
                   index={index}
                   isDraggedItem={dragStyles.isDraggedItem}
                   isDropTarget={dragStyles.isDropTarget}
@@ -342,33 +551,47 @@ export function ImageUpload({
                   }}
                   className="flex-shrink-0"
                 >
-                  <div className="w-full h-full bg-white flex items-center justify-center">
-                    {imageSrc ? (
-                      <Image
-                        src={imageSrc}
-                        alt={image.alt_text || `Image ${index + 1}`}
-                        width={200}
-                        height={120}
-                        className="block object-contain"
-                        style={{ 
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          width: 'auto',
-                          height: 'auto'
-                        }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `
-                              <div class="flex flex-col items-center justify-center h-full text-red-500 text-center">
-                                <div class="text-2xl">❌</div>
-                                <div class="text-xs mt-1">Failed to Load</div>
-                              </div>
-                            `;
-                          }
-                        }}
-                      />
+                  <div className="w-full h-full bg-white flex items-center justify-center relative">
+                    {displaySrc ? (
+                      <>
+                        <Image
+                          src={displaySrc}
+                          alt={image.alt_text || `Image ${index + 1}`}
+                          width={200}
+                          height={120}
+                          className="block object-contain"
+                          style={{ 
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            width: 'auto',
+                            height: 'auto'
+                          }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="flex flex-col items-center justify-center h-full text-red-500 text-center">
+                                  <div class="text-2xl">❌</div>
+                                  <div class="text-xs mt-1">Failed to Load</div>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                        
+
+                        
+                        {/* Loading overlay for watermark preview generation */}
+                        {isGeneratingPreview && (
+                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded">
+                            <div className="bg-white/90 px-2 py-1 rounded-md flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                              <span className="text-xs text-gray-700">Generating Preview...</span>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-gray-500">
                         <ImageIcon className="w-8 h-8 mb-2" />

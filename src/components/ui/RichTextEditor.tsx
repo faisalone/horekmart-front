@@ -14,7 +14,6 @@ import {
   Bold, 
   Italic, 
   Underline as UnderlineIcon, 
-  Strikethrough,
   List,
   ListOrdered,
   Quote,
@@ -23,12 +22,8 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  AlignJustify,
   Link as LinkIcon,
-  Image as ImageIcon,
-  Table as TableIcon,
-  Code,
-  Type
+  Image as ImageIcon
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -119,10 +114,6 @@ const RichTextEditor = ({
     }
   }, [editor]);
 
-  const addTable = useCallback(() => {
-    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-  }, [editor]);
-
   if (!editor) {
     return (
       <div className={cn('border border-gray-600 rounded-lg bg-gray-700', className)}>
@@ -132,94 +123,48 @@ const RichTextEditor = ({
     );
   }
 
+  const buttonClasses = 'px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap hover:bg-gray-700 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const iconButtonClasses = 'px-2 py-1 rounded-md transition-colors whitespace-nowrap hover:bg-gray-700 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed';
+
   return (
     <div className={cn('border border-gray-600 rounded-lg bg-gray-700', className)}>
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-800 border-b border-gray-600 rounded-t-lg">
-        {/* Text Formatting */}
-        <div className="flex items-center border-r border-gray-600 pr-2 mr-2">
+      <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap bg-gray-800 border-b border-gray-600 rounded-t-lg px-2 py-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-gray-700">
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
             disabled={!editor.can().chain().focus().toggleBold().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('bold') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('bold') && 'bg-blue-600 text-white')}
             title="Bold"
           >
-            <Bold className="w-4 h-4" />
+            <Bold className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             disabled={!editor.can().chain().focus().toggleItalic().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('italic') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('italic') && 'bg-blue-600 text-white')}
             title="Italic"
           >
-            <Italic className="w-4 h-4" />
+            <Italic className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             disabled={!editor.can().chain().focus().toggleUnderline().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('underline') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('underline') && 'bg-blue-600 text-white')}
             title="Underline"
           >
-            <UnderlineIcon className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            disabled={!editor.can().chain().focus().toggleStrike().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('strike') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
-            title="Strikethrough"
-          >
-            <Strikethrough className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleCode().run()}
-            disabled={!editor.can().chain().focus().toggleCode().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('code') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
-            title="Inline Code"
-          >
-            <Code className="w-4 h-4" />
+            <UnderlineIcon className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Headings */}
-        <div className="flex items-center border-r border-gray-600 pr-2 mr-2">
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={cn(
-              'px-3 py-2 rounded hover:bg-gray-700 transition-colors text-sm font-medium',
-              editor.isActive('heading', { level: 1 }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
-            title="Heading 1"
-          >
-            H1
-          </button>
+        <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-gray-700">
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={cn(
-              'px-3 py-2 rounded hover:bg-gray-700 transition-colors text-sm font-medium',
-              editor.isActive('heading', { level: 2 }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(buttonClasses, editor.isActive('heading', { level: 2 }) && 'bg-blue-600 text-white')}
             title="Heading 2"
           >
             H2
@@ -227,162 +172,104 @@ const RichTextEditor = ({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={cn(
-              'px-3 py-2 rounded hover:bg-gray-700 transition-colors text-sm font-medium',
-              editor.isActive('heading', { level: 3 }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(buttonClasses, editor.isActive('heading', { level: 3 }) && 'bg-blue-600 text-white')}
             title="Heading 3"
           >
             H3
           </button>
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().setParagraph().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('paragraph') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
-            title="Paragraph"
-          >
-            <Type className="w-4 h-4" />
-          </button>
         </div>
 
-        {/* Lists */}
-        <div className="flex items-center border-r border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-gray-700">
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('bulletList') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('bulletList') && 'bg-blue-600 text-white')}
             title="Bullet List"
           >
-            <List className="w-4 h-4" />
+            <List className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('orderedList') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('orderedList') && 'bg-blue-600 text-white')}
             title="Numbered List"
           >
-            <ListOrdered className="w-4 h-4" />
+            <ListOrdered className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('blockquote') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('blockquote') && 'bg-blue-600 text-white')}
             title="Quote"
           >
-            <Quote className="w-4 h-4" />
+            <Quote className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Alignment */}
-        <div className="flex items-center border-r border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-gray-700">
           <button
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive({ textAlign: 'left' }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive({ textAlign: 'left' }) && 'bg-blue-600 text-white')}
             title="Align Left"
           >
-            <AlignLeft className="w-4 h-4" />
+            <AlignLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive({ textAlign: 'center' }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive({ textAlign: 'center' }) && 'bg-blue-600 text-white')}
             title="Align Center"
           >
-            <AlignCenter className="w-4 h-4" />
+            <AlignCenter className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive({ textAlign: 'right' }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive({ textAlign: 'right' }) && 'bg-blue-600 text-white')}
             title="Align Right"
           >
-            <AlignRight className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive({ textAlign: 'justify' }) ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
-            title="Justify"
-          >
-            <AlignJustify className="w-4 h-4" />
+            <AlignRight className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Insert Elements */}
-        <div className="flex items-center border-r border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-gray-700">
           <button
             type="button"
             onClick={addLink}
-            className={cn(
-              'p-2 rounded hover:bg-gray-700 transition-colors',
-              editor.isActive('link') ? 'bg-blue-600 text-white' : 'text-gray-300'
-            )}
+            className={cn(iconButtonClasses, editor.isActive('link') && 'bg-blue-600 text-white')}
             title="Add Link"
           >
-            <LinkIcon className="w-4 h-4" />
+            <LinkIcon className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={addImage}
-            className="p-2 rounded hover:bg-gray-700 transition-colors text-gray-300"
+            className={iconButtonClasses}
             title="Add Image"
           >
-            <ImageIcon className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={addTable}
-            className="p-2 rounded hover:bg-gray-700 transition-colors text-gray-300"
-            title="Add Table"
-          >
-            <TableIcon className="w-4 h-4" />
+            <ImageIcon className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Undo/Redo */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().chain().focus().undo().run()}
-            className="p-2 rounded hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={iconButtonClasses}
             title="Undo"
           >
-            <Undo className="w-4 h-4" />
+            <Undo className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().chain().focus().redo().run()}
-            className="p-2 rounded hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={iconButtonClasses}
             title="Redo"
           >
-            <Redo className="w-4 h-4" />
+            <Redo className="h-4 w-4" />
           </button>
         </div>
       </div>
