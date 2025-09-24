@@ -3,10 +3,12 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useDragAndDrop } from '@/hooks/useDragAndDrop';
+import { DraggableItem } from '@/components/ui/DraggableItem';
 
 export interface UploadedImage {
   id?: number | string; // Allow both number and string for UUIDs
@@ -43,11 +45,18 @@ export function ImageUpload({
   productId,
   allowReorder = true
 }: ImageUploadProps) {
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [deletingImageId, setDeletingImageId] = useState<number | string | null>(null);
-  const [isReordering, setIsReordering] = useState(false); // Track active reordering
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // const { showError, showWarning } = useToast();
+
+  // Modern drag-and-drop hook
+  const dragAndDrop = useDragAndDrop({
+    items: images,
+    onReorder: onImagesChange,
+    disabled: disabled || uploading
+  });
+
+
 
   // Cleanup blob URLs when component unmounts, but preserve during operations
   useEffect(() => {
@@ -90,7 +99,7 @@ export function ImageUpload({
     );
     
     // Only revoke blob URLs for actually removed images (not during uploads or reordering)
-    if (!uploading && !isReordering) {
+    if (!uploading && !dragAndDrop.isDragging) {
       removedImages.forEach(removedImg => {
         if (removedImg.preview && removedImg.preview.startsWith('blob:') && !removedImg.isExisting) {
           try {
@@ -104,75 +113,61 @@ export function ImageUpload({
     
     // Update the reference
     previousImagesRef.current = currentImages;
-  }, [images, uploading, isReordering]);
+  }, [images, uploading, dragAndDrop.isDragging]);
+
+  // Simple image removal handler
+  const handleRemoveImage = useCallback((index: number) => {
+    if (disabled || uploading || dragAndDrop.isDragging) return;
+    
+    const image = images[index];
+    
+    // Revoke blob URL if it's a new upload
+    if (image.preview?.startsWith('blob:') && !image.isExisting && !uploading && !dragAndDrop.isDragging) {
+      setTimeout(() => URL.revokeObjectURL(image.preview), 100);
+    }
+    
+    // Remove from array and update sort order
+    const newImages = images
+      .filter((_, i) => i !== index)
+      .map((img, idx) => ({ ...img, sort_order: idx }));
+    
+    onImagesChange(newImages);
+  }, [images, onImagesChange, disabled, uploading, dragAndDrop.isDragging]);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (disabled || uploading) return;
 
-    // Handle rejected files and show validation errors
-    if (rejectedFiles.length > 0) {
-      rejectedFiles.forEach(({ file, errors }) => {
-        errors.forEach((error: any) => {
-          switch (error.code) {
-            case 'file-too-large':
-              toast.error(`File "${file.name}" is too large`, {
-                description: `Maximum file size is ${maxSize}MB`
-              });
-              break;
-            case 'file-invalid-type':
-              toast.error(`File "${file.name}" is not a valid image`, {
-                description: 'Please upload JPEG, PNG, or WebP files only'
-              });
-              break;
-            case 'too-many-files':
-              toast.error('Too many files selected', {
-                description: `Maximum ${maxFiles} images allowed`
-              });
-              break;
-            case 'file-invalid':
-              toast.error(`File "${file.name}" is invalid`, {
-                description: error.message || 'File is empty or corrupt'
-              });
-              break;
-            default:
-              toast.error(`File "${file.name}" was rejected`, {
-                description: error.message || 'Unknown error'
-              });
-          }
-        });
-      });
-    }
+    // Handle rejected files with simplified error messages
+    rejectedFiles.forEach(({ file, errors }) => {
+      const error = errors[0];
+      const errorMessages: Record<string, string> = {
+        'file-too-large': `"${file.name}" is too large (max ${maxSize}MB)`,
+        'file-invalid-type': `"${file.name}" is not a valid image`,
+        'too-many-files': `Maximum ${maxFiles} images allowed`,
+        'file-invalid': `"${file.name}" is invalid or empty`
+      };
+      toast.error(errorMessages[error.code] || `"${file.name}" was rejected`);
+    });
 
-    // Check if we're exceeding the file limit
+    // Check file limit
     if (images.length + acceptedFiles.length > maxFiles) {
-      toast.error('Too many images', {
-        description: `You can only upload up to ${maxFiles} images. Current: ${images.length}, Trying to add: ${acceptedFiles.length}`
-      });
+      toast.error(`Cannot add ${acceptedFiles.length} images. Limit: ${maxFiles}`);
       return;
     }
 
-    // Process accepted files
+    // Process new images
     if (acceptedFiles.length > 0) {
-      const newImages = acceptedFiles.map((file, index) => {
-        const previewUrl = URL.createObjectURL(file);
-        return {
-          id: `temp-${Date.now()}-${index}`, // Temporary ID for new uploads
-          file,
-          preview: previewUrl,
-          alt_text: '',
-          sort_order: images.length + index,
-          isExisting: false
-        };
-      });
-  
-      // Update images with new valid files
+      const newImages = acceptedFiles.map((file, index) => ({
+        id: `temp-${Date.now()}-${index}`,
+        file,
+        preview: URL.createObjectURL(file),
+        alt_text: '',
+        sort_order: images.length + index,
+        isExisting: false
+      }));
+
       onImagesChange([...images, ...newImages]);
-      
-      if (acceptedFiles.length === 1) {
-        toast.success('Image added successfully');
-      } else {
-        toast.success(`${acceptedFiles.length} images added successfully`);
-      }
+      toast.success(acceptedFiles.length === 1 ? 'Image added' : `${acceptedFiles.length} images added`);
     }
   }, [images, onImagesChange, disabled, uploading, maxFiles, maxSize]);
 
@@ -224,7 +219,7 @@ export function ImageUpload({
   };
 
   const removeImage = async (index: number) => {
-    if (disabled || uploading || isReordering) return;
+    if (disabled || uploading || dragAndDrop.isDragging) return;
     
     const image = images[index];
     
@@ -233,7 +228,7 @@ export function ImageUpload({
     
     // For new uploads, revoke the blob URL to prevent memory leaks
     // But only if we're not actively uploading or reordering to avoid premature cleanup
-    if (image.preview && image.preview.startsWith('blob:') && !uploading && !isReordering) {
+    if (image.preview && image.preview.startsWith('blob:') && !uploading && !dragAndDrop.isDragging) {
       // Add a small delay to ensure React state updates are complete
       setTimeout(() => {
         try {
@@ -250,59 +245,7 @@ export function ImageUpload({
     onImagesChange(newImages);
   };
 
-  const handleDragStart = (index: number) => {
-    if (!allowReorder) return;
-    setDraggedIndex(index);
-    setIsReordering(true);
-    console.log('Drag started for image at index:', index, 'Image:', images[index]);
-  };
-
-  const handleDragEnd = () => {
-    // Clear reordering flag whether drop succeeded or was cancelled
-    setIsReordering(false);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent dropzone from interfering
-  };
-
-  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent dropzone from interfering
-    
-    console.log('Drop event triggered. draggedIndex:', draggedIndex, 'dropIndex:', dropIndex);
-    
-    if (draggedIndex === null || disabled || uploading || !allowReorder) {
-      console.log('Drop cancelled due to conditions:', { draggedIndex, disabled, uploading, allowReorder });
-      return;
-    }
-    
-    // Clone the images array to avoid mutation
-    const newImages = [...images];
-    
-    // Use array destructuring for a cleaner approach to reorder
-    const [draggedImage] = newImages.splice(draggedIndex, 1);
-    newImages.splice(dropIndex, 0, draggedImage);
-    
-    // Update sort_order to match visual order
-    newImages.forEach((img, index) => {
-      img.sort_order = index;
-    });
-    
-    // Debug information
-    console.log(`Reordered image from position ${draggedIndex} to ${dropIndex}`, {
-      draggedImage,
-      newOrder: newImages.map((img, i) => ({ index: i, id: img.id, isExisting: img.isExisting }))
-    });
-    
-    // Update state with the new order (client-side only)
-    onImagesChange(newImages);
-    setDraggedIndex(null);
-    setIsReordering(false);
-    
-    // Note: No backend API call here - order will be sent when form is submitted
-  };
+  // Old drag handlers removed - now using modern drag hook
 
   const getImageSrc = (image: UploadedImage) => {
     // Always use preview as it contains either blob URL or server URL
@@ -364,12 +307,14 @@ export function ImageUpload({
             )}
           </div>
           
-          {/* Masonry Layout - Flex wrap with original aspect ratios */}
+          {/* Modern Image Grid with Drag-and-Drop */}
           <div className="flex flex-wrap gap-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {images.map((image, index) => {
               const imageSrc = getImageSrc(image);
               const isDeleting = deletingImageId === image.id;
-              // Generate a more unique key
+              const dragStyles = dragAndDrop.getDragStyles(index);
+              
+              // Generate unique key
               const imageKey = image.id != null 
                 ? `img-${image.id}` 
                 : image.preview 
@@ -377,33 +322,27 @@ export function ImageUpload({
                   : `file-${image.file?.name || 'unknown'}-${index}`;
               
               return (
-                <div
+                <DraggableItem
                   key={imageKey}
-                  className={cn(
-                    'relative rounded-lg overflow-hidden transition-all group border border-gray-200 bg-white dark:bg-white flex-shrink-0',
-                    allowReorder && !disabled && !uploading ? 'cursor-move' : '',
-                    disabled || uploading || isDeleting ? 'opacity-50' : draggedIndex === index ? 'opacity-50 scale-95' : ''
-                  )}
-                  style={{ 
-                    height: '120px', // Fixed height for consistency
-                    maxWidth: '200px', // Max width to prevent too wide images
-                    minWidth: '80px', // Min width to prevent too narrow images
-                    backgroundColor: 'white !important' // Force white background with importance
+                  index={index}
+                  isDraggedItem={dragStyles.isDraggedItem}
+                  isDropTarget={dragStyles.isDropTarget}
+                  isDragging={dragStyles.isDragging}
+                  onDragStart={dragAndDrop.handleDragStart}
+                  onDragMove={dragAndDrop.handleDragMove}
+                  onDragEnd={dragAndDrop.handleDragEnd}
+                  onDragCancel={dragAndDrop.handleDragCancel}
+                  onDelete={() => handleRemoveImage(index)}
+                  disabled={disabled || uploading || isDeleting}
+                  dragStyles={{
+                    ...dragStyles,
+                    height: '120px',
+                    maxWidth: '200px',
+                    minWidth: '80px'
                   }}
-                  draggable={allowReorder && !disabled && !uploading}
-                  onDragStart={() => handleDragStart(index)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, index)}
+                  className="flex-shrink-0"
                 >
-                  {/* Image Container */}
-                  <div 
-                    className="w-full h-full bg-white flex items-center justify-center"
-                    style={{ 
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                  >
+                  <div className="w-full h-full bg-white flex items-center justify-center">
                     {imageSrc ? (
                       <Image
                         src={imageSrc}
@@ -415,72 +354,29 @@ export function ImageUpload({
                           maxWidth: '100%',
                           maxHeight: '100%',
                           width: 'auto',
-                          height: 'auto',
-                          backgroundColor: 'white',
-                          zIndex: 1,
-                          position: 'relative'
+                          height: 'auto'
                         }}
                         onError={(e) => {
-                          // Replace with visible error
                           const target = e.target as HTMLImageElement;
                           const parent = target.parentElement;
                           if (parent) {
                             parent.innerHTML = `
-                              <div class="flex flex-col items-center justify-center h-full text-red-500 text-center bg-white">
+                              <div class="flex flex-col items-center justify-center h-full text-red-500 text-center">
                                 <div class="text-2xl">❌</div>
                                 <div class="text-xs mt-1">Failed to Load</div>
-                                <div class="text-xs">${image.file?.name || 'Image'}</div>
                               </div>
                             `;
                           }
                         }}
-                        onLoad={(e) => {
-                          // Calculate and apply dynamic width based on aspect ratio
-                          const img = e.target as HTMLImageElement;
-                          const container = img.parentElement?.parentElement;
-                          if (container && img.naturalWidth && img.naturalHeight) {
-                            const aspectRatio = img.naturalWidth / img.naturalHeight;
-                            const height = 120; // Fixed height
-                            const calculatedWidth = Math.min(Math.max(height * aspectRatio, 80), 200);
-                            container.style.width = `${calculatedWidth}px`;
-                          }
-                        }}
                       />
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500 bg-white">
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500">
                         <ImageIcon className="w-8 h-8 mb-2" />
                         <span className="text-xs">No Preview</span>
                       </div>
                     )}
-                    {/* Overlay */}
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 pointer-events-none" />
-                    
-                    {/* Remove Button */}
-                    {!disabled && !uploading && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeImage(index)}
-                        disabled={isDeleting}
-                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 hover:bg-red-700 text-white p-1 h-auto w-auto min-w-[24px] min-h-[24px] disabled:opacity-50 z-20"
-                        style={{ zIndex: 20 }}
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <X className="w-3 h-3" />
-                        )}
-                      </Button>
-                    )}
-                    
-                    {/* Order Badge */}
-                    <div className="absolute top-1 left-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded text-center min-w-[20px] z-10">
-                      {index + 1}
-                    </div>
-
-                    {/* Remove unnecessary status badges as requested */}
                   </div>
-                </div>
+                </DraggableItem>
               );
             })}
           </div>
@@ -492,6 +388,8 @@ export function ImageUpload({
           )}
         </div>
       )}
+
+
     </div>
   );
 }
