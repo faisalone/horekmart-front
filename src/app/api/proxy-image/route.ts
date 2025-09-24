@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate that it's from our backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     if (!imageUrl.startsWith(backendUrl)) {
       return NextResponse.json(
         { error: 'Invalid image URL' },

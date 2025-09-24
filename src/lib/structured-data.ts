@@ -43,7 +43,7 @@ class StructuredDataService {
 					site_description:
 						'Your trusted eCommerce platform for quality products',
 					site_url:
-						process.env.NEXT_PUBLIC_SITE_URL ||
+						process.env.NEXT_PUBLIC_APP_URL ||
 						'http://localhost:3000',
 					site_logo: '/logo-light.svg',
 					keywords:

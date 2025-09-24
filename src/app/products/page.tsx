@@ -20,51 +20,52 @@ interface ProductsPageProps {
 export async function generateMetadata({ searchParams }: ProductsPageProps) {
   try {
     const resolvedSearchParams = await searchParams;
-    // If there's a category filter, try to get category-specific SEO
+    // Handle category-specific SEO first, with proper hyphen separator and canonical path
     if (resolvedSearchParams.category) {
       try {
         const categories = await publicApi.getCategories();
         const category = categories.find(cat => cat.slug === resolvedSearchParams.category);
         
         if (category) {
-          return await seoService.generateCategoryMetadata(category);
+          // Use query-param based canonical to reflect current URL pattern
+          return await seoService.generateCategoryMetadata(category, `/products?category=${category.slug}`);
         }
       } catch (error) {
         console.error('Error fetching category for SEO:', error);
       }
     }
-    
-    // Generate metadata based on search parameters
+
+    // Build listing titles using site settings and hyphen separator
+  const siteName: string = await seoService.getSiteName();
+
     let path = '/products';
-    let titleSuffix = '';
-    
+    let title = `All Products - ${siteName}`;
+
     if (resolvedSearchParams.q) {
-      titleSuffix = ` - Search: ${resolvedSearchParams.q}`;
-      path += `?q=${encodeURIComponent(resolvedSearchParams.q)}`;
+      const q = resolvedSearchParams.q;
+      path += `?q=${encodeURIComponent(q)}`;
+      title = `Search results for "${q}" - ${siteName}`;
     } else if (resolvedSearchParams.type) {
-      const typeLabels: { [key: string]: string } = {
+      const type = resolvedSearchParams.type;
+      path += `?type=${type}`;
+      const mapping: Record<string, string> = {
         'trending': 'Trending Products',
-        'deals': 'Special Deals',
-        'featured': 'Featured Products',
+        'deals': 'Best Deals',
+        'most-viewed': 'Most Viewed Products',
+        'new-arrivals': 'New Arrivals',
+        'fresh-arrivals': 'New Arrivals',
+        'best-sellers': 'Best Sellers',
       };
-      titleSuffix = ` - ${typeLabels[resolvedSearchParams.type] || resolvedSearchParams.type}`;
-      path += `?type=${resolvedSearchParams.type}`;
-    } else if (resolvedSearchParams.category) {
-      titleSuffix = ` - ${resolvedSearchParams.category}`;
-      path += `?category=${resolvedSearchParams.category}`;
+      title = `${mapping[type] || type} - ${siteName}`;
     }
-    
-    const defaultMetadata = await seoService.generateDefaultMetadata(path);
-    
-    // Customize title if we have specific search params
-    if (titleSuffix) {
-      return {
-        ...defaultMetadata,
-        title: `Products${titleSuffix} | Horekmart`,
-      };
-    }
-    
-    return defaultMetadata;
+
+    const base = await seoService.generateDefaultMetadata(path);
+    return {
+      ...base,
+      title,
+      openGraph: base.openGraph ? { ...base.openGraph, title } : undefined,
+      twitter: base.twitter ? { ...base.twitter, title } : undefined,
+    };
   } catch (error) {
     // Fallback to default metadata
     return await seoService.generateDefaultMetadata('/products');

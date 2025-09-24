@@ -35,14 +35,13 @@ class SEOService {
 					site_description:
 						'Your trusted eCommerce platform for quality products',
 					site_url:
-						process.env.NEXT_PUBLIC_SITE_URL ||
+						process.env.NEXT_PUBLIC_APP_URL ||
 						'http://localhost:3000',
 					site_logo: '/logo-light.svg',
 					keywords:
 						'ecommerce,online shopping,electronics,fashion,home goods,quality products',
 					og_image:
-						process.env.NEXT_PUBLIC_SITE_URL +
-							'/site-preview.jpg' ||
+						process.env.NEXT_PUBLIC_APP_URL + '/site-preview.jpg' ||
 						'http://localhost:3000/site-preview.jpg',
 				};
 			}
@@ -51,12 +50,20 @@ class SEOService {
 	}
 
 	/**
+	 * Public helper to get the site name (used by pages to compose titles)
+	 */
+	async getSiteName(): Promise<string> {
+		const settings = await this.getSiteSettings();
+		return settings.site_name || 'Horekmart';
+	}
+
+	/**
 	 * Generate canonical URL based on current path
 	 */
 	private generateCanonicalUrl(path: string, siteUrl?: string): string {
 		const baseUrl =
 			siteUrl ||
-			process.env.NEXT_PUBLIC_SITE_URL ||
+			process.env.NEXT_PUBLIC_APP_URL ||
 			'https://localhost:3000';
 		return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 	}
@@ -78,7 +85,7 @@ class SEOService {
 			],
 			metadataBase: new URL(
 				settings.site_url ||
-					process.env.NEXT_PUBLIC_SITE_URL ||
+					process.env.NEXT_PUBLIC_APP_URL ||
 					'https://localhost:3000'
 			),
 			alternates: {
@@ -194,12 +201,17 @@ class SEOService {
 
 	/**
 	 * Generate category-specific metadata
+	 * pathOverride: optional path to use for canonical URL (e.g., '/products?category=slug')
 	 */
-	async generateCategoryMetadata(category: Category): Promise<Metadata> {
+	async generateCategoryMetadata(
+		category: Category,
+		pathOverride?: string
+	): Promise<Metadata> {
 		const settings = await this.getSiteSettings();
 
-		const categoryPath = `/${category.slug}`;
-		const title = `${category.name} | ${settings.site_name}`;
+		// Default to products category path; allow override for query-param based pages
+		const categoryPath = pathOverride || `/products/${category.slug}`;
+		const title = `${category.name} - ${settings.site_name}`;
 		const description =
 			category.description ||
 			`Shop ${category.name} products at ${settings.site_name}. ${settings.site_description}`;

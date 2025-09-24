@@ -381,7 +381,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
               </Link>
               <Link href="/products?type=trending" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
                 <TrendingUp className="h-4 w-4" />
-                <span>Trendings</span>
+                <span>Trending</span>
               </Link>
               <Link href="/products?type=deals" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
                 <Tag className="h-4 w-4" />
@@ -548,7 +548,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                       <TrendingUp className="h-6 w-6 text-orange-600" />
                       <div>
                         <span className="text-xl font-bold text-gray-900 tracking-tight">
-                          <AutoFontText>Trendings</AutoFontText>
+                          <AutoFontText>Trending</AutoFontText>
                         </span>
                         <p className="text-sm text-gray-600 mt-0.5">What&apos;s hot right now</p>
                       </div>
