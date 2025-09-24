@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
 	// Derive backend URL from NEXT_PUBLIC_API_URL environment variable
 	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-	let allowedHosts: string[] = [];
+	const allowedHosts: string[] = [];
 
 	if (apiUrl) {
 		// Extract host from API URL (remove /api suffix if present)
