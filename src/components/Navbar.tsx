@@ -387,7 +387,7 @@ const Navbar = ({ }: NavbarProps = {}) => {
                 <Tag className="h-4 w-4" />
                 <span>Deals & Offers</span>
               </Link>
-			  <Link href="/products?sort=newest-desc" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
+			  <Link href="/products?type=new-arrivals" className="flex items-center space-x-2 text-base text-white hover:opacity-80 transition-colors font-bold">
                 <Sparkles className="h-4 w-4" />
                 <span>New Arrivals</span>
               </Link>

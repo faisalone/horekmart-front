@@ -87,9 +87,10 @@ const Footer = () => {
               <ul className="space-y-3">
                 {[
                   { name: 'All Products', href: '/products' },
-                  { name: 'New Arrivals', href: '/products?type=newest-desc' },
-                  { name: 'Best Sellers', href: '/products?type=trending' },
-                  { name: 'Sale Items', href: '/products?type=deals' },
+                  { name: 'Trendings', href: '/products?type=trendings' },
+                  { name: 'Deal & Offers', href: '/products?type=deals' },
+                  { name: 'New Arrivals', href: '/products?type=new-arrivals' },
+                  { name: 'Best Sellers', href: '/products?type=best-sellers' },
                 ].map((item, index) => (
                   <li key={index}>
                     <Link href={item.href} className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">

@@ -20,6 +20,10 @@ import { siteSettingsService } from '@/services/siteSettings';
 
 export default function HomeClient() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+  const [dealsProducts, setDealsProducts] = useState<Product[]>([]);
+  const [mostViewedProducts, setMostViewedProducts] = useState<Product[]>([]);
+  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,17 +39,40 @@ export default function HomeClient() {
         
         // Site settings now auto-initialize in the service
         
-        // Fetch products and categories - simplified to just get a large set of products
-        const [productsResponse, categoriesData, vendorsResponse] = await Promise.all([
-          publicApi.getProducts({ per_page: 50 }), // Get more products to have variety
+        // Fetch sectioned product lists and supporting data in parallel
+        const [
+          trendingResponse,
+          dealsResponse,
+          mostViewedResponse,
+          newestResponse,
+          categoriesData,
+          vendorsResponse,
+          allProductsResponse
+        ] = await Promise.all([
+          publicApi.getProducts({ per_page: 8, type: 'trending' }),
+          publicApi.getProducts({ per_page: 8, type: 'deals' }),
+          publicApi.getProducts({ per_page: 8, type: 'most-viewed' }),
+          publicApi.getProducts({ per_page: 8, sort_by: 'created_at', sort_order: 'desc' }),
           publicApi.getCategories(),
           publicApi.getVendors(),
+          publicApi.getProducts({ per_page: 50 }) // broader set for vendor counts and other UI needs
         ]);
 
-        // Use the data array from the API response
-        const allProducts = productsResponse?.data || [];
+        // Use the data arrays from API responses
+        const trending = trendingResponse?.data || [];
+        const deals = dealsResponse?.data || [];
+        const mostViewed = mostViewedResponse?.data || [];
+        const newest = newestResponse?.data || [];
+        const allProducts = allProductsResponse?.data || [];
         const allVendors = vendorsResponse?.data || [];
         
+        // Set sectioned products
+        setTrendingProducts(trending);
+        setDealsProducts(deals);
+        setMostViewedProducts(mostViewed);
+        setLatestProducts(newest);
+
+        // Set supporting data
         setProducts(allProducts);
         setVendors(allVendors);
         
@@ -57,6 +84,10 @@ export default function HomeClient() {
       } catch (error) {
         console.error('Error fetching data:', error);
         // Keep loading as false to show the page even if API fails
+        setTrendingProducts([]);
+        setDealsProducts([]);
+        setMostViewedProducts([]);
+        setLatestProducts([]);
         setProducts([]);
         setCategories([]);
         setVendors([]);
@@ -68,12 +99,7 @@ export default function HomeClient() {
     fetchData();
   }, []);
   
-  // Compute different product sections from the main products array
-  const featuredProducts = products.filter(p => p.is_featured).slice(0, 8);
-  const popularProducts = products.slice(0, 8); // First 8 products
-  const latestProducts = products.slice(8, 16); // Next 8 products  
-  const mostViewedProducts = products.slice(16, 24); // Next 8 products
-  const saleProducts = products.filter(p => p.sale_price && parseFloat(p.sale_price) < parseFloat(p.price)).slice(0, 8);
+  // Section products are now fetched explicitly via the API (published-only)
 
   // Function to generate initials from business name
   const generateInitials = (businessName: string): string => {
@@ -241,7 +267,7 @@ export default function HomeClient() {
             </div>
             
             <ProductGrid
-              products={popularProducts}
+              products={trendingProducts}
               onAddToCart={handleAddToCart}
               onAddToWishlist={handleAddToWishlist}
               className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
@@ -281,7 +307,7 @@ export default function HomeClient() {
                   <ProductCard key={`skeleton-${index}`} isLoading={true} />
                 ))
               ) : (
-                saleProducts.slice(0, 8).map((product) => (
+                dealsProducts.map((product: Product) => (
                   <ProductCard 
                     key={product.id} 
                     product={product} 
@@ -323,7 +349,7 @@ export default function HomeClient() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?sort=newest-desc" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+              <Link href="/products?type=new-arrivals" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
                 See All New Arrivals <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>

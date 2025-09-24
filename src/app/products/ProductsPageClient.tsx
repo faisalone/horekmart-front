@@ -213,6 +213,7 @@ function ProductsPageContent() {
     { value: 'trending', label: 'Trending', icon: '🔥' },
     { value: 'deals', label: 'Best Deals', icon: '💸' },
     { value: 'most-viewed', label: 'Most Viewed', icon: '👀' },
+    { value: 'new-arrivals', label: 'New Arrivals', icon: '✨' },
     { value: 'best-sellers', label: 'Best Sellers', icon: '⭐' }
   ];
 
