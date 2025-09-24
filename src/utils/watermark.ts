@@ -139,15 +139,12 @@ function loadOriginalImage(imageFile: File): Promise<HTMLImageElement> {
 export async function loadWatermarkImage(
 	customWatermark?: string | null
 ): Promise<HTMLImageElement> {
-	console.log('🎨 Loading watermark image:', customWatermark);
-
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 		img.crossOrigin = 'anonymous';
 		let blobUrl: string | null = null;
 
 		img.onload = () => {
-			console.log('✅ Watermark image loaded successfully');
 			if (blobUrl) {
 				URL.revokeObjectURL(blobUrl);
 			}
@@ -155,7 +152,6 @@ export async function loadWatermarkImage(
 		};
 
 		img.onerror = () => {
-			console.log('❌ Failed to load watermark image, using fallback');
 			if (blobUrl) {
 				URL.revokeObjectURL(blobUrl);
 			}
@@ -225,10 +221,6 @@ export async function batchApplyWatermark(
 				onProgress(((i + 1) / images.length) * 100);
 			}
 		} catch (error) {
-			console.error(
-				`Failed to watermark image ${images[i].name}:`,
-				error
-			);
 			// Keep original image if watermarking fails
 			results.push(images[i]);
 		}

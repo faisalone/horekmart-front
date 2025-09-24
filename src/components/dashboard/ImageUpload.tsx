@@ -23,7 +23,7 @@ export interface UploadedImage {
 
 interface ImageUploadProps {
   images: UploadedImage[];
-  onImagesChange: (images: UploadedImage[]) => void;
+  onImagesChange: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
   onDeleteExistingImage?: (imageId: number | string, productId: string | number) => Promise<void>;
   maxFiles?: number;
   maxSize?: number; // in MB
@@ -71,7 +71,9 @@ export function ImageUpload({
   // Apply watermark and update the actual file in images array
   const applyWatermarkToImage = useCallback(async (imageIndex: number) => {
     const image = images[imageIndex];
-    if (!image) return;
+    if (!image) {
+      return;
+    }
     
     const imageKey = image.id?.toString() || image.preview;
     
@@ -115,22 +117,34 @@ export function ImageUpload({
       );
       
       const watermarkedPreview = URL.createObjectURL(watermarkedFile);
-      
-      // Update the images array with watermarked file and preview
-      const updatedImages = [...images];
-      // Clean up old preview if it's a blob URL
-      if (updatedImages[imageIndex].preview.startsWith('blob:')) {
-        URL.revokeObjectURL(updatedImages[imageIndex].preview);
-      }
-      
-      updatedImages[imageIndex] = {
-        ...updatedImages[imageIndex],
-        file: watermarkedFile,
-        preview: watermarkedPreview,
-        isExisting: false // Mark as new file since it's now watermarked
-      };
-      
-      onImagesChange(updatedImages);
+
+      onImagesChange((prevImages) => {
+        const updatedImages = [...prevImages];
+        const targetIndex = prevImages.findIndex((img) => {
+          const key = img.id?.toString() || img.preview;
+          return key === imageKey;
+        });
+
+        if (targetIndex === -1) {
+          return prevImages;
+        }
+
+        const previousImage = updatedImages[targetIndex];
+
+        // Clean up old preview if it's a blob URL
+        if (previousImage.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(previousImage.preview);
+        }
+
+        updatedImages[targetIndex] = {
+          ...previousImage,
+          file: watermarkedFile,
+          preview: watermarkedPreview,
+          isExisting: false, // Mark as new file since it's now watermarked
+        };
+
+        return updatedImages;
+      });
       
       // Store watermark preview for display
       setWatermarkPreviews(prev => ({
@@ -139,7 +153,6 @@ export function ImageUpload({
       }));
       
     } catch (error) {
-      console.error('Failed to apply watermark:', error);
       processedImagesRef.current.delete(imageKey);
     } finally {
       setPreviewLoading(prev => ({ ...prev, [imageKey]: false }));
@@ -171,102 +184,54 @@ export function ImageUpload({
     };
   }, []); // Empty dependency array - only run on unmount
 
-  // Apply watermarks to actual files when watermark is enabled
+  // Apply watermark to all existing images when watermark is enabled
   useEffect(() => {
-    if (!enableWatermark) return;
+    if (!enableWatermark || !logoWatermark) return;
     
-    const processImages = async () => {
-      let hasChanges = false;
-      const updatedImages = [...images];
+    const processAllImages = async () => {
+      // Create a snapshot of current images to avoid stale closure issues
+      const currentImages = [...images];
       
-      for (let i = 0; i < images.length; i++) {
-        const image = images[i];
+      // Process each image sequentially to avoid conflicts
+      for (let i = 0; i < currentImages.length; i++) {
+        const image = currentImages[i];
         const imageKey = image.id?.toString() || image.preview;
         
-        // Skip if already processed or currently processing
-        if (processedImagesRef.current.has(imageKey) || previewLoading[imageKey]) {
+        // Skip if already processed, processing, or is a watermarked file
+        if (processedImagesRef.current.has(imageKey) || 
+            previewLoading[imageKey] ||
+            image.file?.name.includes('watermarked-')) {
           continue;
         }
         
-        // Skip if image already has watermark applied (check if file name indicates watermark)
-        if (image.file?.name.includes('watermarked-') || image.isExisting) {
-          continue;
-        }
+        // Process this individual image
+        await applyWatermarkToImage(i);
         
-        try {
-          setPreviewLoading(prev => ({ ...prev, [imageKey]: true }));
-          processedImagesRef.current.add(imageKey);
-          
-          let sourceFile: File;
-          
-          if (image.file) {
-            // New upload - use the file directly
-            sourceFile = image.file;
-          } else if (image.preview || image.url) {
-            // Existing image - convert from URL to File
-            let imageUrl = image.preview || image.url!;
-            
-            // Use proxy for backend URLs to avoid CORS issues
-            if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
-              imageUrl = `/api/watermark-proxy?url=${encodeURIComponent(imageUrl)}`;
-            }
-            const response = await fetch(imageUrl);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch image: ${response.status}`);
-            }
-            const blob = await response.blob();
-            const fileName = `watermarked-${Date.now()}-${i}.jpg`;
-            sourceFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
-          } else {
-            continue;
-          }
-          
-          // Apply watermark
-          const watermarkedFile = await applyWatermark(
-            sourceFile,
-            logoWatermark,
-            { opacity: 0.1, position: 'center', size: 35 }
-          );
-          
-          // Clean up old preview if it's a blob URL
-          if (image.preview.startsWith('blob:')) {
-            URL.revokeObjectURL(image.preview);
-          }
-          
-          const watermarkedPreview = URL.createObjectURL(watermarkedFile);
-          
-          // Update the image with watermarked file
-          updatedImages[i] = {
-            ...image,
-            file: watermarkedFile,
-            preview: watermarkedPreview,
-            isExisting: false // Mark as new file since it's now watermarked
-          };
-          
-          // Store watermark preview for UI
-          setWatermarkPreviews(prev => ({
-            ...prev,
-            [imageKey]: watermarkedPreview
-          }));
-          
-          hasChanges = true;
-          
-        } catch (error) {
-          console.error('Failed to apply watermark to image:', error);
-          processedImagesRef.current.delete(imageKey);
-        } finally {
-          setPreviewLoading(prev => ({ ...prev, [imageKey]: false }));
-        }
+        // Small delay to prevent overwhelming the browser
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      // Update images array if there were changes
-      if (hasChanges) {
-        onImagesChange(updatedImages);
-      }
     };
     
-    processImages();
-  }, [enableWatermark, images, logoWatermark, onImagesChange, previewLoading]);
+    processAllImages();
+  }, [enableWatermark, logoWatermark, applyWatermarkToImage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Apply watermark to newly added images immediately
+  useEffect(() => {
+  if (!enableWatermark || !logoWatermark || images.length === 0) return;
+    
+    // Process any new unprocessed images
+    images.forEach(async (image, index) => {
+      const imageKey = image.id?.toString() || image.preview;
+      
+      if (!processedImagesRef.current.has(imageKey) && 
+          !previewLoading[imageKey] && 
+          !image.file?.name.includes('watermarked-') &&
+          image.file) {
+        await applyWatermarkToImage(index);
+      }
+    });
+  }, [images, enableWatermark, logoWatermark, applyWatermarkToImage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clear watermark previews when watermark is disabled
   useEffect(() => {
@@ -431,14 +396,22 @@ export function ImageUpload({
               setWatermarkProgress
             );
               
-            const newImages = watermarkedFiles.map((file, index) => ({
-              id: `temp-${Date.now()}-${index}`,
-              file,
-              preview: URL.createObjectURL(file),
-              alt_text: '',
-              sort_order: images.length + index,
-              isExisting: false
-            }));
+            const newImages = watermarkedFiles.map((file, index) => {
+              const newImage = {
+                id: `temp-${Date.now()}-${index}`,
+                file,
+                preview: URL.createObjectURL(file),
+                alt_text: '',
+                sort_order: images.length + index,
+                isExisting: false
+              };
+              
+              // Mark as processed to prevent re-processing
+              const imageKey = newImage.id?.toString() || newImage.preview;
+              processedImagesRef.current.add(imageKey);
+              
+              return newImage;
+            });
 
             onImagesChange([...images, ...newImages]);
             toast.success(
@@ -447,7 +420,6 @@ export function ImageUpload({
                 : `${acceptedFiles.length} images added with watermark`
             );
           } catch (error) {
-            console.error('Watermark error:', error);
             toast.error('Failed to apply watermark, images added without watermark');
             
             // Fallback: add images without watermark
@@ -554,16 +526,21 @@ export function ImageUpload({
         style={{ display: 'none' }}
       />
 
-      {/* Watermark Toggle - Simple approach like site-settings */}
+      {/* Watermark Toggle - Disabled when no images */}
       {logoWatermark && onWatermarkChange && (
         <div 
-          onClick={!disabled && !uploading && !isProcessingWatermark ? () => onWatermarkChange(!enableWatermark) : undefined}
+          onClick={!disabled && !uploading && !isProcessingWatermark && images.length > 0 ? () => onWatermarkChange(!enableWatermark) : undefined}
           className={cn(
-            "flex items-center gap-3 p-4 border rounded-lg transition-all cursor-pointer",
+            "flex items-center gap-3 p-4 border rounded-lg transition-all",
             enableWatermark 
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-200 dark:ring-blue-800" 
-              : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:border-blue-300 hover:bg-blue-25",
-            (disabled || uploading || isProcessingWatermark) && "opacity-50 cursor-not-allowed"
+              : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50",
+            // Cursor and hover states
+            !disabled && !uploading && !isProcessingWatermark && images.length > 0
+              ? "cursor-pointer hover:border-blue-300 hover:bg-blue-25"
+              : "cursor-not-allowed",
+            // Disabled state when no images or other conditions
+            (disabled || uploading || isProcessingWatermark || images.length === 0) && "opacity-50"
           )}
         >
           <div className={cn(
@@ -596,7 +573,12 @@ export function ImageUpload({
                 ? "text-blue-700 dark:text-blue-200" 
                 : "text-gray-500 dark:text-gray-400"
             )}>
-              {enableWatermark ? 'Watermark will be applied to all images' : 'Click to enable watermark on images'}
+              {images.length === 0
+                ? 'Upload images first to apply watermark'
+                : enableWatermark 
+                  ? `Watermark applied to ${images.length} image${images.length !== 1 ? 's' : ''}` 
+                  : `Apply watermark to ${images.length} image${images.length !== 1 ? 's' : ''}`
+              }
             </div>
           </div>
           <div className={cn(
@@ -614,8 +596,8 @@ export function ImageUpload({
 
 
 
-      {/* Processing Progress */}
-      {isProcessingWatermark && (
+      {/* Processing Progress - Only show when actually processing uploaded files */}
+      {isProcessingWatermark && images.length > 0 && (
         <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
