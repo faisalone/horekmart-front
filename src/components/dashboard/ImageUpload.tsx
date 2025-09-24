@@ -68,15 +68,20 @@ export function ImageUpload({
     disabled: disabled || uploading
   });
 
-  // Generate watermark preview for an image (handles both new and existing images)
-  const generateWatermarkPreview = useCallback(async (image: UploadedImage) => {
+  // Apply watermark and update the actual file in images array
+  const applyWatermarkToImage = useCallback(async (imageIndex: number) => {
+    const image = images[imageIndex];
+    if (!image) return;
+    
     const imageKey = image.id?.toString() || image.preview;
     
     // Prevent duplicate processing
-    setPreviewLoading(prev => {
-      if (prev[imageKey]) return prev;
-      return { ...prev, [imageKey]: true };
-    });
+    if (previewLoading[imageKey] || processedImagesRef.current.has(imageKey)) {
+      return;
+    }
+    
+    setPreviewLoading(prev => ({ ...prev, [imageKey]: true }));
+    processedImagesRef.current.add(imageKey);
     
     try {
       let imageFile: File;
@@ -97,7 +102,7 @@ export function ImageUpload({
           throw new Error(`Failed to fetch image: ${response.status}`);
         }
         const blob = await response.blob();
-        const fileName = `image-${Date.now()}.jpg`;
+        const fileName = `watermarked-${Date.now()}.jpg`;
         imageFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
       } else {
         return; // No valid image source
@@ -109,23 +114,43 @@ export function ImageUpload({
         { opacity: 0.1, position: 'center', size: 35 }
       );
       
-      const previewUrl = URL.createObjectURL(watermarkedFile);
+      const watermarkedPreview = URL.createObjectURL(watermarkedFile);
       
-      // Ensure we don't overwrite existing previews
-      setWatermarkPreviews(prev => {
-        if (prev[imageKey]) {
-          // Clean up the new URL since we already have one
-          URL.revokeObjectURL(previewUrl);
-          return prev;
-        }
-        return { ...prev, [imageKey]: previewUrl };
-      });
+      // Update the images array with watermarked file and preview
+      const updatedImages = [...images];
+      // Clean up old preview if it's a blob URL
+      if (updatedImages[imageIndex].preview.startsWith('blob:')) {
+        URL.revokeObjectURL(updatedImages[imageIndex].preview);
+      }
+      
+      updatedImages[imageIndex] = {
+        ...updatedImages[imageIndex],
+        file: watermarkedFile,
+        preview: watermarkedPreview,
+        isExisting: false // Mark as new file since it's now watermarked
+      };
+      
+      onImagesChange(updatedImages);
+      
+      // Store watermark preview for display
+      setWatermarkPreviews(prev => ({
+        ...prev,
+        [imageKey]: watermarkedPreview
+      }));
+      
     } catch (error) {
-      console.error('Failed to generate watermark preview:', error);
+      console.error('Failed to apply watermark:', error);
+      processedImagesRef.current.delete(imageKey);
     } finally {
       setPreviewLoading(prev => ({ ...prev, [imageKey]: false }));
     }
-  }, [logoWatermark]);
+  }, [images, logoWatermark, onImagesChange, previewLoading]);
+  
+  // Generate watermark preview for display purposes only (legacy - now handled by effect)
+  const generateWatermarkPreview = useCallback(async (image: UploadedImage) => {
+    // This is now handled by the main effect below
+    return;
+  }, []);
 
   // Clean up watermark previews when component unmounts
   useEffect(() => {
@@ -146,23 +171,102 @@ export function ImageUpload({
     };
   }, []); // Empty dependency array - only run on unmount
 
-  // Generate watermark previews when watermark is enabled and images change
+  // Apply watermarks to actual files when watermark is enabled
   useEffect(() => {
     if (!enableWatermark) return;
     
-    images.forEach(image => {
-      // Process both new and existing images
-      if (image.file || image.preview || image.url) {
+    const processImages = async () => {
+      let hasChanges = false;
+      const updatedImages = [...images];
+      
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
         const imageKey = image.id?.toString() || image.preview;
         
-        // Only process if we haven't already processed this image and don't have a preview
-        if (!processedImagesRef.current.has(imageKey) && !watermarkPreviews[imageKey] && !previewLoading[imageKey]) {
+        // Skip if already processed or currently processing
+        if (processedImagesRef.current.has(imageKey) || previewLoading[imageKey]) {
+          continue;
+        }
+        
+        // Skip if image already has watermark applied (check if file name indicates watermark)
+        if (image.file?.name.includes('watermarked-') || image.isExisting) {
+          continue;
+        }
+        
+        try {
+          setPreviewLoading(prev => ({ ...prev, [imageKey]: true }));
           processedImagesRef.current.add(imageKey);
-          generateWatermarkPreview(image);
+          
+          let sourceFile: File;
+          
+          if (image.file) {
+            // New upload - use the file directly
+            sourceFile = image.file;
+          } else if (image.preview || image.url) {
+            // Existing image - convert from URL to File
+            let imageUrl = image.preview || image.url!;
+            
+            // Use proxy for backend URLs to avoid CORS issues
+            if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
+              imageUrl = `/api/watermark-proxy?url=${encodeURIComponent(imageUrl)}`;
+            }
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch image: ${response.status}`);
+            }
+            const blob = await response.blob();
+            const fileName = `watermarked-${Date.now()}-${i}.jpg`;
+            sourceFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+          } else {
+            continue;
+          }
+          
+          // Apply watermark
+          const watermarkedFile = await applyWatermark(
+            sourceFile,
+            logoWatermark,
+            { opacity: 0.1, position: 'center', size: 35 }
+          );
+          
+          // Clean up old preview if it's a blob URL
+          if (image.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(image.preview);
+          }
+          
+          const watermarkedPreview = URL.createObjectURL(watermarkedFile);
+          
+          // Update the image with watermarked file
+          updatedImages[i] = {
+            ...image,
+            file: watermarkedFile,
+            preview: watermarkedPreview,
+            isExisting: false // Mark as new file since it's now watermarked
+          };
+          
+          // Store watermark preview for UI
+          setWatermarkPreviews(prev => ({
+            ...prev,
+            [imageKey]: watermarkedPreview
+          }));
+          
+          hasChanges = true;
+          
+        } catch (error) {
+          console.error('Failed to apply watermark to image:', error);
+          processedImagesRef.current.delete(imageKey);
+        } finally {
+          setPreviewLoading(prev => ({ ...prev, [imageKey]: false }));
         }
       }
-    });
-  }, [enableWatermark, images, generateWatermarkPreview, watermarkPreviews, previewLoading]);
+      
+      // Update images array if there were changes
+      if (hasChanges) {
+        onImagesChange(updatedImages);
+      }
+    };
+    
+    processImages();
+  }, [enableWatermark, images, logoWatermark, onImagesChange, previewLoading]);
 
   // Clear watermark previews when watermark is disabled
   useEffect(() => {
