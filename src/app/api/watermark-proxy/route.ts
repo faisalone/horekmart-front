@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const DEFAULT_BACKEND_URL = 'http://localhost:8000';
 
+// Handle CORS preflight
+export async function OPTIONS(request: NextRequest) {
+	return new NextResponse(null, {
+		status: 200,
+		headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'GET, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type',
+		},
+	});
+}
+
 export async function GET(request: NextRequest) {
 	const { searchParams } = new URL(request.url);
 	const targetUrl = searchParams.get('url');
@@ -58,6 +70,9 @@ export async function GET(request: NextRequest) {
 			headers: {
 				'Content-Type': contentType,
 				'Cache-Control': 'public, max-age=60',
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Methods': 'GET, OPTIONS',
+				'Access-Control-Allow-Headers': 'Content-Type',
 			},
 		});
 	} catch (error) {

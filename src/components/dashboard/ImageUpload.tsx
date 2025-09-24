@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { DraggableItem } from '@/components/ui/DraggableItem';
-import { Switch } from '@/components/ui/Switch';
 import { applyWatermark, batchApplyWatermark } from '@/utils/watermark';
 
 export interface UploadedImage {
@@ -69,10 +68,8 @@ export function ImageUpload({
     disabled: disabled || uploading
   });
 
-  // Generate watermark preview for an image
+  // Generate watermark preview for an image (handles both new and existing images)
   const generateWatermarkPreview = useCallback(async (image: UploadedImage) => {
-    if (!image.file) return;
-    
     const imageKey = image.id?.toString() || image.preview;
     
     // Prevent duplicate processing
@@ -82,8 +79,32 @@ export function ImageUpload({
     });
     
     try {
+      let imageFile: File;
+      
+      if (image.file) {
+        // New upload - use the file directly
+        imageFile = image.file;
+      } else if (image.preview || image.url) {
+        // Existing image - convert from URL to File
+        let imageUrl = image.preview || image.url!;
+        
+        // Use proxy for backend URLs to avoid CORS issues
+        if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
+          imageUrl = `/api/watermark-proxy?url=${encodeURIComponent(imageUrl)}`;
+        }
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const fileName = `image-${Date.now()}.jpg`;
+        imageFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+      } else {
+        return; // No valid image source
+      }
+      
       const watermarkedFile = await applyWatermark(
-        image.file,
+        imageFile,
         logoWatermark,
         { opacity: 0.1, position: 'center', size: 35 }
       );
@@ -130,7 +151,8 @@ export function ImageUpload({
     if (!enableWatermark) return;
     
     images.forEach(image => {
-      if (image.file && !image.isExisting) {
+      // Process both new and existing images
+      if (image.file || image.preview || image.url) {
         const imageKey = image.id?.toString() || image.preview;
         
         // Only process if we haven't already processed this image and don't have a preview
@@ -428,25 +450,65 @@ export function ImageUpload({
         style={{ display: 'none' }}
       />
 
-      {/* Watermark Control */}
-      {onWatermarkChange && (
-        <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <div>
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              Add Watermark
+      {/* Watermark Toggle - Simple approach like site-settings */}
+      {logoWatermark && onWatermarkChange && (
+        <div 
+          onClick={!disabled && !uploading && !isProcessingWatermark ? () => onWatermarkChange(!enableWatermark) : undefined}
+          className={cn(
+            "flex items-center gap-3 p-4 border rounded-lg transition-all cursor-pointer",
+            enableWatermark 
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-200 dark:ring-blue-800" 
+              : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:border-blue-300 hover:bg-blue-25",
+            (disabled || uploading || isProcessingWatermark) && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          <div className={cn(
+            "w-12 h-12 rounded-lg border-2 flex items-center justify-center overflow-hidden transition-all relative",
+            enableWatermark 
+              ? "border-blue-500 bg-white shadow-md" 
+              : "border-gray-300 dark:border-gray-600 bg-white hover:border-blue-400"
+          )}>
+            <Image 
+              src={logoWatermark} 
+              alt="Watermark logo"
+              width={48}
+              height={48}
+              className="w-full h-full object-contain"
+              unoptimized
+            />
+          </div>
+          <div className="flex-1">
+            <div className={cn(
+              "text-sm font-medium",
+              enableWatermark 
+                ? "text-blue-900 dark:text-blue-100" 
+                : "text-gray-700 dark:text-gray-300"
+            )}>
+              Apply Watermark
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Apply company logo to all uploaded images (preview available)
+            <div className={cn(
+              "text-xs",
+              enableWatermark 
+                ? "text-blue-700 dark:text-blue-200" 
+                : "text-gray-500 dark:text-gray-400"
+            )}>
+              {enableWatermark ? 'Watermark will be applied to all images' : 'Click to enable watermark on images'}
             </div>
           </div>
-          <Switch
-            checked={enableWatermark}
-            onCheckedChange={onWatermarkChange}
-            disabled={disabled || uploading || isProcessingWatermark}
-            size="md"
-          />
+          <div className={cn(
+            "w-4 h-4 rounded-full border-2 transition-all",
+            enableWatermark 
+              ? "border-blue-500 bg-blue-500" 
+              : "border-gray-300 dark:border-gray-600"
+          )}>
+            {enableWatermark && (
+              <div className="w-full h-full rounded-full bg-white transform scale-50" />
+            )}
+          </div>
         </div>
       )}
+
+
 
       {/* Processing Progress */}
       {isProcessingWatermark && (
@@ -526,7 +588,7 @@ export function ImageUpload({
               
               // Determine which image to show - watermark preview or original
               const imageKey = image.id?.toString() || image.preview;
-              const showWatermarkPreview = enableWatermark && !image.isExisting && watermarkPreviews[imageKey];
+              const showWatermarkPreview = enableWatermark && watermarkPreviews[imageKey];
               const isGeneratingPreview = previewLoading[imageKey];
               const displaySrc = showWatermarkPreview ? watermarkPreviews[imageKey] : imageSrc;
               
