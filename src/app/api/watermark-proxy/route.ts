@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DEFAULT_BACKEND_URL = 'http://localhost:8000';
-
 // Handle CORS preflight
 export async function OPTIONS(request: NextRequest) {
 	return new NextResponse(null, {
@@ -35,13 +33,42 @@ export async function GET(request: NextRequest) {
 		);
 	}
 
-	const allowedBackend =
-		process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_URL;
-	const allowedHost = new URL(allowedBackend).host;
+	// Derive backend URL from NEXT_PUBLIC_API_URL environment variable
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+	let allowedHosts: string[] = [];
 
-	if (parsedUrl.host !== allowedHost) {
+	if (apiUrl) {
+		// Extract host from API URL (remove /api suffix if present)
+		const backendUrl = apiUrl.replace(/\/api\/?$/, '');
+		const backendHost = new URL(backendUrl).host;
+		allowedHosts.push(backendHost);
+
+		console.log('🔍 Environment API URL:', apiUrl);
+		console.log('🔍 Derived backend host:', backendHost);
+	}
+
+	// Add fallback hosts for development
+	allowedHosts.push('localhost:8000', '127.0.0.1:8000');
+
+	console.log('🔍 Allowed hosts:', allowedHosts);
+	console.log('🔍 Request host:', parsedUrl.host);
+
+	if (!allowedHosts.includes(parsedUrl.host)) {
+		console.error(
+			'❌ Host not allowed:',
+			parsedUrl.host,
+			'Expected one of:',
+			allowedHosts
+		);
 		return NextResponse.json(
-			{ error: 'URL host not allowed' },
+			{
+				error: 'URL host not allowed',
+				details: {
+					requestedHost: parsedUrl.host,
+					allowedHosts: allowedHosts,
+					apiUrl: apiUrl,
+				},
+			},
 			{ status: 400 }
 		);
 	}
