@@ -118,16 +118,6 @@ class PublicApiClient {
 	}
 
 	/**
-	 * Get featured products
-	 */
-	async getFeaturedProducts(): Promise<Product[]> {
-		const response = await this.client.get<Product[]>(
-			'/v1/featured-products'
-		);
-		return response.data;
-	}
-
-	/**
 	 * Get site settings for SEO and configuration
 	 */
 	async getSiteSettings(): Promise<any> {

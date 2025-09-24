@@ -89,14 +89,24 @@ export async function applyWatermark(
 
 		// Convert canvas to file
 		return new Promise((resolve, reject) => {
+			// Generate a unique, hyphen-free filename similar to social platforms
+			const extFromType = (mime: string) => {
+				if (mime.includes('png')) return 'png';
+				if (mime.includes('webp')) return 'webp';
+				if (mime.includes('gif')) return 'gif';
+				return 'jpg'; // default/fallback for jpeg
+			};
+			const randId = () =>
+				Math.random().toString(36).slice(2) +
+				Math.random().toString(36).slice(2);
+			const outExt = extFromType(imageFile.type || 'image/jpeg');
+			const outName = randId() + '.' + outExt;
 			canvas.toBlob(
 				(blob) => {
 					if (blob) {
-						const watermarkedFile = new File(
-							[blob],
-							`watermarked_${imageFile.name}`,
-							{ type: imageFile.type }
-						);
+						const watermarkedFile = new File([blob], outName, {
+							type: imageFile.type || `image/${outExt}`,
+						});
 						resolve(watermarkedFile);
 					} else {
 						reject(new Error('Failed to create watermarked image'));

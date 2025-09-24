@@ -104,8 +104,9 @@ export function ImageUpload({
           const response = await fetch(imageUrl, { cache: "no-store" });
           if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
           const blob = await response.blob();
-          const fileName = `watermarked-${Date.now()}.jpg`;
-          imageFile = new File([blob], fileName, { type: blob.type || "image/jpeg" });
+          const inferExt = (mime: string) => (mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg");
+          const name = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + "." + inferExt(blob.type || "image/jpeg");
+          imageFile = new File([blob], name, { type: blob.type || "image/jpeg" });
         }
         if (!imageFile) return;
 
@@ -167,7 +168,7 @@ export function ImageUpload({
       for (let i = 0; i < images.length; i++) {
         const key = imageKeys[i];
         const img = images[i];
-        if (processedImagesRef.current.has(key) || previewLoading[key] || img.file?.name.includes("watermarked-") || stableBlobUrlsRef.current.has(key)) continue;
+  if (processedImagesRef.current.has(key) || previewLoading[key] || stableBlobUrlsRef.current.has(key)) continue;
         await applyWatermarkToImage(i);
         await new Promise((r) => setTimeout(r, 60));
       }
