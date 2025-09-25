@@ -8,7 +8,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Badge from '@/components/ui/Badge';
 import {
-  DollarSign,
   ShoppingCart,
   Users,
   Store,
@@ -22,6 +21,7 @@ import {
   Truck,
   ArrowUpRight,
 } from 'lucide-react';
+import { HiCurrencyBangladeshi } from "react-icons/hi2";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface StatCardProps {
@@ -71,9 +71,9 @@ export default function AdminDashboard() {
   // Real API calls - replace mock data with live backend data
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: adminApi.getDashboardStats,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes
+    queryFn: () => adminApi.getDashboardStats(),
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const { data: salesData, isLoading: salesLoading } = useQuery({
@@ -108,7 +108,11 @@ export default function AdminDashboard() {
 
   // Use real API data when available, show loading state when loading
   const displayStats = stats || { total_revenue: 0, revenue_change: 0, total_orders: 0, orders_change: 0, total_customers: 0, customers_change: 0, total_vendors: 0, vendors_change: 0, pending_vendor_approvals: 0 };
-  const displaySalesData = salesData || [];
+  
+  const displaySalesData = (salesData || []).map(item => ({
+    ...item,
+    orders: item.orders === 0 ? null : item.orders
+  }));
   const displayTopProducts = topProducts || [];
   const displayRecentOrders = recentOrders || [];
   const displayPendingVendors = pendingVendors || [];
@@ -147,7 +151,7 @@ export default function AdminDashboard() {
             title="Total Revenue"
             value={statsLoading ? '...' : formatCurrency(displayStats.total_revenue)}
             change={displayStats.revenue_change}
-            icon={DollarSign}
+            icon={HiCurrencyBangladeshi}
           />
           <StatCard
             title="Total Orders"
@@ -204,7 +208,7 @@ export default function AdminDashboard() {
                     axisLine={false}
                   />
                   <YAxis 
-                    tickFormatter={(value) => `$${value}`} 
+                    tickFormatter={(value) => `৳${value}`} 
                     stroke="#9CA3AF"
                     fontSize={12}
                     tickLine={false}
@@ -220,7 +224,7 @@ export default function AdminDashboard() {
                     labelStyle={{ color: '#D1D5DB' }}
                     labelFormatter={(date) => new Date(date).toLocaleDateString()}
                     formatter={(value, name) => [
-                      `$${value?.toLocaleString()}`, 
+                      `৳${value?.toLocaleString()}`, 
                       name === 'revenue' ? 'Revenue' : 'Orders'
                     ]}
                   />
@@ -324,7 +328,10 @@ export default function AdminDashboard() {
               </div>
             ) : (
             <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={displaySalesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart 
+                data={displaySalesData} 
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
                 <XAxis
                   dataKey="date"
@@ -349,13 +356,13 @@ export default function AdminDashboard() {
                   }}
                   labelStyle={{ color: '#D1D5DB' }}
                   labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                  formatter={(value) => [value, 'Orders']}
+                  formatter={(value) => [value || 0, 'Orders']}
                 />
                 <Bar 
                   dataKey="orders" 
                   fill="url(#orderGradient)"
                   radius={[4, 4, 0, 0]}
-                  minPointSize={0}
+                  background={false}
                 />
                 <defs>
                   <linearGradient id="orderGradient" x1="0" y1="0" x2="0" y2="1">
