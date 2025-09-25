@@ -10,6 +10,7 @@ import { adminApi } from '@/lib/admin-api';
 import { Asset } from '@/types/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import {
   ArrowLeft,
   Plus,
@@ -40,6 +41,10 @@ export default function AssetsPage() {
   const [selectedDisk, setSelectedDisk] = useState<'all' | 'local' | 'public' | 's3'>('all');
   const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set());
 
+  // Delete confirmation dialog state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
+
   // Fetch assets using React Query
   const {
     data: assets = [],
@@ -64,8 +69,14 @@ export default function AssetsPage() {
   });
 
   const handleDeleteAsset = (asset: Asset) => {
-    if (confirm(`Are you sure you want to delete "${asset.name}"?\n\nThis action cannot be undone.`)) {
-      deleteMutation.mutate(asset.id);
+    setAssetToDelete(asset);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (assetToDelete) {
+      deleteMutation.mutate(assetToDelete.id);
+      setAssetToDelete(null);
     }
   };
 
@@ -400,6 +411,20 @@ export default function AssetsPage() {
             </div>
           )}
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          title="Delete Asset"
+          description={`Are you sure you want to delete "${assetToDelete?.name}"? This action cannot be undone.`}
+          confirmText="Delete Asset"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={confirmDelete}
+          isLoading={deleteMutation.isPending}
+        />
+
       </div>
     </div>
   );

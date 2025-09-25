@@ -7,6 +7,7 @@ import { Variation, VariationValue } from '@/types/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -30,6 +31,12 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
   
   const [variationForm, setVariationForm] = useState({ name: '', slug: '' });
   const [valueForm, setValueForm] = useState({ name: '', slug: '', variation_id: 0 });
+
+  // Delete confirmation dialog states
+  const [deleteVariationConfirmOpen, setDeleteVariationConfirmOpen] = useState(false);
+  const [deleteValueConfirmOpen, setDeleteValueConfirmOpen] = useState(false);
+  const [variationToDelete, setVariationToDelete] = useState<Variation | null>(null);
+  const [valueToDelete, setValueToDelete] = useState<VariationValue | null>(null);
 
   // const { showToast, showError, showSuccess } = useToast();
   const queryClient = useQueryClient();
@@ -190,15 +197,27 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
     });
   };
 
-  const handleDeleteVariation = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this variation? This will also delete all its values.')) {
-      deleteVariationMutation.mutate(id);
+  const handleDeleteVariation = (variation: Variation) => {
+    setVariationToDelete(variation);
+    setDeleteVariationConfirmOpen(true);
+  };
+
+  const confirmDeleteVariation = () => {
+    if (variationToDelete) {
+      deleteVariationMutation.mutate(variationToDelete.id);
+      setVariationToDelete(null);
     }
   };
 
-  const handleDeleteValue = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this variation value?')) {
-      deleteValueMutation.mutate(id);
+  const handleDeleteValue = (value: VariationValue) => {
+    setValueToDelete(value);
+    setDeleteValueConfirmOpen(true);
+  };
+
+  const confirmDeleteValue = () => {
+    if (valueToDelete) {
+      deleteValueMutation.mutate(valueToDelete.id);
+      setValueToDelete(null);
     }
   };
 
@@ -343,7 +362,7 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteVariation(variation.id)}
+                          onClick={() => handleDeleteVariation(variation)}
                           disabled={deleteVariationMutation.isPending}
                           className="border-red-500 text-red-400 hover:bg-red-600 hover:text-white"
                         >
@@ -431,7 +450,7 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDeleteValue(value.id)}
+                                  onClick={() => handleDeleteValue(value)}
                                   disabled={deleteValueMutation.isPending}
                                   className="text-red-400 hover:text-red-300 h-6 w-6 p-0"
                                 >
@@ -458,6 +477,33 @@ export default function VariationManager({ onClose }: VariationManagerProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Variation Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteVariationConfirmOpen}
+        onOpenChange={setDeleteVariationConfirmOpen}
+        title="Delete Variation"
+        description={`Are you sure you want to delete "${variationToDelete?.name}"? This will also delete all its values. This action cannot be undone.`}
+        confirmText="Delete Variation"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDeleteVariation}
+        isLoading={deleteVariationMutation.isPending}
+      />
+
+      {/* Delete Value Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteValueConfirmOpen}
+        onOpenChange={setDeleteValueConfirmOpen}
+        title="Delete Variation Value"
+        description={`Are you sure you want to delete "${valueToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete Value"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDeleteValue}
+        isLoading={deleteValueMutation.isPending}
+      />
+
     </div>
   );
 }

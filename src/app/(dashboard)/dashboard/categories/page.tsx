@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Badge from '@/components/ui/Badge';
 import Filters from '@/components/dashboard/Filters';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { categoriesFilterConfig } from '@/config/adminFilters';
 import {
   Plus,
@@ -44,6 +45,10 @@ export default function CategoriesPage() {
     sort_order: undefined,
   });
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
+  // Delete confirmation dialog state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -82,8 +87,14 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = (category: Category) => {
-    if (confirm(`Are you sure you want to delete "${category.name}"?`)) {
-      deleteCategory.mutate(category.id);
+    setCategoryToDelete(category);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (categoryToDelete) {
+      deleteCategory.mutate(categoryToDelete.id);
+      setCategoryToDelete(null);
     }
   };
 
@@ -220,6 +231,19 @@ export default function CategoriesPage() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete Category"
+        description={`Are you sure you want to delete "${categoryToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete Category"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        isLoading={deleteCategory.isPending}
+      />
 
     </div>
   );
