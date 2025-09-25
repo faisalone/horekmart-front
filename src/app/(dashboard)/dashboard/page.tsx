@@ -2,7 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/admin-api';
+import { formatCurrency } from '@/lib/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import Badge from '@/components/ui/Badge';
 import {
   DollarSign,
   ShoppingCart,
@@ -12,40 +16,13 @@ import {
   TrendingDown,
   Package,
   Bell,
+  Eye,
+  CheckCircle,
+  Clock,
+  Truck,
+  ArrowUpRight,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-
-// Mock data for demo purposes - replace with real API calls
-const mockStats = {
-  total_revenue: 125430.50,
-  revenue_change: 12.5,
-  total_orders: 1248,
-  orders_change: 8.2,
-  total_customers: 3580,
-  customers_change: 15.3,
-  total_vendors: 47,
-  vendors_change: 5.1,
-  pending_vendor_approvals: 5,
-};
-
-const mockSalesData = [
-  { date: '2025-01-07', revenue: 4200, orders: 28 },
-  { date: '2025-01-08', revenue: 3800, orders: 24 },
-  { date: '2025-01-09', revenue: 5100, orders: 32 },
-  { date: '2025-01-10', revenue: 4600, orders: 29 },
-  { date: '2025-01-11', revenue: 5500, orders: 35 },
-  { date: '2025-01-12', revenue: 6200, orders: 41 },
-  { date: '2025-01-13', revenue: 5800, orders: 38 },
-  { date: '2025-01-14', revenue: 6800, orders: 45 },
-];
-
-const mockTopProducts = [
-  { name: 'Premium Headphones', sales: 245, revenue: 12250 },
-  { name: 'Smart Watch', sales: 189, revenue: 18900 },
-  { name: 'Wireless Earbuds', sales: 156, revenue: 7800 },
-  { name: 'Gaming Mouse', sales: 134, revenue: 6700 },
-  { name: 'USB-C Cable', sales: 98, revenue: 1960 },
-];
 
 interface StatCardProps {
   title: string;
@@ -59,239 +36,477 @@ function StatCard({ title, value, change, icon: Icon, prefix = '' }: StatCardPro
   const isPositive = change > 0;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+    <Card className="group relative overflow-hidden border-gray-700 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-800/70 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-500/30">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="text-sm font-medium text-gray-300 group-hover:text-gray-200 transition-colors">
+          {title}
+        </CardTitle>
+        <div className="p-2 rounded-lg bg-gray-700/50 group-hover:bg-blue-500/20 transition-colors">
+          <Icon className="h-4 w-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{prefix}{value}</div>
-        <div className="flex items-center text-xs text-muted-foreground mt-1">
+      <CardContent className="pb-4">
+        <div className="text-2xl font-bold text-white mb-2">
+          {prefix}{value}
+        </div>
+        <div className="flex items-center text-xs">
           {isPositive ? (
-            <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+            <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" />
           ) : (
-            <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+            <TrendingDown className="h-3 w-3 mr-1 text-red-400" />
           )}
-          <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
+          <span className={`font-medium ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
             {isPositive ? '+' : ''}{change}%
           </span>
-          <span className="ml-1">from last month</span>
+          <span className="ml-1 text-gray-400">from last month</span>
         </div>
       </CardContent>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </Card>
   );
 }
 
 export default function AdminDashboard() {
-  // In a real app, these would be actual API calls
-  const { data: stats } = useQuery({
+  // Real API calls - replace mock data with live backend data
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: () => Promise.resolve(mockStats),
-    // queryFn: adminApi.getDashboardStats,
+    queryFn: adminApi.getDashboardStats,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes
   });
 
-  const { data: salesData } = useQuery({
+  const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ['sales-data'],
-    queryFn: () => Promise.resolve(mockSalesData),
-    // queryFn: () => adminApi.getSalesData('7d'),
+    queryFn: () => adminApi.getSalesData('7d'),
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
+
+  const { data: recentOrders, isLoading: ordersLoading } = useQuery({
+    queryKey: ['recent-orders'],
+    queryFn: () => adminApi.getRecentOrders(4),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchInterval: 2 * 60 * 1000,
+  });
+
+  const { data: topProducts, isLoading: productsLoading } = useQuery({
+    queryKey: ['top-products'],
+    queryFn: () => adminApi.getTopProducts('30d', 5),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: 10 * 60 * 1000,
+  });
+
+  const { data: pendingVendors, isLoading: vendorsLoading } = useQuery({
+    queryKey: ['pending-vendors'],
+    queryFn: () => adminApi.getPendingVendors(5),
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+
+
+  // Use real API data when available, show loading state when loading
+  const displayStats = stats || { total_revenue: 0, revenue_change: 0, total_orders: 0, orders_change: 0, total_customers: 0, customers_change: 0, total_vendors: 0, vendors_change: 0, pending_vendor_approvals: 0 };
+  const displaySalesData = salesData || [];
+  const displayTopProducts = topProducts || [];
+  const displayRecentOrders = recentOrders || [];
+  const displayPendingVendors = pendingVendors || [];
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400 mt-1">Welcome back! Here&apos;s what&apos;s happening with your store.</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-3 flex items-center space-x-2">
-            <Bell className="w-4 h-4 text-yellow-400" />
-            <span className="text-sm text-yellow-300">
-              {mockStats.pending_vendor_approvals} vendors pending approval
-            </span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              Dashboard
+            </h1>
+            <p className="text-gray-400 text-sm sm:text-base max-w-2xl">
+              Welcome back! Here&apos;s what&apos;s happening with your store today.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {!statsLoading && displayStats.pending_vendor_approvals > 0 && (
+              <Link href="/dashboard/vendors" className="block">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2 backdrop-blur-sm hover:bg-amber-500/20 transition-colors cursor-pointer">
+                  <Bell className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span className="text-sm text-amber-300 font-medium">
+                    {displayStats.pending_vendor_approvals} vendors pending approval
+                  </span>
+                  <ArrowUpRight className="w-3 h-3 text-amber-400" />
+                </div>
+              </Link>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Revenue"
-          value={stats?.total_revenue.toLocaleString() || '0'}
-          change={stats?.revenue_change || 0}
-          icon={DollarSign}
-          prefix="$"
-        />
-        <StatCard
-          title="Total Orders"
-          value={stats?.total_orders.toLocaleString() || '0'}
-          change={stats?.orders_change || 0}
-          icon={ShoppingCart}
-        />
-        <StatCard
-          title="Total Customers"
-          value={stats?.total_customers.toLocaleString() || '0'}
-          change={stats?.customers_change || 0}
-          icon={Users}
-        />
-        <StatCard
-          title="Active Vendors"
-          value={stats?.total_vendors.toString() || '0'}
-          change={stats?.vendors_change || 0}
-          icon={Store}
-        />
-      </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <StatCard
+            title="Total Revenue"
+            value={statsLoading ? '...' : formatCurrency(displayStats.total_revenue)}
+            change={displayStats.revenue_change}
+            icon={DollarSign}
+          />
+          <StatCard
+            title="Total Orders"
+            value={statsLoading ? '...' : displayStats.total_orders.toLocaleString()}
+            change={displayStats.orders_change}
+            icon={ShoppingCart}
+          />
+          <StatCard
+            title="Total Customers"
+            value={statsLoading ? '...' : displayStats.total_customers.toLocaleString()}
+            change={displayStats.customers_change}
+            icon={Users}
+          />
+          <StatCard
+            title="Active Vendors"
+            value={statsLoading ? '...' : displayStats.total_vendors.toString()}
+            change={displayStats.vendors_change}
+            icon={Store}
+          />
+        </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>Daily revenue for the last 7 days</CardDescription>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+          {/* Revenue Chart */}
+          <Card className="border-gray-700 bg-gray-800/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-white text-lg">Revenue Overview</CardTitle>
+                  <CardDescription className="text-gray-400 text-sm">
+                    Daily revenue trends for the last 7 days
+                  </CardDescription>
+                </div>
+                <div className="p-2 rounded-lg bg-blue-500/20">
+                  <TrendingUp className="w-5 h-5 text-blue-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {salesLoading ? (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                </div>
+              ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={displaySalesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="#9CA3AF"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `$${value}`} 
+                    stroke="#9CA3AF"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1F2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#F3F4F6'
+                    }}
+                    labelStyle={{ color: '#D1D5DB' }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                    formatter={(value, name) => [
+                      `$${value?.toLocaleString()}`, 
+                      name === 'revenue' ? 'Revenue' : 'Orders'
+                    ]}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2, fill: '#1E40AF' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Products */}
+          <Card className="border-gray-700 bg-gray-800/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-white text-lg">Top Products</CardTitle>
+                  <CardDescription className="text-gray-400 text-sm">
+                    Best performing products this month
+                  </CardDescription>
+                </div>
+                <div className="p-2 rounded-lg bg-emerald-500/20">
+                  <Package className="w-5 h-5 text-emerald-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {productsLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+                </div>
+              ) : (
+              <div className="space-y-4">
+                {displayTopProducts.map((product, index) => (
+                  <div key={product.name} className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-700/30 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          index === 0 ? 'bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30' :
+                          index === 1 ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30' :
+                          'bg-gray-700/50 border border-gray-600/50'
+                        }`}>
+                          <Package className={`w-4 h-4 ${
+                            index === 0 ? 'text-yellow-400' :
+                            index === 1 ? 'text-blue-400' :
+                            'text-gray-400'
+                          }`} />
+                        </div>
+                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center text-xs font-bold text-gray-300">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-white group-hover:text-blue-300 transition-colors">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {product.sales} sales
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm text-white">
+                        {formatCurrency(product.revenue)}
+                      </p>
+                      <p className="text-xs text-gray-400">Revenue</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Orders Chart */}
+        <Card className="border-gray-700 bg-gray-800/50 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white text-lg">Orders Overview</CardTitle>
+                <CardDescription className="text-gray-400 text-sm">
+                  Daily orders volume for the last 7 days
+                </CardDescription>
+              </div>
+              <div className="p-2 rounded-lg bg-emerald-500/20">
+                <ShoppingCart className="w-5 h-5 text-emerald-400" />
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
+          <CardContent className="pb-6">
+            {salesLoading ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+              </div>
+            ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={displaySalesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
                 <XAxis
                   dataKey="date"
                   tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
                 />
-                <YAxis tickFormatter={(value) => `$${value}`} />
+                <YAxis 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F3F4F6'
+                  }}
+                  labelStyle={{ color: '#D1D5DB' }}
                   labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                  formatter={(value, name) => [`$${value}`, name === 'revenue' ? 'Revenue' : 'Orders']}
+                  formatter={(value) => [value, 'Orders']}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} />
-              </LineChart>
+                <Bar 
+                  dataKey="orders" 
+                  fill="url(#orderGradient)"
+                  radius={[4, 4, 0, 0]}
+                  minPointSize={0}
+                />
+                <defs>
+                  <linearGradient id="orderGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10B981" />
+                    <stop offset="100%" stopColor="#059669" />
+                  </linearGradient>
+                </defs>
+              </BarChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* Top Products */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Products</CardTitle>
-            <CardDescription>Best performing products this month</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockTopProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Package className="w-4 h-4 text-blue-600" />
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+          {/* Recent Orders */}
+          <Card className="border-gray-700 bg-gray-800/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-white text-lg">Recent Orders</CardTitle>
+                  <CardDescription className="text-gray-400 text-sm">
+                    Latest orders that need attention
+                  </CardDescription>
+                </div>
+                <Link href="/dashboard/orders">
+                  <Button variant="outline" size="sm" className="border-gray-600 bg-gray-700/50 text-gray-300 hover:bg-gray-600 hover:text-white">
+                    View All
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {ordersLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                </div>
+              ) : (
+              <div className="space-y-3">
+                {displayRecentOrders.map((order, idx) => (
+                  <div key={order.id || idx} className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-700/30 transition-all duration-200 border border-transparent hover:border-gray-600/50">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${
+                        order.status === 'pending' ? 'bg-amber-500/20' :
+                        order.status === 'processing' ? 'bg-blue-500/20' :
+                        order.status === 'shipped' ? 'bg-purple-500/20' :
+                        'bg-emerald-500/20'
+                      }`}>
+                        {order.status === 'pending' ? (
+                          <Clock className="w-4 h-4 text-amber-400" />
+                        ) : order.status === 'processing' ? (
+                          <Package className="w-4 h-4 text-blue-400" />
+                        ) : order.status === 'shipped' ? (
+                          <Truck className="w-4 h-4 text-purple-400" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-white group-hover:text-blue-300 transition-colors">
+                          {order.id}
+                        </p>
+                        <div className="flex items-center space-x-2 text-xs text-gray-400">
+                          <span>{order.customer}</span>
+                          <span>•</span>
+                          <span>{order.time}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{product.name}</p>
-                      <p className="text-xs text-gray-500">{product.sales} sales</p>
+                    <div className="flex items-center space-x-3">
+                      <div className="text-right">
+                        <p className="font-semibold text-sm text-white">{formatCurrency(parseFloat(order.amount))}</p>
+                        <Badge className={`text-xs ${
+                          order.status === 'pending' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                          order.status === 'processing' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                          order.status === 'shipped' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+                          'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        }`}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-gray-300 transition-colors" />
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">${product.revenue.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">Revenue</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                ))}
+              </div>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Orders Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Orders Overview</CardTitle>
-          <CardDescription>Daily orders for the last 7 days</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              />
-              <YAxis />
-              <Tooltip
-                labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                formatter={(value) => [value, 'Orders']}
-              />
-              <Bar dataKey="orders" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>Latest orders that need attention</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { id: '#12345', customer: 'John Doe', amount: 129.99, status: 'pending' },
-                { id: '#12346', customer: 'Jane Smith', amount: 89.50, status: 'processing' },
-                { id: '#12347', customer: 'Bob Johnson', amount: 199.99, status: 'shipped' },
-                { id: '#12348', customer: 'Alice Brown', amount: 59.99, status: 'delivered' },
-              ].map((order) => (
-                <div key={order.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm">{order.id}</p>
-                    <p className="text-xs text-gray-500">{order.customer}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">${order.amount}</p>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                      order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </div>
+          {/* Pending Vendor Approvals */}
+          <Card className="border-gray-700 bg-gray-800/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-white text-lg">Vendor Approvals</CardTitle>
+                  <CardDescription className="text-gray-400 text-sm">
+                    Vendors waiting for approval
+                  </CardDescription>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Vendor Approvals</CardTitle>
-            <CardDescription>Vendors waiting for approval</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: 'Tech Solutions Inc.', submitted: '2 days ago', type: 'Electronics' },
-                { name: 'Fashion Forward LLC', submitted: '3 days ago', type: 'Clothing' },
-                { name: 'Home Essentials Co.', submitted: '1 week ago', type: 'Home & Garden' },
-                { name: 'Sports Gear Pro', submitted: '1 week ago', type: 'Sports' },
-                { name: 'Book Haven', submitted: '2 weeks ago', type: 'Books' },
-              ].map((vendor, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm">{vendor.name}</p>
-                    <p className="text-xs text-gray-500">{vendor.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">{vendor.submitted}</p>
-                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                      Pending
-                    </span>
-                  </div>
+                <Link href="/dashboard/vendors">
+                  <Button variant="outline" size="sm" className="border-gray-600 bg-gray-700/50 text-gray-300 hover:bg-gray-600 hover:text-white">
+                    View All
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {vendorsLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              ) : (
+              <div className="space-y-3">
+                {displayPendingVendors.map((vendor, index) => (
+                  <div key={index} className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-700/30 transition-all duration-200 border border-transparent hover:border-gray-600/50">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 border border-gray-600 flex items-center justify-center">
+                          <Store className="w-4 h-4 text-gray-300" />
+                        </div>
+                        <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-gray-800 ${
+                          vendor.urgency === 'high' ? 'bg-red-400' :
+                          vendor.urgency === 'medium' ? 'bg-amber-400' :
+                          'bg-gray-500'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-white group-hover:text-blue-300 transition-colors truncate">
+                          {vendor.name}
+                        </p>
+                        <div className="flex items-center space-x-2 text-xs text-gray-400">
+                          <span>{vendor.type}</span>
+                          <span>•</span>
+                          <span>{vendor.submitted}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Badge className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Pending
+                      </Badge>
+                      <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-gray-300 transition-colors" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

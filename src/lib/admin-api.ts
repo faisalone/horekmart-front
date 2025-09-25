@@ -14,6 +14,7 @@ import {
 	Customer,
 	DashboardStats,
 	SalesData,
+	TopProduct,
 	TableFilter,
 	BulkAction,
 	Category,
@@ -37,8 +38,7 @@ class AdminApiClient {
 
 	constructor() {
 		this.client = axios.create({
-			baseURL:
-				process.env.NEXT_PUBLIC_API_URL,
+			baseURL: process.env.NEXT_PUBLIC_API_URL,
 			headers: {
 				'Content-Type': 'application/json',
 				Accept: 'application/json',
@@ -283,16 +283,47 @@ class AdminApiClient {
 	// Dashboard endpoints
 	async getDashboardStats(): Promise<DashboardStats> {
 		const response = await this.client.get<DashboardStats>(
-			'/admin/admin/stats'
+			'/admin/dashboard/stats'
 		);
 		return response.data;
 	}
 
 	async getSalesData(
-		period: '7d' | '30d' | '90d' | '1y' = '30d'
+		period: '7d' | '30d' | '90d' | '1y' = '7d'
 	): Promise<SalesData[]> {
 		const response = await this.client.get<SalesData[]>(
-			`/admin/admin/sales?period=${period}`
+			`/admin/dashboard/sales?period=${period}`
+		);
+		return response.data;
+	}
+
+	async getRecentOrders(limit: number = 5): Promise<any[]> {
+		const response = await this.client.get<any[]>(
+			`/admin/dashboard/recent-orders?limit=${limit}`
+		);
+		return response.data;
+	}
+
+	async getTopProducts(
+		period: '7d' | '30d' | '90d' = '30d',
+		limit: number = 5
+	): Promise<TopProduct[]> {
+		const response = await this.client.get<TopProduct[]>(
+			`/admin/dashboard/top-products?period=${period}&limit=${limit}`
+		);
+		return response.data;
+	}
+
+	async getPendingVendors(limit: number = 5): Promise<any[]> {
+		const response = await this.client.get<any[]>(
+			`/admin/dashboard/pending-vendors?limit=${limit}`
+		);
+		return response.data;
+	}
+
+	async getRecentActivities(limit: number = 5): Promise<any[]> {
+		const response = await this.client.get<any[]>(
+			`/admin/dashboard/activities?limit=${limit}`
 		);
 		return response.data;
 	}
