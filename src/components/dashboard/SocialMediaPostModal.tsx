@@ -57,6 +57,7 @@ const PLATFORMS = [
 export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMediaPostModalProps) {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [caption, setCaption] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [availableImages, setAvailableImages] = useState<string[]>([]);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
@@ -70,6 +71,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
   const resetForm = useCallback(() => {
     setSelectedPlatforms([]);
     setCaption('');
+    // Don't clear customPrompt - let it persist for editing
     setSelectedImages([]);
     setScheduledTime(undefined);
     setGeneratedCaptions([]);
@@ -86,6 +88,22 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlDescription;
     
+    // Replace <br> tags and <p> tags with newlines before extracting text
+    const brTags = tempDiv.querySelectorAll('br');
+    brTags.forEach(br => {
+      br.replaceWith(document.createTextNode('\n'));
+    });
+    
+    const pTags = tempDiv.querySelectorAll('p');
+    pTags.forEach(p => {
+      p.insertAdjacentText('afterend', '\n');
+    });
+    
+    const divTags = tempDiv.querySelectorAll('div');
+    divTags.forEach(div => {
+      div.insertAdjacentText('afterend', '\n');
+    });
+    
     // Extract emoji alt text from img tags
     const emojiImages = tempDiv.querySelectorAll('img[alt]');
     emojiImages.forEach(img => {
@@ -95,14 +113,18 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
       }
     });
     
-    // Get text content and clean it up
+    // Get text content and preserve line breaks
     let cleanText = tempDiv.textContent || tempDiv.innerText || '';
     
-    // Clean up extra whitespace and newlines
-    cleanText = cleanText.replace(/\s+/g, ' ').trim();
-    
-    // Replace multiple spaces with single space
-    cleanText = cleanText.replace(/  +/g, ' ');
+    // Normalize line breaks and clean up excessive whitespace
+    cleanText = cleanText
+      .replace(/\r\n/g, '\n') // Normalize Windows line endings
+      .replace(/\r/g, '\n') // Normalize Mac line endings
+      .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
+      .replace(/\n[ \t]+/g, '\n') // Remove leading spaces on new lines
+      .replace(/[ \t]+\n/g, '\n') // Remove trailing spaces before new lines
+      .replace(/\n{3,}/g, '\n\n') // Replace 3+ newlines with double newlines
+      .trim();
     
     return cleanText;
   };
@@ -133,7 +155,11 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ product }),
+        body: JSON.stringify({ 
+          product,
+          customPrompt: customPrompt.trim(),
+          previousCaptions: generatedCaptions
+        }),
       });
 
       if (!response.ok) {
@@ -147,6 +173,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
       setGeneratedCaptions(prev => [...prev, caption]);
       setCurrentCaptionIndex(generatedCaptions.length);
       setCaption(caption);
+      // Don't clear the custom prompt so users can edit and regenerate
       setIsGeneratingCaption(false);
     },
     onError: (error) => {
@@ -584,51 +611,113 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
               </div>
             </div>
 
+            {/* Custom Prompt Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-medium text-white">AI Caption Prompt</h3>
+                <div className="text-xs text-gray-400">
+                  {customPrompt.length}/500 characters
+                </div>
+              </div>
+              
+              {/* ChatGPT-style input field */}
+              <div className="relative">
+                <div className="flex items-end bg-gray-800 border border-gray-600 rounded-2xl p-2 focus-within:border-purple-500 transition-colors">
+                  <div className="flex-1 relative">
+                    <textarea
+                      placeholder="Write your prompt (e.g., 'Make it funny', 'Add emojis', 'Write in Bangla', 'Focus on quality')..."
+                      value={customPrompt}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                        if (e.target.value.length <= 500) {
+                          setCustomPrompt(e.target.value);
+                        }
+                        // Auto-resize on change
+                        const target = e.target;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                      }}
+                      rows={1}
+                      className="resize-none w-full bg-transparent text-white placeholder:text-gray-400 focus:outline-none text-sm py-3 px-3 min-h-[44px] overflow-hidden"
+                      style={{
+                        height: 'auto',
+                        minHeight: '44px'
+                      }}
+                      disabled={isGeneratingCaption}
+                    />
+                  </div>
+                  
+                  {/* Send button */}
+                  <div className="flex items-end pb-1 ml-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={generateCaption}
+                      disabled={isGeneratingCaption || !product}
+                      className={`h-8 w-8 p-0 rounded-full text-white transition-all duration-200 flex items-center justify-center shadow-lg ${
+                        isGeneratingCaption 
+                          ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 animate-pulse shadow-purple-500/50' 
+                          : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:shadow-purple-500/30'
+                      } ${!product ? 'bg-gray-600 text-gray-400' : ''}`}
+                      title="Generate caption with AI ✨"
+                    >
+                      {isGeneratingCaption ? (
+                        <div className="relative">
+                          <Sparkles className="w-4 h-4 animate-spin text-white" />
+                          <div className="absolute inset-0 animate-ping">
+                            <Sparkles className="w-4 h-4 text-white opacity-75" />
+                          </div>
+                        </div>
+                      ) : (
+                        <Sparkles className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Character counter */}
+                {customPrompt && (
+                  <div className="absolute -bottom-5 right-2 text-xs text-gray-500">
+                    {customPrompt.length}/500
+                  </div>
+                )}
+              </div>
+              
+              <p className="text-xs text-gray-400 mt-2">
+                💡 Optimized for Bangladeshi online shoppers. Specify language, style, or tone in your prompt
+              </p>
+            </div>
+
             {/* Caption Section */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-medium text-white">Caption</h3>
+                <h3 className="text-lg font-medium text-white">Generated Caption</h3>
                 <div className="flex gap-2">
-                  {!isGeneratingCaption && (
-                    <>
+                  {generatedCaptions.length > 1 && (
+                    <div className="flex items-center gap-1">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={generateCaption}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0"
+                        onClick={previousCaption}
+                        disabled={currentCaptionIndex === 0}
+                        className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
                       >
-                        <Wand2 className="w-4 h-4 mr-2" />
-                        {generatedCaptions.length > 0 ? 'Regenerate' : 'AI Generate'}
+                        <ChevronLeft className="w-4 h-4" />
                       </Button>
-                      {generatedCaptions.length > 1 && (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={previousCaption}
-                            disabled={currentCaptionIndex === 0}
-                            className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-                          <span className="text-sm text-gray-400 px-2">
-                            {currentCaptionIndex + 1} of {generatedCaptions.length}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={nextCaption}
-                            disabled={currentCaptionIndex === generatedCaptions.length - 1}
-                            className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </>
+                      <span className="text-sm text-gray-400 px-2">
+                        {currentCaptionIndex + 1} of {generatedCaptions.length}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={nextCaption}
+                        disabled={currentCaptionIndex === generatedCaptions.length - 1}
+                        className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -639,7 +728,8 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
                   value={caption}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
                   rows={4}
-                  className="resize-y w-full p-3 border border-gray-600 rounded-md bg-gray-800 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] max-h-[300px]"
+                  className="resize-y w-full p-3 border border-gray-600 rounded-md bg-gray-800 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] max-h-[300px] whitespace-pre-wrap"
+                  style={{ whiteSpace: 'pre-wrap' }}
                   disabled={isGeneratingCaption}
                 />
                 
@@ -657,18 +747,7 @@ export function SocialMediaPostModal({ open, onOpenChange, product }: SocialMedi
                 )}
               </div>
               
-              {isGeneratingCaption && (
-                <div className="flex items-center justify-center py-6 bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg mt-3">
-                  <div className="relative">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-                    <Wand2 className="absolute inset-0 m-auto w-4 h-4 text-purple-400" />
-                  </div>
-                  <div className="ml-3">
-                    <span className="text-white font-medium">Generating AI Caption...</span>
-                    <p className="text-gray-400 text-sm">Creating engaging content for your product</p>
-                  </div>
-                </div>
-              )}
+
             </div>
 
             {/* Image Selection */}
