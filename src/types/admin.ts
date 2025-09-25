@@ -280,15 +280,13 @@ export interface OrderBillingAddress {
 }
 
 export interface Customer {
-	id: string;
+	id: number;
 	name: string;
-	email: string;
-	phone?: string;
-	avatar?: string;
-	status: 'active' | 'inactive' | 'banned';
-	email_verified_at?: string;
+	phone: string;
 	created_at: string;
 	updated_at: string;
+	orders_count?: number;
+	orders?: Order[];
 }
 
 export interface Address {

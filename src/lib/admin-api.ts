@@ -639,19 +639,19 @@ class AdminApiClient {
 		return response.data.data;
 	}
 
-	async banCustomer(id: string, reason?: string): Promise<Customer> {
-		const response = await this.client.post<ApiResponse<Customer>>(
-			`/admin/customers/${id}/ban`,
-			{ reason }
+	async updateCustomer(
+		id: string,
+		customerData: Partial<Customer>
+	): Promise<Customer> {
+		const response = await this.client.put<ApiResponse<Customer>>(
+			`/admin/customers/${id}`,
+			customerData
 		);
 		return response.data.data;
 	}
 
-	async unbanCustomer(id: string): Promise<Customer> {
-		const response = await this.client.post<ApiResponse<Customer>>(
-			`/admin/customers/${id}/unban`
-		);
-		return response.data.data;
+	async deleteCustomer(id: string): Promise<void> {
+		await this.client.delete(`/admin/customers/${id}`);
 	}
 
 	// Categories endpoints
