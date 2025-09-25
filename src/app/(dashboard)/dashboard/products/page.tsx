@@ -17,7 +17,8 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  Share 
+  Share,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
@@ -55,6 +56,20 @@ export default function ProductsPage() {
     handleClearFilters,
     deleteProductMutation,
   } = useProductsPage();
+
+  // Helper function to generate product frontend URL
+  const generateProductUrl = (product: Product) => {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const categorySlug = product.category?.slug || 'uncategorized';
+    const productSlug = product.slug;
+    return `${baseUrl}/products/${categorySlug}/${productSlug}`;
+  };
+
+  // Handle external link click
+  const handleExternalLink = (product: Product) => {
+    const url = generateProductUrl(product);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   // Create table columns
   const columns = useMemo(() => [
@@ -180,6 +195,15 @@ export default function ProductsPage() {
           <Button 
             variant="ghost" 
             size="sm"
+            onClick={() => handleExternalLink(row.original)}
+            className="text-purple-400 hover:text-purple-300 hover:bg-gray-700"
+            title="View on Frontend"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => handleSocialMediaPost(row.original)}
             className="text-green-400 hover:text-green-300 hover:bg-gray-700"
             title="Share on Social Media"
@@ -207,9 +231,9 @@ export default function ProductsPage() {
           </Button>
         </div>
       ),
-      size: 150,
+      size: 180,
     }),
-  ], [deleteProductMutation.isPending, handleViewProduct, handleSocialMediaPost, handleEditProduct, handleDeleteProduct]);
+  ], [deleteProductMutation.isPending, handleViewProduct, handleExternalLink, handleSocialMediaPost, handleEditProduct, handleDeleteProduct]);
 
   // Create table instance
   const table = useReactTable(createTableConfig(columns));
@@ -383,6 +407,15 @@ export default function ProductsPage() {
                       title="View Product"
                     >
                       <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleExternalLink(product)}
+                      className="text-purple-400 hover:text-purple-300 hover:bg-gray-600 p-2"
+                      title="View on Frontend"
+                    >
+                      <ExternalLink className="w-4 h-4" />
                     </Button>
                     <Button 
                       variant="ghost" 

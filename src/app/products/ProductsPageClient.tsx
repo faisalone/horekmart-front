@@ -662,7 +662,10 @@ function ProductsPageContent() {
                       name="mobile-category"
                       value=""
                       checked={!filters.category}
-                      onChange={() => handleFilterChange({ category: undefined })}
+                      onChange={() => {
+                        handleFilterChange({ category: undefined });
+                        updateUrlParams({ category: null });
+                      }}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                     />
                     <span className="ml-3 text-gray-700">All Categories</span>
@@ -803,7 +806,10 @@ function ProductsPageContent() {
                       name="desktop-category"
                       value=""
                       checked={!filters.category}
-                      onChange={() => handleFilterChange({ category: undefined })}
+                      onChange={() => {
+                        handleFilterChange({ category: undefined });
+                        updateUrlParams({ category: null });
+                      }}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                     />
                     <span className="ml-2 text-sm text-gray-700">All Categories</span>
