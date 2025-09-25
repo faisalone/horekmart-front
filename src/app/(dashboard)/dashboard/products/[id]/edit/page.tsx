@@ -30,7 +30,6 @@ export default function EditProductPage() {
     queryFn: () => adminApi.getProduct(productId),
     enabled: !!productId,
     retry: 1,
-    staleTime: 0,
   });
 
   const updateProductMutation = useMutation({
