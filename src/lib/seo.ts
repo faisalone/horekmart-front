@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { publicApi } from './public-api';
 import { Product, Category } from '@/types';
+import { getProductUrl } from '@/lib/utils';
 
 interface SiteSettings {
 	site_name: string;
@@ -129,9 +130,7 @@ class SEOService {
 		const settings = await this.getSiteSettings();
 
 		// Generate product URL path
-		const productPath = categorySlug
-			? `/products/${categorySlug}/${product.slug}`
-			: `/products/${product.slug}`;
+		const productPath = getProductUrl(product);
 
 		// Use product SEO fields or fallback to product data
 		const title =

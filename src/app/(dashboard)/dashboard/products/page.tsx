@@ -17,14 +17,14 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  Share,
-  ExternalLink
+  Share
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getProductUrl } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 import { Product } from '@/types/admin';
 import { ProductViewModal } from '@/components/dashboard/ProductViewModal';
 import { SocialMediaPostModal } from '@/components/dashboard/SocialMediaPostModal';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useProductsPage } from '@/hooks/useProductsPage';
 
 const columnHelper = createColumnHelper<Product>();
@@ -57,19 +57,26 @@ export default function ProductsPage() {
     deleteProductMutation,
   } = useProductsPage();
 
-  // Helper function to generate product frontend URL
-  const generateProductUrl = (product: Product) => {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const categorySlug = product.category?.slug || 'uncategorized';
-    const productSlug = product.slug;
-    return `${baseUrl}/products/${categorySlug}/${productSlug}`;
+  // Delete confirmation dialog state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [productToDelete, setProductToDelete] = React.useState<number | null>(null);
+
+  // Handle delete confirmation
+  const handleDeleteClick = (productId: number) => {
+    setProductToDelete(productId);
+    setDeleteConfirmOpen(true);
   };
 
-  // Handle external link click
-  const handleExternalLink = (product: Product) => {
-    const url = generateProductUrl(product);
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const confirmDelete = () => {
+    if (productToDelete) {
+      handleDeleteProduct(productToDelete);
+      setProductToDelete(null);
+    }
   };
+
+
+
+
 
   // Create table columns
   const columns = useMemo(() => [
@@ -113,13 +120,24 @@ export default function ProductsPage() {
     }),
     columnHelper.accessor('name', {
       header: 'Product',
-      cell: ({ row }) => (
-        <div>
-          <div className="font-medium text-gray-200">{row.original.name}</div>
-          <div className="text-sm text-gray-400">SKU: {row.original.sku}</div>
-          <div className="text-sm text-gray-400">{row.original.vendor?.business_name}</div>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const productUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${getProductUrl(row.original)}`;
+        return (
+          <div>
+            <a 
+              href={productUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
+              title="View product on frontend"
+            >
+              {row.original.name}
+            </a>
+            <div className="text-sm text-gray-400">SKU: {row.original.sku}</div>
+            <div className="text-sm text-gray-400">{row.original.vendor?.business_name}</div>
+          </div>
+        );
+      },
       size: 250,
     }),
     columnHelper.accessor('category', {
@@ -195,15 +213,6 @@ export default function ProductsPage() {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => handleExternalLink(row.original)}
-            className="text-purple-400 hover:text-purple-300 hover:bg-gray-700"
-            title="View on Frontend"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
             onClick={() => handleSocialMediaPost(row.original)}
             className="text-green-400 hover:text-green-300 hover:bg-gray-700"
             title="Share on Social Media"
@@ -222,7 +231,7 @@ export default function ProductsPage() {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => handleDeleteProduct(row.original.id)}
+            onClick={() => handleDeleteClick(row.original.id)}
             disabled={deleteProductMutation.isPending}
             className="text-red-400 hover:text-red-300 hover:bg-gray-700 disabled:opacity-50"
             title="Delete Product"
@@ -233,7 +242,7 @@ export default function ProductsPage() {
       ),
       size: 180,
     }),
-  ], [deleteProductMutation.isPending, handleViewProduct, handleExternalLink, handleSocialMediaPost, handleEditProduct, handleDeleteProduct]);
+  ], [deleteProductMutation.isPending, handleViewProduct, handleSocialMediaPost, handleEditProduct, handleDeleteProduct]);
 
   // Create table instance
   const table = useReactTable(createTableConfig(columns));
@@ -411,15 +420,6 @@ export default function ProductsPage() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => handleExternalLink(product)}
-                      className="text-purple-400 hover:text-purple-300 hover:bg-gray-600 p-2"
-                      title="View on Frontend"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
                       onClick={() => handleSocialMediaPost(product)}
                       className="text-green-400 hover:text-green-300 hover:bg-gray-600 p-2"
                       title="Share on Social Media"
@@ -438,7 +438,7 @@ export default function ProductsPage() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => handleDeleteProduct(product.id)}
+                      onClick={() => handleDeleteClick(product.id)}
                       disabled={deleteProductMutation.isPending}
                       className="text-red-400 hover:text-red-300 hover:bg-gray-600 disabled:opacity-50 p-2"
                       title="Delete Product"
@@ -576,6 +576,19 @@ export default function ProductsPage() {
         product={socialMediaProduct}
         open={isSocialMediaModalOpen}
         onOpenChange={setIsSocialMediaModalOpen}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete Product"
+        description="Are you sure you want to delete this product? This action cannot be undone."
+        confirmText="Delete Product"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        isLoading={deleteProductMutation.isPending}
       />
     </div>
   );

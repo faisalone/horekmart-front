@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getProductUrl } from '@/lib/utils';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -28,10 +29,7 @@ export async function POST(request: NextRequest) {
 		// Generate product URL
 		const baseUrl =
 			process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-		const productUrl = `${baseUrl}/products/${
-			product.category?.slug || 'category'
-		}/${product.slug}`;
-
+		const productUrl = `${baseUrl}${getProductUrl(product)}`;
 		const fullPrompt = `You are a professional social media expert creating captions for Bangladeshi online shoppers. Create a single, exceptional social media caption that:
 
 🎯 TARGET AUDIENCE: Bangladeshi online shoppers who are active on social media and love discovering great deals

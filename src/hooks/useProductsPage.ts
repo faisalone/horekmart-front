@@ -96,9 +96,7 @@ export const useProductsPage = () => {
 	};
 
 	const handleDeleteProduct = (productId: number) => {
-		if (confirm('Are you sure you want to delete this product?')) {
-			deleteProductMutation.mutate(productId);
-		}
+		deleteProductMutation.mutate(productId);
 	};
 
 	// Filter handlers

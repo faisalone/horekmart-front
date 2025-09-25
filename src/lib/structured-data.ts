@@ -1,5 +1,6 @@
 import { publicApi } from '@/lib/public-api';
 import { Product, Category } from '@/types';
+import { getProductUrl } from '@/lib/utils';
 
 interface SiteSettings {
 	site_name: string;
@@ -173,7 +174,7 @@ class StructuredDataService {
 				name: product.vendor?.business_name || settings.site_name,
 			},
 			category: product.category?.name,
-			url: `${settings.site_url}/products/${product.category?.slug}/${product.slug}`,
+			url: `${settings.site_url}${getProductUrl(product)}`,
 		};
 
 		// Add images
@@ -199,7 +200,7 @@ class StructuredDataService {
 		// Add offers (pricing)
 		const offers: any = {
 			'@type': 'Offer',
-			url: `${settings.site_url}/products/${product.category?.slug}/${product.slug}`,
+			url: `${settings.site_url}${getProductUrl(product)}`,
 			priceCurrency: 'BDT',
 			price: product.sale_price || product.price,
 			availability: product.in_stock
@@ -255,7 +256,7 @@ class StructuredDataService {
 				'@type': 'ListItem',
 				position: 3,
 				name: product.name,
-				item: `${settings.site_url}/products/${product.category.slug}/${product.slug}`,
+				item: `${settings.site_url}${getProductUrl(product)}`,
 			});
 		}
 
@@ -350,7 +351,7 @@ class StructuredDataService {
 					item: {
 						'@type': 'Product',
 						name: product.name,
-						url: `${settings.site_url}/products/${product.category?.slug}/${product.slug}`,
+						url: `${settings.site_url}${getProductUrl(product)}`,
 						image:
 							product.thumb ||
 							(Array.isArray(product.images) &&

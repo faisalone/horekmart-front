@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
+import { getProductUrl } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
 import { checkoutService, type FormOrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
@@ -732,7 +733,7 @@ export default function CheckoutPage() {
                 {checkoutItems.map((item) => (
                   <Link 
                     key={item.id} 
-                    href={item.categorySlug ? `/products/${item.categorySlug}/${item.productSlug}` : `/products/${item.productSlug}`}
+                    href={getProductUrl({ category: { slug: item.categorySlug }, slug: item.productSlug })}
                     className="block transition-transform hover:scale-[1.02]"
                   >
                     <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">

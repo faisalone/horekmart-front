@@ -7,6 +7,7 @@ import { Minus, Plus, X, ArrowLeft, ShoppingBag, Trash2, ChevronDown } from 'luc
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/currency';
+import { getProductUrl } from '@/lib/utils';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
@@ -126,7 +127,7 @@ function CartContent() {
                       <div className="space-y-2">
                         <h3 className="font-semibold text-gray-900 text-sm leading-tight">
                           <Link 
-                            href={item.categorySlug ? `/products/${item.categorySlug}/${item.productSlug}` : `/products/${item.productSlug}`}
+                            href={getProductUrl({ category: { slug: item.categorySlug }, slug: item.productSlug })}
                             className="hover:text-blue-600 transition-colors"
                           >
                             {item.productName}
