@@ -115,13 +115,13 @@ export function DateTimePicker({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "w-full justify-start text-left font-normal bg-gray-800 border-gray-600 text-white hover:bg-gray-700 hover:text-white",
+              "w-full justify-start text-left font-normal bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:text-white hover:border-white/30 backdrop-blur-sm transition-all duration-200 rounded-xl",
               date ? "pr-10" : "pr-4",
-              !date && "text-gray-300",
+              !date && "text-gray-400",
               className
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4 text-gray-300 flex-shrink-0" />
+            <CalendarIcon className="mr-2 h-4 w-4 text-blue-400 flex-shrink-0" />
             <span className={cn("flex-1 truncate", date ? "pr-3" : "")}>
               {date ? (
                 format(date, "MM/dd/yyyy hh:mm aa")
@@ -136,7 +136,7 @@ export function DateTimePicker({
                 e.stopPropagation();
                 onDateChange?.(undefined);
               }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-0.5 text-gray-400 hover:text-red-400 transition-colors rounded hover:bg-gray-700/50 z-10"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-0.5 text-gray-400 hover:text-red-400 transition-colors rounded hover:bg-white/10 z-10"
               title="Clear schedule"
             >
               <X className="w-3 h-3" />
@@ -144,20 +144,20 @@ export function DateTimePicker({
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-600">
-        <div className="sm:flex bg-gray-800">
-          <div className="p-3 bg-gray-800 border-r border-gray-600">
+      <PopoverContent className="w-auto p-0 bg-gradient-to-br from-slate-900/95 to-slate-800/95 border-white/20 z-[100] backdrop-blur-xl shadow-2xl rounded-2xl" side="top" align="start">
+        <div className="sm:flex bg-transparent">
+          <div className="p-4 bg-transparent border-r border-white/10">
             <Calendar
               mode="single"
               selected={date}
               onSelect={handleDateSelect}
               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               initialFocus
-              className="bg-gray-800"
+              className="bg-transparent text-white"
             />
           </div>
-          <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x divide-gray-600 bg-gray-800">
-            <ScrollArea className="w-64 sm:w-auto bg-gray-800">
+          <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x divide-white/10 bg-transparent">
+            <ScrollArea className="w-64 sm:w-auto bg-transparent">
               <div className="flex sm:flex-col p-2">
                 {hours.reverse().map((hour) => {
                   const isDisabled = isTimeDisabled("hour", hour);
@@ -172,11 +172,11 @@ export function DateTimePicker({
                       }
                       disabled={isDisabled}
                       className={cn(
-                        "sm:w-full shrink-0 aspect-square text-white hover:bg-gray-700 hover:text-white",
+                        "sm:w-full shrink-0 aspect-square text-white hover:bg-white/10 hover:text-white transition-all duration-200 rounded-lg",
                         date && date.getHours() % 12 === hour % 12
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "hover:bg-gray-700",
-                        isDisabled && "opacity-30 cursor-not-allowed hover:bg-gray-800"
+                          ? "bg-blue-600 text-white hover:bg-blue-500 shadow-lg"
+                          : "hover:bg-white/10",
+                        isDisabled && "opacity-30 cursor-not-allowed hover:bg-transparent"
                       )}
                       onClick={() => !isDisabled && handleTimeChange("hour", hour.toString())}
                     >
@@ -187,7 +187,7 @@ export function DateTimePicker({
               </div>
               <ScrollBar orientation="horizontal" className="sm:hidden" />
             </ScrollArea>
-            <ScrollArea className="w-64 sm:w-auto bg-gray-800">
+            <ScrollArea className="w-64 sm:w-auto bg-transparent">
               <div className="flex sm:flex-col p-2">
                 {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => {
                   const isDisabled = isTimeDisabled("minute", minute);
@@ -202,11 +202,11 @@ export function DateTimePicker({
                       }
                       disabled={isDisabled}
                       className={cn(
-                        "sm:w-full shrink-0 aspect-square text-white hover:bg-gray-700 hover:text-white",
+                        "sm:w-full shrink-0 aspect-square text-white hover:bg-white/10 hover:text-white transition-all duration-200 rounded-lg",
                         date && date.getMinutes() === minute
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "hover:bg-gray-700",
-                        isDisabled && "opacity-30 cursor-not-allowed hover:bg-gray-800"
+                          ? "bg-blue-600 text-white hover:bg-blue-500 shadow-lg"
+                          : "hover:bg-white/10",
+                        isDisabled && "opacity-30 cursor-not-allowed hover:bg-transparent"
                       )}
                       onClick={() =>
                         !isDisabled && handleTimeChange("minute", minute.toString())
@@ -219,7 +219,7 @@ export function DateTimePicker({
               </div>
               <ScrollBar orientation="horizontal" className="sm:hidden" />
             </ScrollArea>
-            <ScrollArea className="bg-gray-800">
+            <ScrollArea className="bg-transparent">
               <div className="flex sm:flex-col p-2">
                 {["AM", "PM"].map((ampm) => {
                   const isDisabled = isTimeDisabled("ampm", ampm);
@@ -236,13 +236,13 @@ export function DateTimePicker({
                       }
                       disabled={isDisabled}
                       className={cn(
-                        "sm:w-full shrink-0 aspect-square text-white hover:bg-gray-700 hover:text-white",
+                        "sm:w-full shrink-0 aspect-square text-white hover:bg-white/10 hover:text-white transition-all duration-200 rounded-lg",
                         date &&
                         ((ampm === "AM" && date.getHours() < 12) ||
                           (ampm === "PM" && date.getHours() >= 12))
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "hover:bg-gray-700",
-                        isDisabled && "opacity-30 cursor-not-allowed hover:bg-gray-800"
+                          ? "bg-blue-600 text-white hover:bg-blue-500 shadow-lg"
+                          : "hover:bg-white/10",
+                        isDisabled && "opacity-30 cursor-not-allowed hover:bg-transparent"
                       )}
                       onClick={() => !isDisabled && handleTimeChange("ampm", ampm)}
                     >
