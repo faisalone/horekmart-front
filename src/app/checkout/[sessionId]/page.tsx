@@ -505,18 +505,22 @@ export default function CheckoutPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Phone Number</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="01*****-119"
-                    />
+					<label className="block text-sm font-medium text-gray-700 mb-2">
+					  Phone (11 digits)
+					</label>
+					<input
+					  type="tel"
+					  value={formData.phone}
+					  onChange={(e) => {
+						const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+						handleInputChange('phone', value);
+					  }}
+					  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
+						errors.phone ? 'border-red-500' : 'border-gray-300'
+					  }`}
+					  placeholder="01*********"
+					  maxLength={11}
+					/>
                     {renderErrorList(errors.phone)}
 					<p className="text-xs text-gray-500 mt-2">
 					  We may require your phone number for confirmations and delivery updates. Follow our
