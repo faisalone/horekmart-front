@@ -861,10 +861,6 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 								<div className="bg-gray-50 lg:bg-transparent rounded-xl p-5 lg:p-0 border border-gray-200 lg:border-0">
 									<div className="prose max-w-none">
 										<div className="mb-8">
-											<h4 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 flex items-center">
-												<div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
-												Description
-											</h4>
 											<div className="text-gray-700 text-base lg:text-lg leading-relaxed">
 												{showFullDescription ? (
 													<RichTextDisplay 
