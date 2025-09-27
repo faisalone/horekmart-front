@@ -49,8 +49,17 @@ const BannerBlock = ({
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />
       
-      {/* Static bottom shape for title with dynamic colors - Extended to prevent edge visibility */}
-      <div className={`absolute -bottom-1 -left-1 -right-1 ${bgColorClass} overflow-hidden h-14 md:h-16`}>
+      {/* Mobile: Static title overlay (always visible) */}
+      <div className={`md:hidden absolute -bottom-1 -left-1 -right-1 ${bgColorClass} overflow-hidden h-14`}>
+        <div className="px-4 py-3 text-center h-full flex items-center justify-center">
+          <AutoFontText className={`text-sm font-bold ${textColorClass} truncate w-full max-w-full`}>
+            {title}
+          </AutoFontText>
+        </div>
+      </div>
+
+      {/* Desktop: Interactive title with hover effects */}
+      <div className={`hidden md:block absolute -bottom-1 -left-1 -right-1 ${bgColorClass} overflow-hidden h-14 md:h-16`}>
         {/* Title container - slides up and disappears completely on hover */}
         <div className="transform translate-y-0 group-hover:-translate-y-full transition-transform duration-300 ease-out h-full">
           <div className="px-4 py-3 text-center h-full flex items-center justify-center">

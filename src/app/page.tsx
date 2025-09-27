@@ -179,32 +179,43 @@ export default function HomeClient() {
       {/* Main Banner Section - Enhanced 3 Row Masonry Layout */}
       <AnimatedElement animation="fadeIn" delay={200}>
         <section className="bg-gradient-to-br from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
             
-            {/* Enhanced 3 Row Masonry Grid Layout with better mobile experience */}
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-6">
+            {/* Enhanced Masonry Grid Layout - Mobile Optimized */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-3 md:gap-6">
               {loading ? (
                 // Show skeleton loaders while loading
                 Array.from({ length: 9 }, (_, idx) => (
                   <BannerBlockSkeleton
                     key={idx}
                     className={
-                      idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
-                      idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
-                      idx === 2 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3' :
-                      idx === 3 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6' :
-                      idx === 4 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7' :
-                      idx === 5 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8' :
-                      idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
-                      idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
-                      idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
-                      ''
+                      // Mobile Masonry Layout (6 items) + Desktop Layout (9 items)
+                      idx >= 6 ? 'hidden md:block ' + (
+                        idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
+                        idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
+                        idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
+                        ''
+                      ) : (
+                        // Mobile: Proper masonry with varied sizes | Desktop: Original layout
+                        idx === 0 ? 'col-span-1 order-1 md:col-span-1 lg:col-span-3 lg:order-1' :
+                        idx === 1 ? 'col-span-1 order-2 md:col-span-1 lg:col-span-3 lg:order-2' :
+                        idx === 2 ? 'col-span-2 order-3 md:col-span-2 lg:col-span-6 lg:order-3' :
+                        idx === 3 ? 'col-span-1 order-4 md:col-span-1 lg:col-span-3 lg:order-6' :
+                        idx === 4 ? 'col-span-1 order-5 md:col-span-1 lg:col-span-3 lg:order-7' :
+                        idx === 5 ? 'col-span-2 order-6 md:col-span-1 lg:col-span-3 lg:order-8' :
+                        ''
+                      )
                     }
                     height={
-                      idx === 6 ? 'h-[25rem]' :
-                      idx === 2 ? 'h-64' :
-                      idx === 0 || idx === 1 ? 'h-64' :
-                      idx === 3 || idx === 4 || idx === 5 || idx === 7 || idx === 8 ? 'h-48' :
+                      // Mobile Masonry Heights | Desktop Original Heights
+                      idx === 0 ? 'h-40 md:h-64' :
+                      idx === 1 ? 'h-40 md:h-64' :
+                      idx === 2 ? 'h-44 md:h-64' :
+                      idx === 3 ? 'h-44 md:h-48' :
+                      idx === 4 ? 'h-44 md:h-48' :
+                      idx === 5 ? 'h-44 md:h-48' :
+                      idx === 6 ? 'h-[25rem] md:h-full' :
+                      idx === 7 || idx === 8 ? 'h-48' :
                       'h-48'
                     }
                   />
@@ -220,22 +231,33 @@ export default function HomeClient() {
                     link={`/${cat.slug}`}
                     priority={idx < 3}
                     className={
-                      idx === 0 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-1 lg:order-1' :
-                      idx === 1 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-2 lg:order-2' :
-                      idx === 2 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-3 lg:order-3' :
-                      idx === 3 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-4 lg:order-6' :
-                      idx === 4 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-5 lg:order-7' :
-                      idx === 5 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-6 lg:order-8' :
-                      idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
-                      idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
-                      idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
-                      ''
+                      // Mobile Masonry Layout (6 items) + Desktop Layout (9 items)
+                      idx >= 6 ? 'hidden md:block ' + (
+                        idx === 6 ? 'col-span-1 row-span-2 md:col-span-1 md:row-span-2 lg:col-span-3 lg:row-span-2 order-7 md:order-7 lg:order-4' :
+                        idx === 7 ? 'col-span-1 md:col-span-1 lg:col-span-3 order-8 md:order-8 lg:order-10' :
+                        idx === 8 ? 'col-span-2 md:col-span-2 lg:col-span-6 order-9 md:order-9 lg:order-5' :
+                        ''
+                      ) : (
+                        // Mobile: Proper masonry with varied sizes | Desktop: Original layout
+                        idx === 0 ? 'col-span-1 order-1 md:col-span-1 lg:col-span-3 lg:order-1' :
+                        idx === 1 ? 'col-span-1 order-2 md:col-span-1 lg:col-span-3 lg:order-2' :
+                        idx === 2 ? 'col-span-2 order-3 md:col-span-2 lg:col-span-6 lg:order-3' :
+                        idx === 3 ? 'col-span-1 order-4 md:col-span-1 lg:col-span-3 lg:order-6' :
+                        idx === 4 ? 'col-span-1 order-5 md:col-span-1 lg:col-span-3 lg:order-7' :
+                        idx === 5 ? 'col-span-2 order-6 md:col-span-1 lg:col-span-3 lg:order-8' :
+                        ''
+                      )
                     }
                     height={
-                      idx === 6 ? 'h-[25rem]' :
-                      idx === 2 ? 'h-64' :
-                      idx === 0 || idx === 1 ? 'h-64' :
-                      idx === 3 || idx === 4 || idx === 5 || idx === 7 || idx === 8 ? 'h-48' :
+                      // Mobile Masonry Heights | Desktop Original Heights
+                      idx === 0 ? 'h-40 md:h-64' :
+                      idx === 1 ? 'h-40 md:h-64' :
+                      idx === 2 ? 'h-44 md:h-64' :
+                      idx === 3 ? 'h-44 md:h-48' :
+                      idx === 4 ? 'h-44 md:h-48' :
+                      idx === 5 ? 'h-44 md:h-48' :
+                      idx === 6 ? 'h-[25rem] md:h-full' :
+                      idx === 7 || idx === 8 ? 'h-48' :
                       'h-48'
                     }
                     textSize={
