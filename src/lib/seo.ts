@@ -12,6 +12,7 @@ interface SiteSettings {
 	og_image: string;
 	author?: string;
 	theme_color?: string;
+	facebook_app_id?: string;
 }
 
 class SEOService {
@@ -116,6 +117,7 @@ class SEOService {
 			},
 			other: {
 				'theme-color': settings.theme_color || '#1e40af',
+				'fb:app_id': settings.facebook_app_id || '1062202325995875',
 			},
 		};
 	}
@@ -194,6 +196,7 @@ class SEOService {
 			},
 			other: {
 				'theme-color': settings.theme_color || '#1e40af',
+				'fb:app_id': settings.facebook_app_id || '1062202325995875',
 			},
 		};
 	}
@@ -258,6 +261,7 @@ class SEOService {
 			},
 			other: {
 				'theme-color': settings.theme_color || '#1e40af',
+				'fb:app_id': settings.facebook_app_id || '1062202325995875',
 			},
 		};
 	}
