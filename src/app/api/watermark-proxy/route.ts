@@ -42,16 +42,10 @@ export async function GET(request: NextRequest) {
 		const backendUrl = apiUrl.replace(/\/api\/?$/, '');
 		const backendHost = new URL(backendUrl).host;
 		allowedHosts.push(backendHost);
-
-		console.log('🔍 Environment API URL:', apiUrl);
-		console.log('🔍 Derived backend host:', backendHost);
 	}
 
 	// Add fallback hosts for development
 	allowedHosts.push('localhost:8000', '127.0.0.1:8000');
-
-	console.log('🔍 Allowed hosts:', allowedHosts);
-	console.log('🔍 Request host:', parsedUrl.host);
 
 	if (!allowedHosts.includes(parsedUrl.host)) {
 		console.error(

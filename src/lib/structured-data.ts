@@ -73,7 +73,7 @@ class StructuredDataService {
 			'@context': 'https://schema.org',
 			'@type': 'WebSite',
 			name: settings.site_name,
-			alternateName: `${settings.site_name}.com`,
+			alternateName: `${settings.site_name}`,
 			url: settings.site_url,
 			description: settings.site_description,
 		};

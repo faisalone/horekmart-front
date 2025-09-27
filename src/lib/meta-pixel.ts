@@ -36,7 +36,6 @@ declare global {
 export const initMetaPixel = () => {
 	if (typeof window !== 'undefined' && !window.fbq) {
 		// The script will be loaded by the layout, this just ensures we can track events
-		console.log('Meta Pixel initialized');
 	}
 };
 

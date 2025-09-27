@@ -146,18 +146,16 @@ class SiteSettingsService {
 	private autoInitialize(): void {
 		if (!this.initialized && !this.settings) {
 			this.initialized = true;
-			console.log('🚀 Site settings service: Auto-initializing...');
 			// Start fetching in background without waiting
 			this.fetchSiteSettings()
-				.then((settings) => {
-					console.log(
-						'✅ Site settings loaded successfully:',
-						Object.keys(settings).length,
-						'settings'
-					);
+				.then(() => {
+					// Settings loaded successfully
 				})
 				.catch((error) => {
-					console.warn('❌ Auto-initialization failed:', error);
+					console.warn(
+						'Site settings auto-initialization failed:',
+						error
+					);
 					this.initialized = false; // Allow retry
 				});
 		}

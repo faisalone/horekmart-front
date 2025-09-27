@@ -87,39 +87,18 @@ export const useProductPage = (
 	const isInStock = useMemo(() => {
 		if (!pricingEngine) return false;
 
-		console.log('🔍 Debug isInStock calculation:', {
-			hasVariations,
-			selectedVariant: selectedVariant?.id,
-			productInStock: product?.in_stock,
-			productStockQuantity: product?.stock_quantity,
-			variants: variants.length,
-			variantQuantities: variants.map((v) => ({
-				id: v.id,
-				quantity: v.quantity,
-			})),
-		});
-
 		// If product has variations
 		if (hasVariations) {
 			// If a specific variant is selected, check that variant's stock
 			if (selectedVariant) {
-				const result = pricingEngine.isAvailableForPurchase();
-				console.log(
-					'✅ Variant selected - isAvailableForPurchase:',
-					result
-				);
-				return result;
+				return pricingEngine.isAvailableForPurchase();
 			}
 			// No specific variant selected, check if ANY variant has stock
-			const result = pricingEngine.hasAnyStock();
-			console.log('🔄 No variant selected - hasAnyStock:', result);
-			return result;
+			return pricingEngine.hasAnyStock();
 		}
 
 		// No variations, check base product stock
-		const result = pricingEngine.isAvailableForPurchase();
-		console.log('📦 No variations - isAvailableForPurchase:', result);
-		return result;
+		return pricingEngine.isAvailableForPurchase();
 	}, [pricingEngine, selectedVariant, hasVariations, product, variants]);
 
 	const canPurchaseCurrentSelection = useMemo(() => {
@@ -133,18 +112,7 @@ export const useProductPage = (
 	}, [variantEngine]);
 
 	const canPurchase = useMemo(() => {
-		const result = canAddToCart(
-			isInStock,
-			hasVariations,
-			allVariationsSelected
-		);
-		console.log('🛒 canPurchase calculation:', {
-			isInStock,
-			hasVariations,
-			allVariationsSelected,
-			result,
-		});
-		return result;
+		return canAddToCart(isInStock, hasVariations, allVariationsSelected);
 	}, [isInStock, hasVariations, allVariationsSelected]);
 
 	// Handlers
@@ -242,13 +210,11 @@ export const useCartOperations = (
 			quantity,
 			price: finalPrice,
 		};
-		console.log('Adding to cart:', cartItem);
 		// TODO: Implement cart functionality
 	};
 
 	const handleAddToWishlist = () => {
 		if (!product) return;
-		console.log('Adding to wishlist:', product);
 		// TODO: Implement wishlist functionality
 	};
 
@@ -257,7 +223,6 @@ export const useCartOperations = (
 		// Add to cart and redirect to checkout
 		handleAddToCart();
 		// TODO: Redirect to checkout
-		console.log('Buy now clicked');
 	};
 
 	return {

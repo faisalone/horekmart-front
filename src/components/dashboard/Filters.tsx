@@ -88,8 +88,6 @@ function Filters<T extends Record<string, any>>({
   };
 
   const handleClearAll = () => {
-    console.log('Clear All clicked - Current filters:', filters);
-    
     // Use FilterManager to clear all filters
     const cleanFilters = FilterManager.clearAllFilters(filters);
     
