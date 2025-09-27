@@ -105,7 +105,7 @@ class StructuredDataService {
 			description: settings.site_description,
 			logo: {
 				'@type': 'ImageObject',
-				url: `${settings.site_url}${settings.site_logo}`,
+				url: settings.site_logo,
 				width: 200,
 				height: 60,
 			},
