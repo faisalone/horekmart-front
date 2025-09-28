@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Lock, Edit3, X, Loader2 } from 'lucide-react';
@@ -13,6 +13,7 @@ import { toast } from 'react-hot-toast';
 import { checkoutService, type FormOrderData as CheckoutOrderData, type CheckoutSessionData } from '@/services/CheckoutService';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { useGTM } from '@/hooks/useGTM';
 
 interface City {
   id: number;
@@ -67,6 +68,74 @@ export default function CheckoutPage() {
   
   // Set page title using improved context
   useSetPageTitle('Checkout');
+  
+  // GTM tracking
+  const {
+    trackBeginCheckout,
+    trackCheckoutStep,
+    trackFieldInteraction,
+    trackPaymentMethodSelect,
+    trackShippingInfo,
+    trackCheckoutAbandonment,
+    trackUserEngagement,
+    trackError,
+    trackPurchase
+  } = useGTM();
+  
+  // Tracking refs
+  const pageStartTime = useRef(Date.now());
+  const stepStartTimes = useRef<Record<string, number>>({});
+  const fieldInteractions = useRef<Record<string, { focused: boolean; filled: boolean }>>({});
+  const hasTrackedBeginCheckout = useRef(false);
+  
+  // Field interaction handlers
+  const handleFieldFocus = (fieldName: string, fieldType: string) => {
+    trackFieldInteraction({
+      fieldName,
+      fieldType,
+      action: 'focus',
+      formName: 'checkout_form',
+      sessionId
+    });
+    
+    fieldInteractions.current[fieldName] = {
+      ...fieldInteractions.current[fieldName],
+      focused: true
+    };
+  };
+  
+  const handleFieldBlur = (fieldName: string, fieldType: string, value: any) => {
+    trackFieldInteraction({
+      fieldName,
+      fieldType,
+      action: 'blur',
+      formName: 'checkout_form',
+      sessionId,
+      fieldValueLength: value ? value.toString().length : 0
+    });
+  };
+  
+  const handlePaymentMethodSelect = (method: string) => {
+    handleInputChange('paymentMethod', method);
+    
+    trackPaymentMethodSelect({
+      paymentMethod: method,
+      sessionId,
+      total,
+      checkoutType: isDirectBuy ? 'buy_now' : 'cart'
+    });
+    
+    trackCheckoutStep({
+      stepNumber: 4,
+      stepName: 'payment_method_selected',
+      sessionId,
+      checkoutType: isDirectBuy ? 'buy_now' : 'cart',
+      total,
+      additionalData: {
+        selected_method: method
+      }
+    });
+  };
   
   const [isValidSession, setIsValidSession] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -144,6 +213,44 @@ export default function CheckoutPage() {
         setIsValidSession(true);
         setSessionLoading(false);
         
+        // Track begin checkout only once
+        if (!hasTrackedBeginCheckout.current) {
+          hasTrackedBeginCheckout.current = true;
+          const checkoutType = sessionData.type === 'buy_now' ? 'buy_now' : 'cart';
+          const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          
+          trackBeginCheckout({
+            items: items.map(item => ({
+              product: {
+                id: parseInt(item.id),
+                name: item.productName,
+                price: item.price.toString(),
+                sale_price: undefined,
+                category: { name: item.categorySlug || 'Unknown' }
+              } as any,
+              quantity: item.quantity
+            })),
+            total,
+            checkoutType,
+            sessionId
+          });
+          
+          // Track step 1 - checkout page loaded
+          trackCheckoutStep({
+            stepNumber: 1,
+            stepName: 'checkout_page_loaded',
+            sessionId,
+            checkoutType,
+            total,
+            additionalData: {
+              items_count: items.length,
+              is_direct_buy: sessionData.type === 'buy_now'
+            }
+          });
+          
+          stepStartTimes.current['checkout_page_loaded'] = Date.now();
+        }
+        
       } catch (error) {
         console.error('Error validating session:', error);
         setIsValidSession(false);
@@ -158,6 +265,71 @@ export default function CheckoutPage() {
       router.replace('/cart');
     }
   }, [sessionId, router, isDirectBuy, state.items]);
+  
+  // Track page abandonment on unmount
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (hasTrackedBeginCheckout.current && !isProcessing) {
+        // Determine current step based on form completion
+        let currentStep = 'checkout_page_loaded';
+        let stepNumber = 1;
+        
+        const fieldsCompleted = [];
+        const fieldsIncomplete = [];
+        
+        if (formData.phone) fieldsCompleted.push('phone');
+        else fieldsIncomplete.push('phone');
+        
+        if (formData.name) fieldsCompleted.push('name');
+        else fieldsIncomplete.push('name');
+        
+        if (formData.address) fieldsCompleted.push('address');
+        else fieldsIncomplete.push('address');
+        
+        if (formData.cityId) {
+          fieldsCompleted.push('city');
+          currentStep = 'city_selected';
+          stepNumber = 2;
+        } else {
+          fieldsIncomplete.push('city');
+        }
+        
+        if (formData.zoneId) {
+          fieldsCompleted.push('zone');
+          currentStep = 'zone_selected';
+          stepNumber = 3;
+        } else {
+          fieldsIncomplete.push('zone');
+        }
+        
+        if (formData.paymentMethod) {
+          fieldsCompleted.push('paymentMethod');
+          currentStep = 'payment_method_selected';
+          stepNumber = 4;
+        } else {
+          fieldsIncomplete.push('paymentMethod');
+        }
+        
+        trackCheckoutAbandonment({
+          stepName: currentStep,
+          stepNumber,
+          sessionId,
+          timeOnStep: Date.now() - (stepStartTimes.current[currentStep] || pageStartTime.current),
+          fieldsCompleted,
+          fieldsIncomplete,
+          checkoutType: isDirectBuy ? 'buy_now' : 'cart'
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also track abandonment on component unmount
+      handleBeforeUnload();
+    };
+  }, []);
 
   const [formData, setFormData] = useState<OrderData>({
     email: '',
@@ -166,7 +338,7 @@ export default function CheckoutPage() {
     address: '',
     cityId: null,
     zoneId: null,
-    paymentMethod: '',
+    paymentMethod: 'pay_later',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -176,6 +348,71 @@ export default function CheckoutPage() {
   });
 
   const [errors, setErrors] = useState<FieldErrors>({});
+  
+  // Track page abandonment on unmount
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (hasTrackedBeginCheckout.current && !isProcessing) {
+        // Determine current step based on form completion
+        let currentStep = 'checkout_page_loaded';
+        let stepNumber = 1;
+        
+        const fieldsCompleted = [];
+        const fieldsIncomplete = [];
+        
+        if (formData.phone) fieldsCompleted.push('phone');
+        else fieldsIncomplete.push('phone');
+        
+        if (formData.name) fieldsCompleted.push('name');
+        else fieldsIncomplete.push('name');
+        
+        if (formData.address) fieldsCompleted.push('address');
+        else fieldsIncomplete.push('address');
+        
+        if (formData.cityId) {
+          fieldsCompleted.push('city');
+          currentStep = 'city_selected';
+          stepNumber = 2;
+        } else {
+          fieldsIncomplete.push('city');
+        }
+        
+        if (formData.zoneId) {
+          fieldsCompleted.push('zone');
+          currentStep = 'zone_selected';
+          stepNumber = 3;
+        } else {
+          fieldsIncomplete.push('zone');
+        }
+        
+        if (formData.paymentMethod) {
+          fieldsCompleted.push('paymentMethod');
+          currentStep = 'payment_method_selected';
+          stepNumber = 4;
+        } else {
+          fieldsIncomplete.push('paymentMethod');
+        }
+        
+        trackCheckoutAbandonment({
+          stepName: currentStep,
+          stepNumber,
+          sessionId,
+          timeOnStep: Date.now() - (stepStartTimes.current[currentStep] || pageStartTime.current),
+          fieldsCompleted,
+          fieldsIncomplete,
+          checkoutType: isDirectBuy ? 'buy_now' : 'cart'
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also track abandonment on component unmount
+      handleBeforeUnload();
+    };
+  }, [formData, isProcessing, sessionId, isDirectBuy]);
   
   // Discount code state
   const [discountCode, setDiscountCode] = useState('');
@@ -189,10 +426,40 @@ export default function CheckoutPage() {
 
   const handleInputChange = (field: keyof OrderData, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Track field interaction
+    const fieldName = field as string;
+    if (['phone', 'name', 'address', 'email'].includes(fieldName)) {
+      trackFieldInteraction({
+        fieldName,
+        fieldType: 'text',
+        action: 'input',
+        formName: 'checkout_form',
+        sessionId,
+        fieldValueLength: value ? value.toString().length : 0
+      });
+      
+      // Update field interaction tracking
+      fieldInteractions.current[fieldName] = {
+        ...fieldInteractions.current[fieldName],
+        filled: !!value
+      };
+    }
+    
     // Clear error when user starts typing
     if (['phone','name','address','paymentMethod'].includes(field as string)) {
       const f = field as FormField;
-      if (errors[f]) setErrors(prev => ({ ...prev, [f]: undefined }));
+      if (errors[f]) {
+        setErrors(prev => ({ ...prev, [f]: undefined }));
+        // Track error resolution
+        trackFieldInteraction({
+          fieldName,
+          fieldType: 'text',
+          action: 'valid',
+          formName: 'checkout_form',
+          sessionId
+        });
+      }
     }
   };
   
@@ -206,7 +473,19 @@ export default function CheckoutPage() {
       zone: '' 
     }));
     // Clear city/zone related errors on change
-  setErrors(prev => ({ ...prev, city: undefined, zone: undefined }));
+    setErrors(prev => ({ ...prev, city: undefined, zone: undefined }));
+    
+    // Track step progress
+    trackCheckoutStep({
+      stepNumber: 2,
+      stepName: 'city_selected',
+      sessionId,
+      checkoutType: isDirectBuy ? 'buy_now' : 'cart',
+      additionalData: {
+        city_name: cityName,
+        city_id: cityId
+      }
+    });
     
     // Clear zones and shipping fee
     setZones([]);
@@ -219,6 +498,13 @@ export default function CheckoutPage() {
       setZones(zonesData);
     } catch (error) {
       console.error('Error loading zones:', error);
+      trackError({
+        errorType: 'network',
+        errorMessage: error instanceof Error ? error.message : 'Failed to load zones',
+        formName: 'checkout_form',
+        sessionId,
+        userAction: 'city_selection'
+      });
     } finally {
       setLoadingZones(false);
     }
@@ -230,7 +516,21 @@ export default function CheckoutPage() {
     setFormData(prev => {
       const newFormData = { ...prev, zoneId, zone: zoneName };
       // Clear zone error on change
-  setErrors(p => ({ ...p, zone: undefined }));
+      setErrors(p => ({ ...p, zone: undefined }));
+      
+      // Track step progress and shipping selection
+      const currentCity = cities.find(c => c.id === prev.cityId);
+      trackCheckoutStep({
+        stepNumber: 3,
+        stepName: 'zone_selected',
+        sessionId,
+        checkoutType: isDirectBuy ? 'buy_now' : 'cart',
+        additionalData: {
+          city_name: currentCity?.name,
+          zone_name: zoneName,
+          zone_id: zoneId
+        }
+      });
       
       // Calculate shipping price with the current cityId
       if (prev.cityId && sessionId) {
@@ -256,8 +556,28 @@ export default function CheckoutPage() {
       const shippingPrice = shippingData.price || 0;
       console.log('Setting shipping fee to:', shippingPrice);
       setShippingFee(shippingPrice);
+      
+      // Track shipping info
+      const currentCity = cities.find(c => c.id === cityId);
+      const currentZone = zones.find(z => z.id === zoneId);
+      
+      trackShippingInfo({
+        shippingCost: shippingPrice,
+        city: currentCity?.name,
+        zone: currentZone?.name,
+        sessionId,
+        total: subtotal + shippingPrice
+      });
+      
     } catch (error) {
       console.error('Error calculating shipping:', error);
+      trackError({
+        errorType: 'network',
+        errorMessage: error instanceof Error ? error.message : 'Failed to calculate shipping',
+        formName: 'checkout_form',
+        sessionId,
+        userAction: 'shipping_calculation'
+      });
     } finally {
       setCalculatingShipping(false);
     }
@@ -329,13 +649,47 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Track form submission attempt
+    trackCheckoutStep({
+      stepNumber: 5,
+      stepName: 'confirm_order_clicked',
+      sessionId,
+      checkoutType: isDirectBuy ? 'buy_now' : 'cart',
+      total,
+      additionalData: {
+        payment_method: formData.paymentMethod,
+        has_agreed_terms: formData.agreeTerms,
+        shipping_fee: shippingFee,
+        fields_filled: Object.keys(formData).filter(key => {
+          const value = formData[key as keyof OrderData];
+          return value !== '' && value !== null && value !== false;
+        })
+      }
+    });
+    
     if (!validateForm()) {
+      // Track validation errors
+      const errorFields = Object.keys(errors);
+      trackError({
+        errorType: 'validation',
+        errorMessage: `Form validation failed: ${errorFields.join(', ')}`,
+        formName: 'checkout_form',
+        sessionId,
+        userAction: 'form_submission'
+      });
       return;
     }
 
     // Ensure shipping fee has been calculated; backend requires shipping_amount
     if (!formData.cityId || !formData.zoneId) {
       toast.error('Please select city and zone to calculate shipping.');
+      trackError({
+        errorType: 'validation',
+        errorMessage: 'Missing shipping information',
+        formName: 'checkout_form',
+        sessionId,
+        userAction: 'form_submission'
+      });
       return;
     }
     if (calculatingShipping) {
@@ -344,6 +698,13 @@ export default function CheckoutPage() {
     }
     if (Number.isNaN(shippingFee)) {
       toast.error('Invalid shipping amount. Please reselect your zone.');
+      trackError({
+        errorType: 'system',
+        errorMessage: 'Invalid shipping calculation',
+        formName: 'checkout_form',
+        sessionId,
+        userAction: 'form_submission'
+      });
       return;
     }
 
@@ -369,6 +730,37 @@ export default function CheckoutPage() {
 
     const response = await checkoutService.createOrder(orderData);
     const ordNum = response.order.order_number;
+      
+      // Track successful purchase
+      trackPurchase({
+        orderId: ordNum,
+        total,
+        items: checkoutItems.map(item => ({
+          product: {
+            id: parseInt(item.id),
+            name: item.productName,
+            price: item.price.toString(),
+            sale_price: undefined,
+            category: { name: item.categorySlug || 'Unknown' }
+          } as any,
+          quantity: item.quantity
+        }))
+      });
+      
+      // Track successful checkout completion
+      trackCheckoutStep({
+        stepNumber: 6,
+        stepName: 'order_completed',
+        sessionId,
+        checkoutType: isDirectBuy ? 'buy_now' : 'cart',
+        total,
+        additionalData: {
+          order_number: ordNum,
+          payment_method: formData.paymentMethod,
+          shipping_cost: shippingFee,
+          processing_time: Date.now() - pageStartTime.current
+        }
+      });
       
       // Clear cart if not direct buy
       if (!isDirectBuy) {
@@ -396,6 +788,21 @@ export default function CheckoutPage() {
           toast.error(be['session_id'][0]);
         }
         setErrors(mapped);
+        
+        // Track field-specific validation errors
+        Object.entries(mapped).forEach(([fieldName, fieldErrors]) => {
+          if (fieldErrors && fieldErrors.length > 0) {
+            trackFieldInteraction({
+              fieldName,
+              fieldType: 'text',
+              action: 'error',
+              formName: 'checkout_form',
+              sessionId,
+              errorMessage: fieldErrors[0]
+            });
+          }
+        });
+        
         // Scroll to first error field
         const firstField = ['phone','name','address','city','zone']
           .find(k => (mapped as any)[k] && (mapped as any)[k].length > 0);
@@ -409,6 +816,15 @@ export default function CheckoutPage() {
           errorMessage = error.response.data.error;
         }
         toast.error(errorMessage);
+        
+        // Track general order creation error
+        trackError({
+          errorType: error.response?.status === 422 ? 'validation' : 'network',
+          errorMessage,
+          formName: 'checkout_form',
+          sessionId,
+          userAction: 'order_creation'
+        });
       }
     } finally {
       setIsProcessing(false);
@@ -511,6 +927,8 @@ export default function CheckoutPage() {
 					<input
 					  type="tel"
 					  value={formData.phone}
+					  onFocus={() => handleFieldFocus('phone', 'tel')}
+					  onBlur={(e) => handleFieldBlur('phone', 'tel', e.target.value)}
 					  onChange={(e) => {
 						const value = e.target.value.replace(/\D/g, '').slice(0, 11);
 						handleInputChange('phone', value);
@@ -549,6 +967,8 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       value={formData.name}
+                      onFocus={() => handleFieldFocus('name', 'text')}
+                      onBlur={(e) => handleFieldBlur('name', 'text', e.target.value)}
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
                         errors.name ? 'border-red-500' : 'border-gray-300'
@@ -565,6 +985,8 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       value={formData.address}
+                      onFocus={() => handleFieldFocus('address', 'text')}
+                      onBlur={(e) => handleFieldBlur('address', 'text', e.target.value)}
                       onChange={(e) => handleInputChange('address', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors ${
                         errors.address ? 'border-red-500' : 'border-gray-300'
@@ -690,7 +1112,7 @@ export default function CheckoutPage() {
 
                   {/* Pay Later */}
                   <div 
-                    onClick={() => handleInputChange('paymentMethod', 'pay_later')}
+                    onClick={() => handlePaymentMethodSelect('pay_later')}
                     className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                       formData.paymentMethod === 'pay_later' 
                         ? 'bg-blue-50 border-blue-500' 

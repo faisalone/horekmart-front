@@ -19,6 +19,9 @@ function ProductsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
+  // GTM tracking
+  const { trackSearch, trackEvent } = useGTM();
+  
   // Get search query, category, vendor, sort, and type from URL parameters
   const urlSearchQuery = searchParams.get('q') || '';
   const categoryQuery = searchParams.get('category') || '';
@@ -105,11 +108,8 @@ function ProductsPageContent() {
   const { toggleItem: toggleWishlist } = useWishlist();
   const { addToCart: addToCartService } = useProductCheckout();
   
-  // GTM tracking
-  const { trackSearch } = useGTM();
-
+  // Track search queries
   useEffect(() => {
-    // Track search queries
     if (urlSearchQuery) {
       trackSearch(urlSearchQuery);
     }
@@ -344,6 +344,16 @@ function ProductsPageContent() {
   const handleFilterChange = useCallback((newFilters: Partial<SearchFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     
+    // Track filter usage
+    Object.entries(newFilters).forEach(([key, value]) => {
+      trackEvent('product_filter_change', {
+        filter_type: key,
+        filter_value: value,
+        page_location: window.location.pathname,
+        current_search: urlSearchQuery
+      });
+    });
+    
     // Update URL parameters for the filters
     const updates: Record<string, string | null> = {};
     
@@ -560,6 +570,14 @@ function ProductsPageContent() {
 
   // Handler for sort change from SortingHeader (only handles regular sorting)
   const handleSortChange = useCallback((value: string) => {
+    // Track sort usage
+    trackEvent('product_sort_change', {
+      sort_type: value || 'default',
+      page_location: window.location.pathname,
+      current_search: urlSearchQuery,
+      current_category: categoryQuery
+    });
+    
     if (value === '' || !value) {
       // Clear regular sorting but keep type if active
       if (selectedType) {

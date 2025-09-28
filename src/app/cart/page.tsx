@@ -10,12 +10,14 @@ import { formatCurrency } from '@/lib/currency';
 import { getProductUrl } from '@/lib/utils';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
+import { useGTM } from '@/hooks/useGTM';
 
 function CartContent() {
   // Set page title
   useSetPageTitle('Cart');
   const { state, updateQuantity, updateVariant, removeItem, clearCart } = useCart();
   const { prepareCartCheckout } = useProductCheckout();
+  const { trackButtonClick } = useGTM();
 
   // Simple cart totals without shipping calculation
   const subtotal = state.totalPrice;
@@ -307,6 +309,9 @@ function CartContent() {
               <Button 
                 onClick={async () => {
                   try {
+                    // Track checkout button click from cart
+                    trackButtonClick('proceed_to_checkout_from_cart', 'cart_page');
+                    
                     const checkoutUrl = await prepareCartCheckout(state.items);
                     window.location.href = checkoutUrl;
                   } catch (error) {

@@ -44,6 +44,7 @@ import { useProductCheckout } from '@/services/ProductCheckoutService';
 import RichTextDisplay from '@/components/ui/RichTextDisplay';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getProductUrl } from '@/lib/utils';
+import { useGTM } from '@/hooks/useGTM';
 
 
 interface BreadcrumbItem {
@@ -85,6 +86,24 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 	
 	// Centralized checkout service
 	const { addToCart: addToCartService, buyNow } = useProductCheckout();
+	
+	// GTM tracking
+	const { trackProductView, trackAddToCart, trackButtonClick, trackEvent } = useGTM();
+
+	// Enhanced variant selection handler with tracking
+	const handleVariantSelectionWithTracking = (variationName: string, valueId: string) => {
+		if (productPageData) {
+			productPageData.handleVariantSelection(variationName, valueId);
+			
+			// Track variant selection
+			trackEvent('variant_selection', {
+				product_id: product?.id.toString() || '',
+				variation_name: variationName,
+				value_id: valueId,
+				selected_options: JSON.stringify(productPageData.selectedOptions),
+			});
+		}
+	};
 
 	// Legacy hooks (might remove these later)
 	const productPageData = useProductPage(product, variants);
@@ -227,6 +246,9 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 				
 				// Use the product passed as prop
 				setProduct(initialProduct);
+				
+				// Track product view
+				trackProductView(initialProduct);
 				
 				// Build breadcrumb from product's category hierarchy
 				let breadcrumbData: Category[] = [];
@@ -453,15 +475,33 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 
 	const handleQuantityChange = (change: number) => {
 		if (productPageData) {
+			const oldQuantity = productPageData.quantity;
 			productPageData.handleQuantityChange(change);
+			
+			// Track quantity change
+			trackEvent('quantity_change', {
+				product_id: product?.id.toString() || '',
+				old_quantity: oldQuantity,
+				new_quantity: oldQuantity + change,
+				change: change,
+			});
 		} else {
 			// Fallback if productPageData is not available
 			const currentStock = product.stock_quantity;
+			const oldQuantity = quantity;
 			const newQuantity = Math.max(
 				1,
 				Math.min(currentStock, quantity + change)
 			);
 			setQuantity(newQuantity);
+			
+			// Track quantity change
+			trackEvent('quantity_change', {
+				product_id: product?.id.toString() || '',
+				old_quantity: oldQuantity,
+				new_quantity: newQuantity,
+				change: change,
+			});
 		}
 	};
 
@@ -481,6 +521,9 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 				productPageData.selectedVariant?.id?.toString(),
 				(item) => addToCart(item)
 			);
+			
+			// Track add to cart event
+			trackAddToCart(product, productPageData.quantity);
 		} catch (error) {
 			console.error('Error adding to cart:', error);
 		}
@@ -505,6 +548,14 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 		};
 
 		toggleWishlist(wishlistItem);
+		
+		// Track wishlist action
+		trackEvent('add_to_wishlist', {
+			product_id: product.id.toString(),
+			product_name: product.name,
+			category: product.category?.name || 'Unknown',
+			price: product.sale_price ? parseFloat(product.sale_price) : parseFloat(product.price),
+		});
 	};
 
 	const handleBuyNow = async () => {
@@ -517,6 +568,15 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 		}
 
 		try {
+			// Track Buy Now button click
+			trackEvent('buy_now_click', {
+				product_id: product.id.toString(),
+				product_name: product.name,
+				category: product.category?.name || 'Unknown',
+				quantity: productPageData.quantity,
+				variant_id: productPageData.selectedVariant?.id?.toString(),
+			});
+
 			const checkoutUrl = await buyNow(
 				product.slug,
 				productPageData.quantity,
@@ -529,6 +589,13 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 	};
 
 	const handleShare = () => {
+		// Track share action
+		trackEvent('product_share', {
+			product_id: product?.id.toString() || '',
+			product_name: product?.name || '',
+			share_method: typeof navigator.share !== 'undefined' ? 'native' : 'copy_link',
+		});
+
 		if (navigator.share) {
 			navigator
 				.share({
@@ -880,9 +947,13 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 											</div>
 											{(product.description && product.description.length > 300) && (
 												<button
-													onClick={() =>
-														setShowFullDescription(!showFullDescription)
-													}
+													onClick={() => {
+														setShowFullDescription(!showFullDescription);
+														trackEvent('product_description_toggle', {
+															product_id: product.id.toString(),
+															action: showFullDescription ? 'collapse' : 'expand',
+														});
+													}}
 													className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
 												>
 													{showFullDescription ? 'Show Less' : 'Show More'}
