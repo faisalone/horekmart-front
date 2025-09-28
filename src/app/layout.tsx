@@ -42,13 +42,13 @@ export async function generateMetadata() {
       openGraph: {
         title: 'Horekmart - Your trusted eCommerce platform',
         description: 'Your trusted eCommerce platform for quality products',
-        url: 'http://localhost:3000',
+        url: 'https://horekmart.com',
         siteName: 'Horekmart',
         locale: 'en_US',
         type: 'website',
         images: [
           {
-            url: 'http://localhost:8000/site-preview.jpg',
+            url: 'https://app.horekmart.com/site-preview.jpg',
             width: 1200,
             height: 630,
             alt: 'Horekmart',
@@ -59,7 +59,7 @@ export async function generateMetadata() {
         card: 'summary_large_image',
         title: 'Horekmart - Your trusted eCommerce platform',
         description: 'Your trusted eCommerce platform for quality products',
-        images: ['http://localhost:8000/site-preview.jpg'],
+        images: ['https://app.horekmart.com/site-preview.jpg'],
       },
       other: {
         'theme-color': '#f22540',
