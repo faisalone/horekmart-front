@@ -42,6 +42,19 @@ jobs:
           NODE_ENV: production
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          if [ ! -d .next ]; then
+            echo "::error title=Missing build output::.next directory not found after build. Failing early.";
+            echo "Workspace listing:";
+            ls -al .;
+            echo "Disk usage:";
+            du -sh * 2>/dev/null || true;
+            exit 1;
+          fi
+          echo "✅ .next build directory present";
+          du -sh .next || true
+
       - name: Export build metadata
         run: |
           echo "BUILD_SHA=${GITHUB_SHA}" > build-info.txt
@@ -81,6 +94,13 @@ jobs:
 
       - name: Sync build to server (rsync)
         run: |
+          echo "Listing downloaded artifact contents before packaging (debug)";
+          ls -al . || true
+          if [ ! -d .next ]; then
+            echo "::error title=Artifact missing .next::The downloaded artifact does not contain the .next directory. Aborting deploy.";
+            ls -al .;
+            exit 1;
+          fi
           tar -czf artifact.tar.gz .next package.json package-lock.json next.config.ts build-info.txt
           scp artifact.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/artifact.tar.gz
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' <<'EOF'
