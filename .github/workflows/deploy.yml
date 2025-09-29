@@ -140,11 +140,14 @@ jobs:
           git fetch origin main --depth=1
           git reset --hard origin/main
           
-          echo "📦 Installing dependencies"
-          npm ci --omit=dev
+          echo "📦 Installing dependencies (including dev for build)"
+          npm ci
           
           echo "🏗️ Building application on server"
           NEXT_PUBLIC_API_URL=https://app.horekmart.com/api NEXT_PUBLIC_APP_URL=https://horekmart.com NODE_ENV=production npm run build
+          
+          echo "🧹 Cleaning dev dependencies after build"
+          npm ci --omit=dev
           
           if [ ! -d .next ]; then
             echo "❌ Build failed - .next directory not created"
