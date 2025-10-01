@@ -98,14 +98,28 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
 
 	const [keywordInput, setKeywordInput] = useState('');
 
-	// Comprehensive list of available tags
-	const allAvailableTags = [
-		'electronics', 'smartphone', 'laptop', 'accessories', 'gaming', 'home', 'fashion', 'books', 'sports', 'beauty',
-		'automotive', 'health', 'technology', 'mobile', 'computer', 'tablet', 'headphones', 'speakers', 'camera', 'tv',
-		'kitchen', 'furniture', 'decor', 'garden', 'tools', 'outdoor', 'fitness', 'travel', 'music', 'movies',
-		'clothing', 'shoes', 'jewelry', 'watches', 'bags', 'makeup', 'skincare', 'perfume', 'toys', 'kids',
-		'office', 'stationery', 'art', 'craft', 'pets', 'food', 'drinks', 'supplements', 'medical', 'baby'
-	];
+	// Helper function to add keywords from input (handles comma separation)
+	const addKeywordsFromInput = (input: string) => {
+		if (!input.trim()) return;
+		
+		// Split by comma and filter out empty values
+		const newKeywords = input
+			.split(',')
+			.map(k => k.trim())
+			.filter(k => k.length > 0);
+		
+		if (newKeywords.length === 0) return;
+		
+		const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
+		const uniqueNewTags = newKeywords.filter(tag => !currentTags.includes(tag));
+		
+		if (uniqueNewTags.length > 0) {
+			const allTags = [...currentTags, ...uniqueNewTags];
+			handleInputChange('meta_keywords', allTags.join(', '));
+		}
+		
+		setKeywordInput('');
+	};
 
 	const [images, setImages] = useState<UploadedImage[]>([]);
 	const [thumbnail, setThumbnail] = useState<File | string | null | undefined>(undefined);
@@ -715,59 +729,42 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading, mo
 											</div>
 											<Input
 												value={keywordInput}
-												onChange={(e) => setKeywordInput(e.target.value)}
+												onChange={(e) => {
+													const value = e.target.value;
+													
+													// Check if comma was just typed or pasted
+													if (value.includes(',')) {
+														// Auto-process keywords when comma is detected
+														addKeywordsFromInput(value);
+													} else {
+														setKeywordInput(value);
+													}
+												}}
 												onKeyDown={(e) => {
 													if (e.key === 'Enter') {
 														e.preventDefault();
-														const value = keywordInput.trim();
-														if (value) {
-															const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
-															if (!currentTags.includes(value)) {
-																const newTags = [...currentTags, value];
-																handleInputChange('meta_keywords', newTags.join(', '));
-															}
-															setKeywordInput('');
-														}
+														addKeywordsFromInput(keywordInput);
+													} else if (e.key === ',') {
+														// Prevent default comma input since we'll handle it in onChange
+														e.preventDefault();
+														addKeywordsFromInput(keywordInput);
 													}
 												}}
-												placeholder="Type a keyword and press Enter"
+												onPaste={(e) => {
+													// Handle pasted content with commas
+													setTimeout(() => {
+														const pastedValue = (e.target as HTMLInputElement).value;
+														if (pastedValue.includes(',')) {
+															addKeywordsFromInput(pastedValue);
+														}
+													}, 0);
+												}}
+												placeholder="Type keywords separated by comma or press Enter"
 												className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
 											/>
-											<div className="flex flex-wrap gap-2">
-												{(() => {
-													const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
-													const availableTags = allAvailableTags.filter(tag => !currentTags.includes(tag));
-													const tagsToShow = availableTags.slice(0, Math.min(12, availableTags.length));
-
-													return tagsToShow.map((tag) => (
-														<button
-															key={tag}
-															type="button"
-															onClick={() => {
-																const newTags = [...currentTags, tag];
-																handleInputChange('meta_keywords', newTags.join(', '));
-															}}
-															className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
-														>
-															+ {tag}
-														</button>
-													));
-												})()}
+											<div className="text-sm text-gray-400 mt-1">
+												Tip: Separate multiple keywords with commas or press Enter after each keyword
 											</div>
-											{(() => {
-												const currentTags = formData.meta_keywords?.split(',').map(t => t.trim()).filter(t => t) || [];
-												const availableTags = allAvailableTags.filter(tag => !currentTags.includes(tag));
-												const remainingCount = availableTags.length;
-
-												if (remainingCount > 12) {
-													return (
-														<div className="text-xs text-gray-400">
-															{remainingCount - 12} more tags available...
-														</div>
-													);
-												}
-												return null;
-											})()}
 										</div>
 
 										<div className="mt-4">
