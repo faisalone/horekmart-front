@@ -1,5 +1,4 @@
 'use client';
-// CI/CD Test - Verifying auto-deployment
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
