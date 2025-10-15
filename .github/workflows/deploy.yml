@@ -136,7 +136,11 @@ jobs:
           
           cd "$APP_DIR"
           
-          echo "📥 Fetching latest code"
+          echo "� Fixing permissions before deployment"
+          sudo chown -R webadmin:www-data "$APP_DIR"
+          sudo chmod -R u+w "$APP_DIR/.git"
+          
+          echo "�📥 Fetching latest code"
           git fetch origin main --depth=1
           git reset --hard origin/main
           
