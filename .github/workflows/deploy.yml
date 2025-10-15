@@ -48,7 +48,7 @@ jobs:
       - name: Build (production)
         env:
           NEXT_PUBLIC_API_URL: https://app.horekmart.com/api
-          NEXT_PUBLIC_APP_URL: https://horekmart.com
+          NEXT_PUBLIC_APP_URL: https://www.horekmart.com
           NODE_ENV: production
         run: |
           echo "🏗️ Starting Next.js build..."
@@ -144,7 +144,7 @@ jobs:
           npm ci
           
           echo "🏗️ Building application on server"
-          NEXT_PUBLIC_API_URL=https://app.horekmart.com/api NEXT_PUBLIC_APP_URL=https://horekmart.com NODE_ENV=production npm run build
+          NEXT_PUBLIC_API_URL=https://app.horekmart.com/api NEXT_PUBLIC_APP_URL=https://www.horekmart.com NODE_ENV=production npm run build
           
           echo "🧹 Cleaning dev dependencies after build"
           npm ci --omit=dev

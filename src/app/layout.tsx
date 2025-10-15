@@ -42,7 +42,7 @@ export async function generateMetadata() {
       openGraph: {
         title: 'Horekmart - Your trusted eCommerce platform',
         description: 'Your trusted eCommerce platform for quality products',
-        url: 'https://horekmart.com',
+        url: 'https://www.horekmart.com',
         siteName: 'Horekmart',
         locale: 'en_US',
         type: 'website',
