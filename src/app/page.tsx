@@ -275,21 +275,21 @@ export default function HomeClient() {
       </section>
       </AnimatedElement>
 
-      {/* Popular Products Section - Moved below Main Banner */}
-      <AnimatedElement animation="scaleUp" delay={300}>
-        <section className="py-16 bg-theme-subtle-secondary">
+	  {/* Latest Products Section */}
+      <AnimatedElement animation="slideLeft" delay={500}>
+        <section className="py-16 bg-theme-subtle-primary">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                🔥 Trending Now
+                ✨ Fresh Arrivals
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Discover what everyone&apos;s talking about - our most popular picks that are flying off the shelves
+                Be the first to explore our newest additions - straight from the latest collections
               </p>
             </div>
             
             <ProductGrid
-              products={trendingProducts}
+              products={latestProducts}
               onAddToCart={handleAddToCart}
               onAddToWishlist={handleAddToWishlist}
               className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
@@ -297,8 +297,8 @@ export default function HomeClient() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?type=trending" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
-                View All Trending Products <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/products?type=new-arrivals" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+                See All New Arrivals <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -349,21 +349,21 @@ export default function HomeClient() {
         </section>
       </AnimatedElement>
 
-      {/* Latest Products Section */}
-      <AnimatedElement animation="slideLeft" delay={500}>
-        <section className="py-16 bg-theme-subtle-primary">
+	  {/* Popular Products Section - Moved below Main Banner */}
+      <AnimatedElement animation="scaleUp" delay={300}>
+        <section className="py-16 bg-theme-subtle-secondary">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                ✨ Fresh Arrivals
+                🔥 Trending Now
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Be the first to explore our newest additions - straight from the latest collections
+                Discover what everyone&apos;s talking about - our most popular picks that are flying off the shelves
               </p>
             </div>
             
             <ProductGrid
-              products={latestProducts}
+              products={trendingProducts}
               onAddToCart={handleAddToCart}
               onAddToWishlist={handleAddToWishlist}
               className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
@@ -371,8 +371,8 @@ export default function HomeClient() {
             />
 
             <div className="text-center mt-8">
-              <Link href="/products?type=new-arrivals" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
-                See All New Arrivals <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/products?type=trending" className="inline-flex items-center text-theme-secondary hover:text-theme-secondary-dark text-lg font-semibold bg-theme-secondary/10 hover:bg-theme-secondary/20 px-6 py-3 rounded-full transition-all hover:scale-105">
+                View All Trending Products <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
           </div>
