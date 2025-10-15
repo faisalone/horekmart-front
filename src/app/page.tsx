@@ -284,7 +284,7 @@ export default function HomeClient() {
                 ✨ Fresh Arrivals
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Be the first to explore our newest additions - just added to our collection!
+                Be the first to explore our newest additions - straight from the latest collections
               </p>
             </div>
             
