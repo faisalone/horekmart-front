@@ -136,9 +136,21 @@ jobs:
           
           cd "$APP_DIR"
           
-          echo "📥 Fetching latest code"
-          git fetch origin main --depth=1
+          echo "� Checking for local changes on server"
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "⚠️ WARNING: Local uncommitted changes detected:"
+            git status --short
+            echo "These changes will be discarded and overwritten with remote code."
+            echo "Proceeding with deployment in 3 seconds..."
+            sleep 3
+          fi
+          
+          echo "�📥 Fetching latest code"
+          git fetch origin main
+          
+          echo "🔄 Resetting to remote state (discarding any local changes)"
           git reset --hard origin/main
+          git clean -fd
           
           echo "📦 Installing dependencies (including dev for build)"
           npm ci
