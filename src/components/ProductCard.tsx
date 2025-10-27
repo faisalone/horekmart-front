@@ -131,44 +131,51 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, className, isLoadi
       </Link>
 
       <div className="p-2 sm:p-4 flex flex-col flex-grow">
-        <Link href={getProductUrl(product)} className="flex-grow">
-          <div className="space-y-1 sm:space-y-2">
-            {/* Category - Hidden on mobile to save space */}
-            <div className="hidden sm:block text-sm text-gray-500">
-              <AutoFontText>
-                {product.category?.name || 'General'}
-              </AutoFontText>
-            </div>
-            
-            {/* Price - Stack vertically on mobile, horizontal on desktop */}
-            <div className="flex flex-col sm:flex-row sm:items-baseline gap-0 sm:gap-2">
-              <span className="text-sm sm:text-lg font-bold text-gray-900">
-                {formatCurrency(salePrice || price)}
+        <div className="flex-grow space-y-1 sm:space-y-2">
+          {/* Category - Hidden on mobile to save space */}
+          <div className="hidden sm:block text-sm text-gray-500">
+            <AutoFontText>
+              {product.category?.name || 'General'}
+            </AutoFontText>
+          </div>
+          
+          {/* Price - Stack vertically on mobile, horizontal on desktop */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-0 sm:gap-2">
+            <span className="text-sm sm:text-lg font-bold text-gray-900">
+              {formatCurrency(salePrice || price)}
+            </span>
+            {hasDiscount && (
+              <span className="text-xs sm:text-sm text-gray-500 line-through">
+                {formatCurrency(price)}
               </span>
-              {hasDiscount && (
-                <span className="text-xs sm:text-sm text-gray-500 line-through">
-                  {formatCurrency(price)}
-                </span>
-              )}
-            </div>
-            
-            {/* Product Name with theme hover color - Allow up to 2 lines on mobile, 3 on desktop */}
+            )}
+          </div>
+          
+          {/* Product Name with theme hover color - Allow up to 2 lines on mobile, 3 on desktop */}
+          <Link
+            href={getProductUrl(product)}
+            onClick={() => trackProductView(product)}
+            className="block"
+          >
             <h3 className="text-sm sm:text-base font-medium text-gray-900 line-clamp-2 sm:line-clamp-3 group-hover:text-theme-secondary transition-colors leading-tight">
               <AutoFontText>
                 {product.name}
               </AutoFontText>
             </h3>
-            
-            {/* Vendor - Hidden on mobile to save space */}
-            {product.vendor && (
-              <div className="hidden sm:block text-sm text-gray-400">
-                <AutoFontText>
-                  by {product.vendor.business_name}
-                </AutoFontText>
-              </div>
-            )}
-          </div>
-        </Link>
+          </Link>
+          
+          {/* Vendor - Hidden on mobile to save space */}
+          {product.vendor && (
+            <Link
+              href={`/products?vendor=${encodeURIComponent(product.vendor.business_name)}`}
+              className="hidden sm:block text-sm text-gray-400 hover:text-theme-secondary transition-colors"
+            >
+              <AutoFontText>
+                by {product.vendor.business_name}
+              </AutoFontText>
+            </Link>
+          )}
+        </div>
 
         {/* Bottom action area: ensure no empty space - This will always be at the bottom */}
         <div className="mt-auto pt-2 sm:pt-3">

@@ -3,27 +3,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ArrowLeft, ShoppingCart, Settings } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Snowflake } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
-import PromoBanner from '@/components/PromoBanner';
 import ProductCard from '@/components/ProductCard';
-import { Button } from '@/components/ui/button';
 import { publicApi } from '@/lib/public-api';
 import { Product, Category, Vendor } from '@/types';
 import BannerBlock from '@/components/BannerBlock';
 import BannerBlockSkeleton from '@/components/BannerBlockSkeleton';
 import AnimatedElement from '@/components/AnimatedElement';
-import { AnimatedSection, useSequentialAnimation } from '@/lib/animations';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProductCheckout } from '@/services/ProductCheckoutService';
-import { siteSettingsService } from '@/services/siteSettings';
 
 export default function HomeClient() {
-  const [products, setProducts] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [dealsProducts, setDealsProducts] = useState<Product[]>([]);
   const [mostViewedProducts, setMostViewedProducts] = useState<Product[]>([]);
   const [latestProducts, setLatestProducts] = useState<Product[]>([]);
+  const [winterSpecialProducts, setWinterSpecialProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,17 +41,17 @@ export default function HomeClient() {
           dealsResponse,
           mostViewedResponse,
           newestResponse,
+          winterSpecialResponse,
           categoriesData,
-          vendorsResponse,
-          allProductsResponse
+          vendorsResponse
         ] = await Promise.all([
           publicApi.getProducts({ per_page: 8, type: 'trending' }),
           publicApi.getProducts({ per_page: 8, type: 'deals' }),
           publicApi.getProducts({ per_page: 8, type: 'most-viewed' }),
           publicApi.getProducts({ per_page: 8, sort_by: 'created_at', sort_order: 'desc' }),
+          publicApi.getProducts({ per_page: 8, category: 'winter-special' }),
           publicApi.getCategories(),
-          publicApi.getVendors(),
-          publicApi.getProducts({ per_page: 50 }) // broader set for vendor counts and other UI needs
+          publicApi.getVendors()
         ]);
 
         // Use the data arrays from API responses
@@ -63,7 +59,7 @@ export default function HomeClient() {
         const deals = dealsResponse?.data || [];
         const mostViewed = mostViewedResponse?.data || [];
         const newest = newestResponse?.data || [];
-        const allProducts = allProductsResponse?.data || [];
+        const winterSpecial = winterSpecialResponse?.data || [];
         const allVendors = vendorsResponse?.data || [];
         
         // Set sectioned products
@@ -71,9 +67,9 @@ export default function HomeClient() {
         setDealsProducts(deals);
         setMostViewedProducts(mostViewed);
         setLatestProducts(newest);
+        setWinterSpecialProducts(winterSpecial);
 
         // Set supporting data
-        setProducts(allProducts);
         setVendors(allVendors);
         
         // Sort categories by sort_order and take first 9
@@ -88,7 +84,7 @@ export default function HomeClient() {
         setDealsProducts([]);
         setMostViewedProducts([]);
         setLatestProducts([]);
-        setProducts([]);
+        setWinterSpecialProducts([]);
         setCategories([]);
         setVendors([]);
       } finally {
@@ -98,6 +94,8 @@ export default function HomeClient() {
 
     fetchData();
   }, []);
+
+  const showWinterSpecialSection = loading || winterSpecialProducts.length > 0;
   
   // Section products are now fetched explicitly via the API (published-only)
 
@@ -124,7 +122,6 @@ export default function HomeClient() {
       name: vendor.business_name,
       logo: vendor.logo || null, // Vendors might not have logos
       initials: generateInitials(vendor.business_name),
-      items: products.filter(p => p.vendor?.business_name === vendor.business_name).length,
       slug: vendor.business_name.toLowerCase().replace(/\s+/g, '-'),
     }));
   };
@@ -275,7 +272,52 @@ export default function HomeClient() {
       </section>
       </AnimatedElement>
 
-	  {/* Latest Products Section */}
+      {showWinterSpecialSection && (
+        <AnimatedElement animation="slideUp" delay={400}>
+          <section className="py-16 bg-gradient-to-br from-slate-900 via-blue-800 to-cyan-600 text-white">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12">
+                <div>
+                  <div className="flex items-center gap-3 text-cyan-200 uppercase tracking-[0.4em] text-xs font-semibold">
+                    <Snowflake className="h-5 w-5" />
+                    Winter Special
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-bold mt-3 mb-4">
+                    Cozy Picks For The Chilly Season
+                  </h2>
+                  <p className="text-lg text-white/80 max-w-2xl">
+                    Layer up with curated styles and essentials from our Winter Special collection. Fresh arrivals, limited offers, and everything you need to stay warm in style.
+                  </p>
+                </div>
+                <Link
+                  href="/products?category=winter-special"
+                  className="inline-flex items-center self-start lg:self-center bg-white text-slate-900 hover:bg-white/90 font-semibold px-5 py-3 rounded-full transition-colors"
+                >
+                  Explore Full Collection
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </div>
+
+              {loading ? (
+                <ProductGrid
+                  products={winterSpecialProducts}
+                  className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                  loading
+                />
+              ) : (
+                <ProductGrid
+                  products={winterSpecialProducts}
+                  onAddToCart={handleAddToCart}
+                  onAddToWishlist={handleAddToWishlist}
+                  className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                />
+              )}
+            </div>
+          </section>
+        </AnimatedElement>
+      )}
+
+      {/* Latest Products Section */}
       <AnimatedElement animation="slideLeft" delay={500}>
         <section className="py-16 bg-theme-subtle-primary">
           <div className="max-w-7xl mx-auto px-4">
@@ -498,14 +540,10 @@ export default function HomeClient() {
                       </h3>
                     </div>
                     
-                    {/* Text and Arrow Block - slides in from left on hover */}
                     <div className="flex items-center justify-center gap-2 h-6 overflow-hidden">
-                      {/* Arrow - slides in from left */}
                       <ArrowRight className="h-5 w-5 text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
-                      
-                      {/* Product Count Text - slides in from left */}
-                      <p className="font-bold text-gray-900 group-hover:text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap text-sm">
-                        {brand.items} Products
+                      <p className="font-semibold text-gray-700 group-hover:text-theme-primary transform -translate-x-8 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap text-sm">
+                        View Products
                       </p>
                     </div>
                   </Link>

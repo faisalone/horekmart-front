@@ -78,6 +78,7 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 	const productInfoRef = useRef<HTMLDivElement>(null);
 	const relatedProductsRef = useRef<HTMLDivElement>(null);
 	const [staticSoldCount] = useState(Math.floor(Math.random() * 500) + 50);
+	const [vendorProductCount, setVendorProductCount] = useState<number | null>(null);
 
 	// Context hooks
 	const { addItem: addToCart } = useCart();
@@ -107,6 +108,147 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 
 	// Legacy hooks (might remove these later)
 	const productPageData = useProductPage(product, variants);
+
+	const vendorName = product?.vendor?.business_name ?? '';
+	const vendorProductsHref = vendorName
+		? `/products?vendor=${encodeURIComponent(vendorName)}`
+		: null;
+	const vendorInitials = vendorName
+		? vendorName
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((segment) => segment.charAt(0).toUpperCase())
+				.join('') || vendorName.charAt(0).toUpperCase()
+		: '';
+	const vendorLogo = product?.vendor?.logo ?? null;
+	const vendorPhoneSanitized = product?.vendor?.phone
+		? product.vendor.phone.replace(/[^\d]/g, '')
+		: '';
+	const canContactVendor = vendorPhoneSanitized.length >= 6;
+
+	useEffect(() => {
+		if (!vendorName) {
+			setVendorProductCount(null);
+			return;
+		}
+
+		let isMounted = true;
+
+		const loadVendorProductCount = async () => {
+			try {
+				const response = await publicApi.getProducts({
+					vendor: vendorName,
+					per_page: 1,
+				});
+				if (isMounted) {
+					setVendorProductCount(response.meta?.total ?? 0);
+				}
+			} catch (loadError) {
+				console.error('Error fetching vendor product count:', loadError);
+				if (isMounted) {
+					setVendorProductCount(null);
+				}
+			}
+		};
+
+		loadVendorProductCount();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [vendorName]);
+
+	const handleContactSeller = () => {
+		if (!canContactVendor || !product) {
+			return;
+		}
+
+		const message = encodeURIComponent(
+			`Hi ${vendorName || 'there'}, I'm interested in ${product.name}.`
+		);
+		const whatsappUrl = `https://wa.me/${vendorPhoneSanitized}?text=${message}`;
+		window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+		trackEvent('contact_seller_whatsapp', {
+			product_id: product.id.toString(),
+			vendor_name: vendorName,
+		});
+	};
+
+	const renderVendorCard = () => {
+		if (!product || !product.vendor || !vendorProductsHref) {
+			return null;
+		}
+
+		return (
+			<div className="bg-gray-50 rounded-lg p-3">
+				<div className="flex items-center gap-3">
+					<Link
+						href={vendorProductsHref}
+						className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+						aria-label={`View ${vendorName} products`}
+					>
+						{vendorLogo ? (
+							<Image
+								src={vendorLogo}
+								alt={`${vendorName} logo`}
+								width={40}
+								height={40}
+								className="h-full w-full object-cover"
+							/>
+						) : (
+							vendorInitials || vendorName.charAt(0).toUpperCase()
+						)}
+					</Link>
+					<div className="flex-1 space-y-1">
+						<div className="flex items-center">
+							<Link
+								href={vendorProductsHref}
+								className="font-medium text-gray-900 text-sm truncate hover:text-theme-primary transition-colors"
+							>
+								{vendorName}
+							</Link>
+							{typeof vendorProductCount === 'number' && (
+								<span className="text-xs text-gray-500 ml-2">
+									({vendorProductCount.toLocaleString()})
+								</span>
+							)}
+						</div>
+						<div className="flex items-center gap-3">
+							<div className="flex items-center space-x-1">
+								{[...Array(5)].map((_, i) => (
+									<Star
+										key={i}
+										className={`w-3 h-3 ${
+											i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
+										}`}
+									/>
+								))}
+							</div>
+							<button
+								type="button"
+								onClick={handleContactSeller}
+								disabled={!canContactVendor}
+								className="text-xs font-medium transition-colors flex items-center gap-1 text-green-600 hover:text-green-800 disabled:text-gray-400 disabled:cursor-not-allowed"
+								title={!canContactVendor ? 'Seller contact unavailable' : 'Message seller via WhatsApp'}
+							>
+								<MessageCircle className="w-3 h-3" />
+								Contact Seller
+							</button>
+						</div>
+					</div>
+					<Link
+						href={vendorProductsHref}
+						className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+						aria-label={`Browse ${vendorName} products`}
+					>
+						<ArrowRight className="w-4 h-4 text-gray-600" />
+					</Link>
+				</div>
+			</div>
+		);
+	};
 
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 	const [showAllImages, setShowAllImages] = useState(false);
@@ -751,49 +893,7 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 										{product.name}
 									</h1>
 
-									{product.vendor && (
-										<div className="bg-gray-50 rounded-lg p-3">
-											<div className="flex items-center gap-3">
-												<div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-													{product.vendor.business_name.charAt(0)}
-												</div>
-												<div className="flex-1 space-y-1">
-													<div className="flex items-center">
-														<h3 className="font-medium text-gray-900 text-sm truncate">
-															{product.vendor.business_name}
-														</h3>
-														<span className="text-xs text-gray-500 ml-2">
-															(250)
-														</span>
-													</div>
-													<div className="flex items-center gap-3">
-														<div className="flex items-center space-x-1">
-															{[...Array(5)].map((_, i) => (
-																<Star
-																	key={i}
-																	className={`w-3 h-3 ${
-																		i < 4
-																			? 'text-yellow-400 fill-current'
-																			: 'text-gray-300'
-																	}`}
-																/>
-															))}
-														</div>
-														<button className="text-xs text-green-600 hover:text-green-800 font-medium transition-colors flex items-center gap-1">
-															<MessageCircle className="w-3 h-3" />
-															Contact Seller
-														</button>
-													</div>
-												</div>
-												<button
-													className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
-													title="View Vendor Profile"
-												>
-													<ArrowRight className="w-4 h-4 text-gray-600" />
-												</button>
-											</div>
-										</div>
-									)}
+									{renderVendorCard()}
 
 									<div className="space-y-3">
 										{productPageData ? (
@@ -920,47 +1020,39 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 
 						{/* Product Details */}
 						<div className="mt-8 lg:mt-16 space-y-6 lg:space-y-16">
-							<ProductDetailSection
-								title="Product Description & Details"
-								icon={<div className="w-3 h-3 bg-white rounded"></div>}
-								gradient="bg-gradient-to-r from-blue-600 to-blue-700"
-							>
-								<div className="bg-gray-50 lg:bg-transparent rounded-xl p-5 lg:p-0 border border-gray-200 lg:border-0">
-									<div className="prose max-w-none">
-										<div className="mb-8">
-											<div className="text-gray-700 text-base lg:text-lg leading-relaxed">
-												{showFullDescription ? (
-													<RichTextDisplay 
-														content={product.description || ''} 
-														textColor="gray"
-													/>
-												) : (
-													<RichTextDisplay 
-														content={
-															(product.description && product.description.length > 300)
-																? `${product.description.substring(0, 300)}...`
-																: product.description || ''
-														}
-														textColor="gray"
-													/>
-												)}
-											</div>
-											{(product.description && product.description.length > 300) && (
-												<button
-													onClick={() => {
-														setShowFullDescription(!showFullDescription);
-														trackEvent('product_description_toggle', {
-															product_id: product.id.toString(),
-															action: showFullDescription ? 'collapse' : 'expand',
-														});
-													}}
-													className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
-												>
-													{showFullDescription ? 'Show Less' : 'Show More'}
-												</button>
-											)}
-										</div>
+							<ProductDetailSection title="Product Description & Details">
+								<div className="space-y-4">
+									<div className="text-gray-700 text-base lg:text-lg leading-relaxed">
+										{showFullDescription ? (
+											<RichTextDisplay 
+												content={product.description || ''} 
+												textColor="gray"
+											/>
+										) : (
+											<RichTextDisplay 
+												content={
+													(product.description && product.description.length > 300)
+														? `${product.description.substring(0, 300)}...`
+														: product.description || ''
+												}
+												textColor="gray"
+											/>
+										)}
 									</div>
+									{(product.description && product.description.length > 300) && (
+										<button
+											onClick={() => {
+											setShowFullDescription(!showFullDescription);
+											trackEvent('product_description_toggle', {
+												product_id: product.id.toString(),
+												action: showFullDescription ? 'collapse' : 'expand',
+											});
+										}}
+											className="text-blue-600 hover:text-blue-800 font-medium"
+										>
+											{showFullDescription ? 'Show Less' : 'Show More'}
+										</button>
+									)}
 								</div>
 							</ProductDetailSection>
 
@@ -1076,11 +1168,7 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 								const maxIdx = Math.max(0, embeds.length - socialVisible);
 
 								return (
-									<ProductDetailSection
-										title="Social Media Showcase"
-										icon={<div className="w-3 h-3 bg-white rounded" />}
-										gradient="bg-gradient-to-r from-gray-700 to-gray-900"
-									>
+									<ProductDetailSection title="Social Media Showcase">
 										{/* Full-width, no extra wrapper: responsive 2-up carousel */}
 										<div className="relative">
 											{/* Track */}
@@ -1178,49 +1266,7 @@ export default function ProductPageClient({ product: initialProduct }: ProductPa
 										{product.name}
 									</h1>
 
-									{product.vendor && (
-										<div className="bg-gray-50 rounded-lg p-3">
-											<div className="flex items-center gap-3">
-												<div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-													{product.vendor.business_name.charAt(0)}
-												</div>
-												<div className="flex-1 space-y-1">
-													<div className="flex items-center">
-														<h3 className="font-medium text-gray-900 text-sm truncate">
-															{product.vendor.business_name}
-														</h3>
-														<span className="text-xs text-gray-500 ml-2">
-															(250)
-														</span>
-													</div>
-													<div className="flex items-center gap-3">
-														<div className="flex items-center space-x-1">
-															{[...Array(5)].map((_, i) => (
-																<Star
-																	key={i}
-																	className={`w-3 h-3 ${
-																		i < 4
-																			? 'text-yellow-400 fill-current'
-																			: 'text-gray-300'
-																	}`}
-																/>
-															))}
-														</div>
-														<button className="text-xs text-green-600 hover:text-green-800 font-medium transition-colors flex items-center gap-1">
-															<MessageCircle className="w-3 h-3" />
-															Contact Seller
-														</button>
-													</div>
-												</div>
-												<button
-													className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
-													title="View Vendor Profile"
-												>
-													<ArrowRight className="w-4 h-4 text-gray-600" />
-												</button>
-											</div>
-										</div>
-									)}
+									{renderVendorCard()}
 
 									<div className="space-y-3">
 										{productPageData ? (
